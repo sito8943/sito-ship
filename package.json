@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint-staged": "lint-staged",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -25,9 +29,18 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.6.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.45.0",
     "vite": "npm:rolldown-vite@7.1.14"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --max-warnings=0 --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,scss,md,html,yml,yaml}": "prettier --write"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.1.14"
