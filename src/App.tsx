@@ -1,6 +1,6 @@
-import AppLayout from "./layouts/AppLayout";
-import ShipBuilderProvider from "./providers/ShipBuilderProvider";
-import HomeView from "./views/HomeView";
+import AppLayout from '@/layouts/AppLayout'
+import ShipBuilderProvider from '@/providers/ShipBuilderProvider'
+import HomeView from '@/views/HomeView'
 
 const App = () => {
   return (
@@ -9,7 +9,7 @@ const App = () => {
         <HomeView />
       </AppLayout>
     </ShipBuilderProvider>
-  );
-};
+  )
+}
 
-export default App;
+export default App

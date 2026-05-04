@@ -1,1 +1,1 @@
-export * from "./ShipConfig";
+export * from "@/lib/models/ShipConfig";

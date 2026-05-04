@@ -1,1 +1,1 @@
-export { useShipBuilder } from "./useShipBuilder";
+export { useShipBuilder } from "@/hooks/useShipBuilder/useShipBuilder";

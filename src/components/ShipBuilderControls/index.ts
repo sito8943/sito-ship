@@ -1,1 +1,1 @@
-export { default } from "./ShipBuilderControls";
+export { default } from "@/components/ShipBuilderControls/ShipBuilderControls";

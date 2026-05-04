@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { ShipBuilderContext } from "../../providers/ShipBuilderProvider";
+import { ShipBuilderContext } from "@/providers/ShipBuilderProvider";
 
 export const useShipBuilder = () => {
   const context = useContext(ShipBuilderContext);

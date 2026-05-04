@@ -6,7 +6,7 @@ import {
   type Material,
   type Object3D,
 } from "three";
-import type { ShipSlot, ShipSlotConfigMap } from "../../models/ShipConfig";
+import type { ShipSlot, ShipSlotConfigMap } from "@/lib/models/ShipConfig";
 
 export const createSlotMaterial = (color: string): MeshStandardMaterial => {
   return new MeshStandardMaterial({

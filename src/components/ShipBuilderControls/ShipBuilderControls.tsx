@@ -3,22 +3,22 @@ import type {
   ShipSlot,
   ShipSlotConfigMap,
   ShipSlotPatch,
-} from "../../lib/models/ShipConfig";
-import { useShipBuilder } from "../../hooks/useShipBuilder";
+} from "@/lib/models/ShipConfig";
+import { useShipBuilder } from "@/hooks/useShipBuilder";
 import {
   OFFSET_AXIS_OPTIONS,
   SCALE_RANGE,
   SLOT_LABELS,
   SLOT_ORDER,
   SLOT_VARIANT_OPTIONS,
-} from "./constants";
+} from "@/components/ShipBuilderControls/constants";
 import {
   createVector3Tuple,
   formatVariantLabel,
   getSlotConfig,
   getUniformScale,
   updateTupleAxis,
-} from "./utils";
+} from "@/components/ShipBuilderControls/utils";
 
 const ShipBuilderControls = () => {
   const { shipConfig, updateSlot, resetShipConfig } = useShipBuilder();

@@ -1,5 +1,5 @@
-import SceneCanvas from "../../components/SceneCanvas";
-import ShipBuilderControls from "../../components/ShipBuilderControls";
+import SceneCanvas from '@/components/SceneCanvas'
+import ShipBuilderControls from '@/components/ShipBuilderControls'
 
 const HomeView = () => {
   return (
@@ -7,7 +7,7 @@ const HomeView = () => {
       <SceneCanvas />
       <ShipBuilderControls />
     </section>
-  );
-};
+  )
+}
 
-export default HomeView;
+export default HomeView

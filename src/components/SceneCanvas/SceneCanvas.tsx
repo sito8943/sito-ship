@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useShipBuilder } from "../../hooks/useShipBuilder";
+import { useShipBuilder } from "@/hooks/useShipBuilder";
 
 const SceneCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);

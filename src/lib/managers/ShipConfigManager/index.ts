@@ -1,1 +1,1 @@
-export { ShipConfigManager } from "./ShipConfigManager";
+export { ShipConfigManager } from "@/lib/managers/ShipConfigManager/ShipConfigManager";

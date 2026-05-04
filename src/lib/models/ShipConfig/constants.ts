@@ -1,4 +1,4 @@
-import type { ShipConfig } from "./types";
+import type { ShipConfig } from "@/lib/models/ShipConfig/types";
 
 export const SHIP_CONFIG_VERSION = 1;
 

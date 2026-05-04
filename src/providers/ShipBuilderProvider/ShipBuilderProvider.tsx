@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ShipConfigManager } from "../../lib/managers/ShipConfigManager";
-import { ShipBuilderSceneManager } from "../../lib/managers/ShipBuilderSceneManager";
-import type { ShipConfig } from "../../lib/models/ShipConfig";
-import { ShipBuilderContext } from "./context";
+import { ShipConfigManager } from "@/lib/managers/ShipConfigManager";
+import { ShipBuilderSceneManager } from "@/lib/managers/ShipBuilderSceneManager";
+import type { ShipConfig } from "@/lib/models/ShipConfig";
+import { ShipBuilderContext } from "@/providers/ShipBuilderProvider/context";
 import type {
   ShipBuilderContextValue,
   ShipBuilderProviderProps,
   UpdateSlot,
-} from "./types";
+} from "@/providers/ShipBuilderProvider/types";
 
 const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   const sceneManager = useMemo(() => new ShipBuilderSceneManager(), []);

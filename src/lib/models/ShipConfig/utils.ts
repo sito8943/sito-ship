@@ -1,5 +1,9 @@
-import { DEFAULT_SHIP_CONFIG } from "./constants";
-import type { ShipConfig, ShipSlotBaseConfig, Vector3Tuple } from "./types";
+import { DEFAULT_SHIP_CONFIG } from "@/lib/models/ShipConfig/constants";
+import type {
+  ShipConfig,
+  ShipSlotBaseConfig,
+  Vector3Tuple,
+} from "@/lib/models/ShipConfig/types";
 
 const cloneVector3Tuple = (vector: Vector3Tuple): Vector3Tuple => {
   return [vector[0], vector[1], vector[2]];

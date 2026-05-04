@@ -1,4 +1,4 @@
-import type { ShipSlot, ShipSlotConfigMap } from "../../lib/models/ShipConfig";
+import type { ShipSlot, ShipSlotConfigMap } from "@/lib/models/ShipConfig";
 
 export type SlotVariantOptionsMap = {
   [TSlot in ShipSlot]: readonly ShipSlotConfigMap[TSlot]["variant"][];

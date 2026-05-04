@@ -1,5 +1,8 @@
-import type { ShipSlot } from "../../lib/models/ShipConfig";
-import type { OffsetAxisOption, SlotVariantOptionsMap } from "./types";
+import type { ShipSlot } from "@/lib/models/ShipConfig";
+import type {
+  OffsetAxisOption,
+  SlotVariantOptionsMap,
+} from "@/components/ShipBuilderControls/types";
 
 export const SLOT_ORDER: readonly ShipSlot[] = [
   "body",

@@ -3,8 +3,8 @@ import type {
   ShipConfig,
   ShipSlot,
   ShipSlotPatch,
-} from "../../lib/models/ShipConfig";
-import type { ShipBuilderSceneManager } from "../../lib/managers/ShipBuilderSceneManager";
+} from "@/lib/models/ShipConfig";
+import type { ShipBuilderSceneManager } from "@/lib/managers/ShipBuilderSceneManager";
 
 export type ShipBuilderProviderProps = PropsWithChildren;
 

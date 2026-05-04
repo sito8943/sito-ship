@@ -1,5 +1,5 @@
-export { DEFAULT_SHIP_CONFIG, SHIP_CONFIG_VERSION } from "./constants";
-export { cloneShipConfig, createDefaultShipConfig } from "./utils";
+export { DEFAULT_SHIP_CONFIG, SHIP_CONFIG_VERSION } from "@/lib/models/ShipConfig/constants";
+export { cloneShipConfig, createDefaultShipConfig } from "@/lib/models/ShipConfig/utils";
 export type {
   BodySlotConfig,
   BodyVariant,
@@ -18,4 +18,4 @@ export type {
   WeaponsVariant,
   WingsSlotConfig,
   WingsVariant,
-} from "./types";
+} from "@/lib/models/ShipConfig/types";

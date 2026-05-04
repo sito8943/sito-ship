@@ -12,14 +12,14 @@ import {
   Scene,
   WebGLRenderer,
 } from "three";
-import { ShipBuilderModelManager } from "../ShipBuilderModelManager";
-import type { ShipConfig } from "../../models/ShipConfig";
+import { ShipBuilderModelManager } from "@/lib/managers/ShipBuilderModelManager";
+import type { ShipConfig } from "@/lib/models/ShipConfig";
 import {
   CAMERA_SETTINGS,
   MAX_DEVICE_PIXEL_RATIO,
   SCENE_COLORS,
-} from "./constants";
-import type { SceneSize } from "./types";
+} from "@/lib/managers/ShipBuilderSceneManager/constants";
+import type { SceneSize } from "@/lib/managers/ShipBuilderSceneManager/types";
 
 export class ShipBuilderSceneManager {
   private canvas: HTMLCanvasElement | null = null;

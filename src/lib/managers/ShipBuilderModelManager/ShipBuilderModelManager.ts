@@ -16,21 +16,25 @@ import type {
   ShipSlotConfigMap,
   WeaponsSlotConfig,
   WingsSlotConfig,
-} from "../../models/ShipConfig";
-import { BODY_BASE_DEPTH, SHIP_SLOT_KEYS, SLOT_ANCHORS } from "./constants";
+} from "@/lib/models/ShipConfig";
+import {
+  BODY_BASE_DEPTH,
+  SHIP_SLOT_KEYS,
+  SLOT_ANCHORS,
+} from "@/lib/managers/ShipBuilderModelManager/constants";
 import type {
   ShipSlotGroupMap,
   ShipSlotKey,
   ShipSlotSignatureMap,
   SlotBuilderMap,
-} from "./types";
+} from "@/lib/managers/ShipBuilderModelManager/types";
 import {
   applyShadowToObject,
   applySlotTransform,
   createSlotMaterial,
   createSlotSignature,
   disposeGroupResources,
-} from "./utils";
+} from "@/lib/managers/ShipBuilderModelManager/utils";
 
 export class ShipBuilderModelManager {
   private readonly rootGroup: Group;
