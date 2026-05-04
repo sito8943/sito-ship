@@ -1,0 +1,1 @@
+export { ShipConfigManager } from "./ShipConfigManager";

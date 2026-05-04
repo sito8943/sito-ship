@@ -1,10 +1,20 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ShipConfigManager } from "../../lib/managers/ShipConfigManager";
 import { ShipBuilderSceneManager } from "../../lib/managers/ShipBuilderSceneManager";
+import type { ShipConfig } from "../../lib/models/ShipConfig";
 import { ShipBuilderContext } from "./context";
-import type { ShipBuilderContextValue, ShipBuilderProviderProps } from "./types";
+import type {
+  ShipBuilderContextValue,
+  ShipBuilderProviderProps,
+  UpdateSlot,
+} from "./types";
 
 const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   const sceneManager = useMemo(() => new ShipBuilderSceneManager(), []);
+  const shipConfigManager = useMemo(() => new ShipConfigManager(), []);
+  const [shipConfig, setShipConfig] = useState<ShipConfig>(() => {
+    return shipConfigManager.createDefaultConfig();
+  });
 
   useEffect(() => {
     return () => {
@@ -12,9 +22,35 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     };
   }, [sceneManager]);
 
+  const updateSlot = useCallback<UpdateSlot>(
+    (slot, patch) => {
+      setShipConfig((currentConfig) => {
+        return shipConfigManager.updateSlot(currentConfig, slot, patch);
+      });
+    },
+    [shipConfigManager],
+  );
+
+  const resetShipConfig = useCallback(() => {
+    setShipConfig(shipConfigManager.createDefaultConfig());
+  }, [shipConfigManager]);
+
+  const replaceShipConfig = useCallback(
+    (config: ShipConfig) => {
+      setShipConfig(shipConfigManager.replaceConfig(config));
+    },
+    [shipConfigManager],
+  );
+
   const value = useMemo<ShipBuilderContextValue>(() => {
-    return { sceneManager };
-  }, [sceneManager]);
+    return {
+      sceneManager,
+      shipConfig,
+      updateSlot,
+      resetShipConfig,
+      replaceShipConfig,
+    };
+  }, [replaceShipConfig, resetShipConfig, sceneManager, shipConfig, updateSlot]);
 
   return (
     <ShipBuilderContext.Provider value={value}>
