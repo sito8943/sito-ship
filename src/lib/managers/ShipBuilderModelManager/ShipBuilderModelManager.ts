@@ -11,11 +11,13 @@ import {
 import type {
   BodySlotConfig,
   CockpitSlotConfig,
+  EnginesSlotConfig,
   ShipConfig,
   ShipSlotConfigMap,
+  WeaponsSlotConfig,
   WingsSlotConfig,
 } from "../../models/ShipConfig";
-import { BODY_BASE_DEPTH, SHIP_SLOT_KEYS } from "./constants";
+import { BODY_BASE_DEPTH, SHIP_SLOT_KEYS, SLOT_ANCHORS } from "./constants";
 import type {
   ShipSlotGroupMap,
   ShipSlotKey,
@@ -140,14 +142,22 @@ export class ShipBuilderModelManager {
     const material = createSlotMaterial(slotConfig.color);
 
     const cockpitMesh = new Mesh(this.createCockpitGeometry(slotConfig), material);
-    cockpitMesh.position.set(0, 0.58, 1.08);
+    cockpitMesh.position.set(
+      SLOT_ANCHORS.cockpit.x,
+      SLOT_ANCHORS.cockpit.y,
+      SLOT_ANCHORS.cockpit.z,
+    );
     group.add(cockpitMesh);
 
     if (slotConfig.variant === "bubble") {
       const ringGeometry = new TorusGeometry(0.56, 0.08, 8, 20);
       const ring = new Mesh(ringGeometry, createSlotMaterial("#cbd5e1"));
       ring.rotation.x = Math.PI / 2;
-      ring.position.set(0, 0.46, 1.08);
+      ring.position.set(
+        SLOT_ANCHORS.cockpit.x,
+        SLOT_ANCHORS.cockpit.y - 0.12,
+        SLOT_ANCHORS.cockpit.z,
+      );
       group.add(ring);
     }
 
@@ -172,14 +182,10 @@ export class ShipBuilderModelManager {
   }
 
   private buildWingsSlot = (slotConfig: WingsSlotConfig): Group => {
-    const group = new Group();
     const material = createSlotMaterial(slotConfig.color);
-
-    const leftWing = this.createWingSide("left", slotConfig, material);
-    const rightWing = this.createWingSide("right", slotConfig, material);
-
-    group.add(leftWing);
-    group.add(rightWing);
+    const group = this.createMirroredPair(() => {
+      return this.createWingLeftSide(slotConfig, material);
+    });
 
     applyShadowToObject(group);
     applySlotTransform(group, slotConfig);
@@ -187,46 +193,186 @@ export class ShipBuilderModelManager {
     return group;
   };
 
-  private createWingSide(
-    side: "left" | "right",
+  private createWingLeftSide(
     slotConfig: WingsSlotConfig,
     material: ReturnType<typeof createSlotMaterial>,
   ): Group {
     const sideGroup = new Group();
-    const sideFactor = side === "left" ? -1 : 1;
 
     if (slotConfig.variant === "rect") {
       const wing = new Mesh(new BoxGeometry(2.2, 0.16, 1.5), material);
-      wing.position.set(2 * sideFactor, 0, 0.45);
+      wing.position.set(SLOT_ANCHORS.wing.x, SLOT_ANCHORS.wing.y, SLOT_ANCHORS.wing.z);
       sideGroup.add(wing);
       return sideGroup;
     }
 
     if (slotConfig.variant === "double") {
       const upperWing = new Mesh(new BoxGeometry(1.85, 0.14, 0.95), material);
-      upperWing.position.set(1.85 * sideFactor, 0.12, 0.95);
+      upperWing.position.set(
+        SLOT_ANCHORS.wing.x + 0.2,
+        SLOT_ANCHORS.wing.y + 0.12,
+        SLOT_ANCHORS.wing.z + 0.5,
+      );
       sideGroup.add(upperWing);
 
       const lowerWing = new Mesh(new BoxGeometry(2.3, 0.12, 1.2), material);
-      lowerWing.position.set(2.2 * sideFactor, -0.1, 0.05);
+      lowerWing.position.set(
+        SLOT_ANCHORS.wing.x - 0.15,
+        SLOT_ANCHORS.wing.y - 0.1,
+        SLOT_ANCHORS.wing.z - 0.4,
+      );
       sideGroup.add(lowerWing);
       return sideGroup;
     }
 
     const triangularWing = new Mesh(new ConeGeometry(0.85, 2.6, 4), material);
-    triangularWing.rotation.z =
-      side === "left" ? Math.PI * 0.5 : -Math.PI * 0.5;
-    triangularWing.position.set(2.05 * sideFactor, 0, 0.45);
+    triangularWing.rotation.z = Math.PI * 0.5;
+    triangularWing.position.set(
+      SLOT_ANCHORS.wing.x,
+      SLOT_ANCHORS.wing.y,
+      SLOT_ANCHORS.wing.z,
+    );
     sideGroup.add(triangularWing);
 
     return sideGroup;
   }
 
-  private buildEnginesSlot = (): Group => {
-    return new Group();
+  private buildEnginesSlot = (slotConfig: EnginesSlotConfig): Group => {
+    const material = createSlotMaterial(slotConfig.color);
+    const group = this.createMirroredPair(() => {
+      return this.createEngineLeftSide(slotConfig, material);
+    });
+
+    applyShadowToObject(group);
+    applySlotTransform(group, slotConfig);
+
+    return group;
   };
 
-  private buildWeaponsSlot = (): Group => {
-    return new Group();
+  private createEngineLeftSide(
+    slotConfig: EnginesSlotConfig,
+    material: ReturnType<typeof createSlotMaterial>,
+  ): Group {
+    const sideGroup = new Group();
+    const anchor = SLOT_ANCHORS.engine;
+
+    if (slotConfig.variant === "cylinder") {
+      const engine = new Mesh(new CylinderGeometry(0.32, 0.38, 1.7, 18), material);
+      engine.rotation.z = Math.PI / 2;
+      engine.position.set(anchor.x, anchor.y, anchor.z);
+      sideGroup.add(engine);
+
+      const nozzle = new Mesh(new ConeGeometry(0.26, 0.7, 18), createSlotMaterial("#1f2937"));
+      nozzle.rotation.z = Math.PI / 2;
+      nozzle.position.set(anchor.x - 1.05, anchor.y, anchor.z);
+      sideGroup.add(nozzle);
+
+      return sideGroup;
+    }
+
+    if (slotConfig.variant === "cone") {
+      const cone = new Mesh(new ConeGeometry(0.44, 1.85, 20), material);
+      cone.rotation.z = Math.PI / 2;
+      cone.position.set(anchor.x - 0.15, anchor.y, anchor.z);
+      sideGroup.add(cone);
+
+      const core = new Mesh(
+        new CylinderGeometry(0.12, 0.12, 1.2, 14),
+        createSlotMaterial("#0f172a"),
+      );
+      core.rotation.z = Math.PI / 2;
+      core.position.set(anchor.x - 0.6, anchor.y, anchor.z);
+      sideGroup.add(core);
+
+      return sideGroup;
+    }
+
+    const topEngine = new Mesh(new CylinderGeometry(0.2, 0.28, 1.5, 14), material);
+    topEngine.rotation.z = Math.PI / 2;
+    topEngine.position.set(anchor.x, anchor.y + 0.2, anchor.z);
+    sideGroup.add(topEngine);
+
+    const bottomEngine = new Mesh(new CylinderGeometry(0.2, 0.28, 1.5, 14), material);
+    bottomEngine.rotation.z = Math.PI / 2;
+    bottomEngine.position.set(anchor.x, anchor.y - 0.2, anchor.z);
+    sideGroup.add(bottomEngine);
+
+    const bridge = new Mesh(
+      new BoxGeometry(0.25, 0.22, 0.95),
+      createSlotMaterial("#334155"),
+    );
+    bridge.position.set(anchor.x + 0.2, anchor.y, anchor.z);
+    sideGroup.add(bridge);
+
+    return sideGroup;
+  }
+
+  private buildWeaponsSlot = (slotConfig: WeaponsSlotConfig): Group => {
+    if (slotConfig.variant === "none") {
+      return new Group();
+    }
+
+    const material = createSlotMaterial(slotConfig.color);
+    const group = this.createMirroredPair(() => {
+      return this.createWeaponLeftSide(slotConfig, material);
+    });
+
+    applyShadowToObject(group);
+    applySlotTransform(group, slotConfig);
+
+    return group;
   };
+
+  private createWeaponLeftSide(
+    slotConfig: WeaponsSlotConfig,
+    material: ReturnType<typeof createSlotMaterial>,
+  ): Group {
+    const sideGroup = new Group();
+    const anchor = SLOT_ANCHORS.weapon;
+
+    if (slotConfig.variant === "singleCannon") {
+      const cannon = new Mesh(new CylinderGeometry(0.09, 0.11, 1.35, 14), material);
+      cannon.rotation.z = Math.PI / 2;
+      cannon.position.set(anchor.x, anchor.y, anchor.z);
+      sideGroup.add(cannon);
+
+      const tip = new Mesh(new ConeGeometry(0.1, 0.34, 12), createSlotMaterial("#0b1220"));
+      tip.rotation.z = Math.PI / 2;
+      tip.position.set(anchor.x - 0.82, anchor.y, anchor.z);
+      sideGroup.add(tip);
+
+      return sideGroup;
+    }
+
+    const upperCannon = new Mesh(new CylinderGeometry(0.07, 0.09, 1.15, 12), material);
+    upperCannon.rotation.z = Math.PI / 2;
+    upperCannon.position.set(anchor.x, anchor.y + 0.12, anchor.z);
+    sideGroup.add(upperCannon);
+
+    const lowerCannon = new Mesh(new CylinderGeometry(0.07, 0.09, 1.15, 12), material);
+    lowerCannon.rotation.z = Math.PI / 2;
+    lowerCannon.position.set(anchor.x, anchor.y - 0.12, anchor.z);
+    sideGroup.add(lowerCannon);
+
+    const mount = new Mesh(new BoxGeometry(0.25, 0.34, 0.26), createSlotMaterial("#1e293b"));
+    mount.position.set(anchor.x + 0.3, anchor.y, anchor.z);
+    sideGroup.add(mount);
+
+    return sideGroup;
+  }
+
+  private createMirroredPair(createLeftSide: () => Group): Group {
+    const pairGroup = new Group();
+    const leftSide = createLeftSide();
+    leftSide.name = "leftSide";
+
+    const rightSide = leftSide.clone(true);
+    rightSide.name = "rightSide";
+    rightSide.scale.x = -1;
+
+    pairGroup.add(leftSide);
+    pairGroup.add(rightSide);
+
+    return pairGroup;
+  }
 }
