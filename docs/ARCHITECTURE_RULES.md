@@ -6,7 +6,15 @@ All coding agents (Codex, Claude, or any automated contributor) **must read this
 
 ---
 
-## 1) State Management and Data Flow
+## 1) Scope
+
+- These architecture rules are mandatory for this project.
+- Any new feature, refactor, or file move must follow this document.
+- If an exception is needed, document it explicitly in the implementation notes/PR.
+
+---
+
+## 2) State Management and Data Flow
 
 - Use `Context + Provider` patterns to avoid prop-drilling.
 - Do not pass shared state through multiple component levels unless it is strictly local UI state.
@@ -15,7 +23,7 @@ All coding agents (Codex, Claude, or any automated contributor) **must read this
 
 ---
 
-## 2) Models and Domain Design
+## 3) Models and Domain Design
 
 - Define explicit, typed models for domain entities.
 - Keep model definitions centralized and reusable.
@@ -24,7 +32,7 @@ All coding agents (Codex, Claude, or any automated contributor) **must read this
 
 ---
 
-## 3) Manager Classes + Provider Access
+## 4) Manager Classes + Provider Access
 
 - Use manager classes to encapsulate domain operations/state transitions.
 - Managers should be instantiated and exposed through providers.
@@ -33,7 +41,7 @@ All coding agents (Codex, Claude, or any automated contributor) **must read this
 
 ---
 
-## 4) Styling Rules (Tailwind + Global Theme)
+## 5) Styling Rules (Tailwind + Global Theme)
 
 - Use **Tailwind CSS** for component styling (`className` utilities in components).
 - Define theme tokens/variables in `global.css`.
@@ -42,7 +50,7 @@ All coding agents (Codex, Claude, or any automated contributor) **must read this
 
 ---
 
-## 5) Folder Structure (Required)
+## 6) Folder Structure (Required)
 
 Use this project structure as the default organization:
 
@@ -67,7 +75,42 @@ Notes:
 
 ---
 
-## 6) i18n Rules
+## 7) Feature-Level File Structure (Mandatory)
+
+When creating or refactoring hooks/components, use this per-feature structure:
+
+```txt
+FeatureName/
+  FeatureName.tsx|ts   # Only one component or one hook per file
+  constants.ts         # Constants only
+  utils.ts             # Reusable helper functions only
+  types.ts             # Type aliases and interfaces only
+  index.ts             # Public exports
+```
+
+Rules:
+- One hook per file (`useSomething.ts`).
+- One component per file (`Something.tsx`).
+- Do not declare reusable helpers/constants/types inside component or hook files.
+- Move helper functions to `utils.ts`.
+- Move constants to `constants.ts`.
+- Move interfaces/types to `types.ts`.
+- Keep support files as siblings of the hook/component they support.
+- If a hook/component grows, create its own folder and expose public API via `index.ts`.
+- Preserve existing public imports by re-exporting from local `index.ts` files.
+
+---
+
+## 8) Routing Conventions (Mandatory)
+
+- Centralize app routes in one shared file (for example: `src/lib/routes.ts`) using constant objects (`as const`).
+- Do not hardcode route strings in `navigate(...)`, `<Link to=...>`, `<Route path=...>`, menu config, or sitemap config.
+- For dynamic routes and query-based routes, expose helper functions (for example: `getShipRoute(id)`).
+- Centralize query parameter keys in route constants (for example: `RouteQueryParam`) and reuse them consistently.
+
+---
+
+## 9) i18n Rules
 
 - Store translation resources in `lang/`.
 - Avoid hardcoded user-facing strings in reusable components when i18n is expected.
@@ -75,9 +118,9 @@ Notes:
 
 ---
 
-## 7) Implementation Discipline
+## 10) Implementation Discipline
 
 - Prefer clear boundaries: UI layer, provider layer, domain logic layer.
 - Prefer small, composable modules over monolithic files.
 - Keep APIs typed and explicit.
-- New features must follow these rules unless an exception is documented in the PR/implementation notes.
+- New features must follow these rules unless an exception is documented in the implementation notes/PR.
