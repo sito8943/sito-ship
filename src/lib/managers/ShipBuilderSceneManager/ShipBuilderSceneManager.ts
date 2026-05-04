@@ -12,6 +12,8 @@ import {
   Scene,
   WebGLRenderer,
 } from "three";
+import { ShipBuilderModelManager } from "../ShipBuilderModelManager";
+import type { ShipConfig } from "../../models/ShipConfig";
 import {
   CAMERA_SETTINGS,
   MAX_DEVICE_PIXEL_RATIO,
@@ -27,6 +29,8 @@ export class ShipBuilderSceneManager {
   private controls: OrbitControls | null = null;
   private clock: Clock | null = null;
   private shipGroup: Group | null = null;
+  private shipModelManager: ShipBuilderModelManager | null = null;
+  private pendingShipConfig: ShipConfig | null = null;
   private animationFrameId = 0;
   private isMounted = false;
 
@@ -47,6 +51,11 @@ export class ShipBuilderSceneManager {
 
   getShipGroup() {
     return this.shipGroup;
+  }
+
+  syncShipConfig(shipConfig: ShipConfig) {
+    this.pendingShipConfig = shipConfig;
+    this.shipModelManager?.sync(shipConfig);
   }
 
   resize() {
@@ -82,6 +91,7 @@ export class ShipBuilderSceneManager {
     window.removeEventListener("resize", this.handleResize);
 
     this.controls?.dispose();
+    this.shipModelManager?.dispose();
 
     if (this.scene) {
       this.scene.traverse((object) => {
@@ -104,6 +114,8 @@ export class ShipBuilderSceneManager {
     this.clock = null;
     this.controls = null;
     this.shipGroup = null;
+    this.shipModelManager = null;
+    this.pendingShipConfig = null;
     this.camera = null;
     this.scene = null;
     this.renderer = null;
@@ -186,6 +198,11 @@ export class ShipBuilderSceneManager {
     this.shipGroup = new Group();
     this.shipGroup.name = "shipGroup";
     this.scene.add(this.shipGroup);
+    this.shipModelManager = new ShipBuilderModelManager(this.shipGroup);
+
+    if (this.pendingShipConfig) {
+      this.shipModelManager.sync(this.pendingShipConfig);
+    }
   }
 
   private getSceneSize(): SceneSize {

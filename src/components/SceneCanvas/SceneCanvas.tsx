@@ -3,7 +3,7 @@ import { useShipBuilder } from "../../hooks/useShipBuilder";
 
 const SceneCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { sceneManager } = useShipBuilder();
+  const { sceneManager, shipConfig } = useShipBuilder();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -17,6 +17,10 @@ const SceneCanvas = () => {
       sceneManager.destroy();
     };
   }, [sceneManager]);
+
+  useEffect(() => {
+    sceneManager.syncShipConfig(shipConfig);
+  }, [sceneManager, shipConfig]);
 
   return (
     <div className="scene-shell">
