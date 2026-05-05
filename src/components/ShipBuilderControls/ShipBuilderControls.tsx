@@ -1,10 +1,6 @@
-import { useMemo, useState } from "react";
-import type {
-  ShipSlot,
-  ShipSlotConfigMap,
-  ShipSlotPatch,
-} from "@/lib/models/ShipConfig";
-import { useShipBuilder } from "@/hooks/useShipBuilder";
+import { useMemo, useState } from 'react'
+import type { ShipSlot, ShipSlotConfigMap, ShipSlotPatch } from '@/lib/models/ShipConfig'
+import { useShipBuilder } from '@/hooks/useShipBuilder'
 import {
   OFFSET_AXIS_OPTIONS,
   SLOT_LABELS,
@@ -14,14 +10,14 @@ import {
   SLOT_SCALE_RANGES,
   SLOT_VARIANT_OPTIONS,
   TRANSFORM_MODE_OPTIONS,
-} from "@/components/ShipBuilderControls/constants";
+} from '@/components/ShipBuilderControls/constants'
 import {
   createVector3Tuple,
   formatVariantLabel,
   getSlotConfig,
   getUniformScale,
   updateTupleAxis,
-} from "@/components/ShipBuilderControls/utils";
+} from '@/components/ShipBuilderControls/utils'
 
 const ShipBuilderControls = () => {
   const {
@@ -42,87 +38,99 @@ const ShipBuilderControls = () => {
     resetShipConfig,
     exportShipConfigToJson,
     importShipConfigFromJson,
-  } = useShipBuilder();
+  } = useShipBuilder()
 
-  const [jsonInput, setJsonInput] = useState("");
-  const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  const [jsonInput, setJsonInput] = useState('')
+  const [importWarnings, setImportWarnings] = useState<string[]>([])
 
   const activeSlotConfig = useMemo(() => {
-    return getSlotConfig(shipConfig, selectedSlot);
-  }, [selectedSlot, shipConfig]);
+    return getSlotConfig(shipConfig, selectedSlot)
+  }, [selectedSlot, shipConfig])
 
   const handleVariantChange = <TSlot extends ShipSlot>(
     slot: TSlot,
-    variant: ShipSlotConfigMap[TSlot]["variant"],
+    variant: ShipSlotConfigMap[TSlot]['variant']
   ) => {
     updateSlot(slot, {
       variant,
-    } as ShipSlotPatch<TSlot>);
-  };
+    } as ShipSlotPatch<TSlot>)
+  }
 
   const handleColorChange = <TSlot extends ShipSlot>(slot: TSlot, color: string) => {
     updateSlot(slot, {
       color,
-    } as ShipSlotPatch<TSlot>);
-  };
+    } as ShipSlotPatch<TSlot>)
+  }
 
   const handleScaleChange = <TSlot extends ShipSlot>(
     slot: TSlot,
     scale: number,
-    options?: { commitHistory?: boolean },
+    options?: { commitHistory?: boolean }
   ) => {
-    updateSlot(slot, {
-      scale: createVector3Tuple(scale, scale, scale),
-    } as ShipSlotPatch<TSlot>, {
-      commitHistory: options?.commitHistory ?? false,
-    });
-  };
+    updateSlot(
+      slot,
+      {
+        scale: createVector3Tuple(scale, scale, scale),
+      } as ShipSlotPatch<TSlot>,
+      {
+        commitHistory: options?.commitHistory ?? false,
+      }
+    )
+  }
 
   const handleOffsetAxisChange = <TSlot extends ShipSlot>(
     slot: TSlot,
     axisIndex: 0 | 1 | 2,
     value: number,
-    options?: { commitHistory?: boolean },
+    options?: { commitHistory?: boolean }
   ) => {
-    const slotConfig = getSlotConfig(shipConfig, slot);
-    updateSlot(slot, {
-      offset: updateTupleAxis(slotConfig.offset, axisIndex, value),
-    } as ShipSlotPatch<TSlot>, {
-      commitHistory: options?.commitHistory ?? false,
-    });
-  };
+    const slotConfig = getSlotConfig(shipConfig, slot)
+    updateSlot(
+      slot,
+      {
+        offset: updateTupleAxis(slotConfig.offset, axisIndex, value),
+      } as ShipSlotPatch<TSlot>,
+      {
+        commitHistory: options?.commitHistory ?? false,
+      }
+    )
+  }
 
   const handleRotationAxisChange = <TSlot extends ShipSlot>(
     slot: TSlot,
     axisIndex: 0 | 1 | 2,
     value: number,
-    options?: { commitHistory?: boolean },
+    options?: { commitHistory?: boolean }
   ) => {
-    const slotConfig = getSlotConfig(shipConfig, slot);
-    updateSlot(slot, {
-      rotation: updateTupleAxis(slotConfig.rotation, axisIndex, value),
-    } as ShipSlotPatch<TSlot>, {
-      commitHistory: options?.commitHistory ?? false,
-    });
-  };
+    const slotConfig = getSlotConfig(shipConfig, slot)
+    updateSlot(
+      slot,
+      {
+        rotation: updateTupleAxis(slotConfig.rotation, axisIndex, value),
+      } as ShipSlotPatch<TSlot>,
+      {
+        commitHistory: options?.commitHistory ?? false,
+      }
+    )
+  }
 
   const handleExportJson = () => {
-    const exportedJson = exportShipConfigToJson();
-    setJsonInput(exportedJson);
-    setImportWarnings([]);
-  };
+    const exportedJson = exportShipConfigToJson()
+    setJsonInput(exportedJson)
+    setImportWarnings([])
+  }
 
   const handleImportJson = () => {
-    const importResult = importShipConfigFromJson(jsonInput);
+    const importResult = importShipConfigFromJson(jsonInput)
     if (!importResult.ok) {
-      setImportWarnings([]);
-      return;
+      setImportWarnings([])
+      return
     }
 
-    setImportWarnings(importResult.warnings);
-  };
+    setImportWarnings(importResult.warnings)
+  }
 
-  const uniformScale = getUniformScale(activeSlotConfig.scale);
+  const uniformScale = getUniformScale(activeSlotConfig.scale)
 
   return (
     <aside className="ship-builder-controls" aria-label="Ship Builder Controls">
@@ -164,15 +172,15 @@ const ShipBuilderControls = () => {
                 key={slot}
                 type="button"
                 className={`ship-builder-controls__slot-tab ${
-                  selectedSlot === slot ? "ship-builder-controls__slot-tab--active" : ""
+                  selectedSlot === slot ? 'ship-builder-controls__slot-tab--active' : ''
                 }`}
                 onClick={() => {
-                  setSelectedSlot(slot);
+                  setSelectedSlot(slot)
                 }}
               >
                 {SLOT_LABELS[slot]}
               </button>
-            );
+            )
           })}
         </div>
       </section>
@@ -187,16 +195,16 @@ const ShipBuilderControls = () => {
                 type="button"
                 className={`ship-builder-controls__mode-button ${
                   transformMode === modeOption.value
-                    ? "ship-builder-controls__mode-button--active"
-                    : ""
+                    ? 'ship-builder-controls__mode-button--active'
+                    : ''
                 }`}
                 onClick={() => {
-                  setTransformMode(modeOption.value);
+                  setTransformMode(modeOption.value)
                 }}
               >
                 {modeOption.label}
               </button>
-            );
+            )
           })}
         </div>
       </section>
@@ -209,7 +217,7 @@ const ShipBuilderControls = () => {
               type="button"
               className="ship-builder-controls__action-button ship-builder-controls__action-button--small"
               onClick={() => {
-                resetSlot(selectedSlot);
+                resetSlot(selectedSlot)
               }}
             >
               Reset Slot
@@ -223,8 +231,8 @@ const ShipBuilderControls = () => {
               value={activeSlotConfig.variant}
               onChange={(event) => {
                 const nextVariant = event.target
-                  .value as ShipSlotConfigMap[typeof selectedSlot]["variant"];
-                handleVariantChange(selectedSlot, nextVariant);
+                  .value as ShipSlotConfigMap[typeof selectedSlot]['variant']
+                handleVariantChange(selectedSlot, nextVariant)
               }}
             >
               {SLOT_VARIANT_OPTIONS[selectedSlot].map((variant) => {
@@ -232,7 +240,7 @@ const ShipBuilderControls = () => {
                   <option key={variant} value={variant}>
                     {formatVariantLabel(variant)}
                   </option>
-                );
+                )
               })}
             </select>
           </label>
@@ -244,7 +252,7 @@ const ShipBuilderControls = () => {
               type="color"
               value={activeSlotConfig.color}
               onChange={(event) => {
-                handleColorChange(selectedSlot, event.target.value);
+                handleColorChange(selectedSlot, event.target.value)
               }}
             />
           </label>
@@ -261,24 +269,24 @@ const ShipBuilderControls = () => {
               step={SLOT_SCALE_RANGES[selectedSlot].step}
               value={uniformScale}
               onChange={(event) => {
-                handleScaleChange(selectedSlot, Number(event.target.value));
+                handleScaleChange(selectedSlot, Number(event.target.value))
               }}
               onPointerUp={(event) => {
                 handleScaleChange(selectedSlot, Number(event.currentTarget.value), {
                   commitHistory: true,
-                });
+                })
               }}
               onBlur={(event) => {
                 handleScaleChange(selectedSlot, Number(event.currentTarget.value), {
                   commitHistory: true,
-                });
+                })
               }}
             />
           </label>
 
           {OFFSET_AXIS_OPTIONS.map((axisOption) => {
-            const axisValue = activeSlotConfig.offset[axisOption.index];
-            const axisRange = SLOT_OFFSET_RANGES[selectedSlot][axisOption.axis];
+            const axisValue = activeSlotConfig.offset[axisOption.index]
+            const axisRange = SLOT_OFFSET_RANGES[selectedSlot][axisOption.axis]
 
             return (
               <label
@@ -299,33 +307,33 @@ const ShipBuilderControls = () => {
                     handleOffsetAxisChange(
                       selectedSlot,
                       axisOption.index,
-                      Number(event.target.value),
-                    );
+                      Number(event.target.value)
+                    )
                   }}
                   onPointerUp={(event) => {
                     handleOffsetAxisChange(
                       selectedSlot,
                       axisOption.index,
                       Number(event.currentTarget.value),
-                      { commitHistory: true },
-                    );
+                      { commitHistory: true }
+                    )
                   }}
                   onBlur={(event) => {
                     handleOffsetAxisChange(
                       selectedSlot,
                       axisOption.index,
                       Number(event.currentTarget.value),
-                      { commitHistory: true },
-                    );
+                      { commitHistory: true }
+                    )
                   }}
                 />
               </label>
-            );
+            )
           })}
 
           {OFFSET_AXIS_OPTIONS.map((axisOption) => {
-            const axisValue = activeSlotConfig.rotation[axisOption.index];
-            const axisRange = SLOT_ROTATION_RANGES[selectedSlot][axisOption.axis];
+            const axisValue = activeSlotConfig.rotation[axisOption.index]
+            const axisRange = SLOT_ROTATION_RANGES[selectedSlot][axisOption.axis]
 
             return (
               <label
@@ -346,28 +354,28 @@ const ShipBuilderControls = () => {
                     handleRotationAxisChange(
                       selectedSlot,
                       axisOption.index,
-                      Number(event.target.value),
-                    );
+                      Number(event.target.value)
+                    )
                   }}
                   onPointerUp={(event) => {
                     handleRotationAxisChange(
                       selectedSlot,
                       axisOption.index,
                       Number(event.currentTarget.value),
-                      { commitHistory: true },
-                    );
+                      { commitHistory: true }
+                    )
                   }}
                   onBlur={(event) => {
                     handleRotationAxisChange(
                       selectedSlot,
                       axisOption.index,
                       Number(event.currentTarget.value),
-                      { commitHistory: true },
-                    );
+                      { commitHistory: true }
+                    )
                   }}
                 />
               </label>
-            );
+            )
           })}
         </article>
       </div>
@@ -397,7 +405,7 @@ const ShipBuilderControls = () => {
             value={jsonInput}
             placeholder='{"version":1,...}'
             onChange={(event) => {
-              setJsonInput(event.target.value);
+              setJsonInput(event.target.value)
             }}
           />
         </label>
@@ -412,26 +420,26 @@ const ShipBuilderControls = () => {
 
         {overlappingSlots.length > 0 ? (
           <p className="ship-builder-controls__io-message ship-builder-controls__io-message--warning">
-            Overlap alert: {overlappingSlots.map((slot) => SLOT_LABELS[slot]).join(", ")}
+            Overlap alert: {overlappingSlots.map((slot) => SLOT_LABELS[slot]).join(', ')}
           </p>
         ) : null}
 
         {detachedSlots.length > 0 ? (
           <p className="ship-builder-controls__io-message ship-builder-controls__io-message--warning">
-            Body contact enforced: {detachedSlots.map((slot) => SLOT_LABELS[slot]).join(", ")}
+            Body contact enforced: {detachedSlots.map((slot) => SLOT_LABELS[slot]).join(', ')}
           </p>
         ) : null}
 
         {importWarnings.length > 0 ? (
           <ul className="ship-builder-controls__warning-list">
             {importWarnings.map((warningMessage) => {
-              return <li key={warningMessage}>{warningMessage}</li>;
+              return <li key={warningMessage}>{warningMessage}</li>
             })}
           </ul>
         ) : null}
       </section>
     </aside>
-  );
-};
+  )
+}
 
-export default ShipBuilderControls;
+export default ShipBuilderControls

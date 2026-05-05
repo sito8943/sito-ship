@@ -1,32 +1,32 @@
-import { useEffect, useRef } from "react";
-import { useShipBuilder } from "@/hooks/useShipBuilder";
+import { useEffect, useRef } from 'react'
+import { useShipBuilder } from '@/hooks/useShipBuilder'
 
 const SceneCanvas = () => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const { sceneManager, shipConfig } = useShipBuilder();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const { sceneManager, shipConfig } = useShipBuilder()
 
   useEffect(() => {
-    const canvas = canvasRef.current;
+    const canvas = canvasRef.current
     if (!canvas) {
-      return;
+      return
     }
 
-    sceneManager.mount(canvas);
+    sceneManager.mount(canvas)
 
     return () => {
-      sceneManager.destroy();
-    };
-  }, [sceneManager]);
+      sceneManager.destroy()
+    }
+  }, [sceneManager])
 
   useEffect(() => {
-    sceneManager.syncShipConfig(shipConfig);
-  }, [sceneManager, shipConfig]);
+    sceneManager.syncShipConfig(shipConfig)
+  }, [sceneManager, shipConfig])
 
   return (
     <div className="scene-shell">
       <canvas ref={canvasRef} className="scene-canvas" />
     </div>
-  );
-};
+  )
+}
 
-export default SceneCanvas;
+export default SceneCanvas

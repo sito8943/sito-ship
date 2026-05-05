@@ -1,1 +1,1 @@
-export { ShipBuilderSceneManager } from "@/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager";
+export { ShipBuilderSceneManager } from '@/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager'

@@ -1,78 +1,78 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ShipConfigManager,
   type ShipConfigNormalizationResult,
-} from "@/lib/managers/ShipConfigManager";
+} from '@/lib/managers/ShipConfigManager'
 import {
   ShipConfigIOManager,
   type ImportShipConfigResult,
-} from "@/lib/managers/ShipConfigIOManager";
-import { ShipBuilderSceneManager } from "@/lib/managers/ShipBuilderSceneManager";
-import type { ShipConfig, ShipSlot, ShipSlotPatch } from "@/lib/models/ShipConfig";
-import { ShipBuilderContext } from "@/providers/ShipBuilderProvider/context";
+} from '@/lib/managers/ShipConfigIOManager'
+import { ShipBuilderSceneManager } from '@/lib/managers/ShipBuilderSceneManager'
+import type { ShipConfig, ShipSlot, ShipSlotPatch } from '@/lib/models/ShipConfig'
+import { ShipBuilderContext } from '@/providers/ShipBuilderProvider/context'
 import {
   DEFAULT_SELECTED_SLOT,
   DEFAULT_TRANSFORM_MODE,
   SHIP_BUILDER_HISTORY_LIMIT,
   SHIP_BUILDER_STORAGE_KEY,
-} from "@/providers/ShipBuilderProvider/constants";
+} from '@/providers/ShipBuilderProvider/constants'
 import type {
   ShipBuilderContextValue,
   ShipBuilderMessage,
   ShipBuilderProviderProps,
   UpdateSlot,
-} from "@/providers/ShipBuilderProvider/types";
+} from '@/providers/ShipBuilderProvider/types'
 import {
   isEditableKeyboardTarget,
   pushHistorySnapshot,
-} from "@/providers/ShipBuilderProvider/utils";
+} from '@/providers/ShipBuilderProvider/utils'
 
 type ShipBuilderState = {
-  shipConfig: ShipConfig;
-  historyEntries: ShipConfig[];
-  historyIndex: number;
-};
+  shipConfig: ShipConfig
+  historyEntries: ShipConfig[]
+  historyIndex: number
+}
 
 const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
-  const sceneManager = useMemo(() => new ShipBuilderSceneManager(), []);
-  const shipConfigManager = useMemo(() => new ShipConfigManager(), []);
-  const shipConfigIOManager = useMemo(() => new ShipConfigIOManager(), []);
+  const sceneManager = useMemo(() => new ShipBuilderSceneManager(), [])
+  const shipConfigManager = useMemo(() => new ShipConfigManager(), [])
+  const shipConfigIOManager = useMemo(() => new ShipConfigIOManager(), [])
 
   const [builderState, setBuilderState] = useState<ShipBuilderState>(() => {
-    const initialConfig = shipConfigManager.createDefaultConfig();
+    const initialConfig = shipConfigManager.createDefaultConfig()
     return {
       shipConfig: initialConfig,
       historyEntries: [initialConfig],
       historyIndex: 0,
-    };
-  });
-  const builderStateRef = useRef(builderState);
-  const [selectedSlot, setSelectedSlot] = useState<ShipSlot>(DEFAULT_SELECTED_SLOT);
-  const [transformMode, setTransformMode] = useState(DEFAULT_TRANSFORM_MODE);
-  const [overlappingSlots, setOverlappingSlots] = useState<ShipSlot[]>([]);
-  const [detachedSlots, setDetachedSlots] = useState<ShipSlot[]>([]);
-  const [message, setMessage] = useState<ShipBuilderMessage | null>(null);
-  const [hasHydratedStorage, setHasHydratedStorage] = useState(false);
-  const hasRestoredStorageRef = useRef(false);
+    }
+  })
+  const builderStateRef = useRef(builderState)
+  const [selectedSlot, setSelectedSlot] = useState<ShipSlot>(DEFAULT_SELECTED_SLOT)
+  const [transformMode, setTransformMode] = useState(DEFAULT_TRANSFORM_MODE)
+  const [overlappingSlots, setOverlappingSlots] = useState<ShipSlot[]>([])
+  const [detachedSlots, setDetachedSlots] = useState<ShipSlot[]>([])
+  const [message, setMessage] = useState<ShipBuilderMessage | null>(null)
+  const [hasHydratedStorage, setHasHydratedStorage] = useState(false)
+  const hasRestoredStorageRef = useRef(false)
 
   const setBuilderStateAndRef = useCallback((nextState: ShipBuilderState) => {
-    builderStateRef.current = nextState;
-    setBuilderState(nextState);
-  }, []);
+    builderStateRef.current = nextState
+    setBuilderState(nextState)
+  }, [])
 
   const applyNormalizationWarnings = useCallback(
     (warnings: string[]) => {
       if (warnings.length === 0) {
-        return;
+        return
       }
 
       setMessage({
-        kind: "warning",
+        kind: 'warning',
         text: warnings[0],
-      });
+      })
     },
-    [setMessage],
-  );
+    [setMessage]
+  )
 
   const applyNextConfig = useCallback(
     ({
@@ -80,16 +80,16 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       commitHistory,
       successMessage,
     }: {
-      result: ShipConfigNormalizationResult;
-      commitHistory: boolean;
-      successMessage?: string;
+      result: ShipConfigNormalizationResult
+      commitHistory: boolean
+      successMessage?: string
     }) => {
-      const currentState = builderStateRef.current;
+      const currentState = builderStateRef.current
       let nextState: ShipBuilderState = {
         shipConfig: result.config,
         historyEntries: currentState.historyEntries,
         historyIndex: currentState.historyIndex,
-      };
+      }
 
       if (commitHistory) {
         const historyResult = pushHistorySnapshot({
@@ -97,319 +97,319 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
           currentIndex: currentState.historyIndex,
           snapshot: result.config,
           maxEntries: SHIP_BUILDER_HISTORY_LIMIT,
-        });
+        })
 
         nextState = {
           shipConfig: result.config,
           historyEntries: historyResult.entries,
           historyIndex: historyResult.currentIndex,
-        };
+        }
       }
 
-      setBuilderStateAndRef(nextState);
-      applyNormalizationWarnings(result.warnings);
+      setBuilderStateAndRef(nextState)
+      applyNormalizationWarnings(result.warnings)
 
       if (successMessage && result.warnings.length === 0) {
         setMessage({
-          kind: "success",
+          kind: 'success',
           text: successMessage,
-        });
+        })
       }
     },
-    [applyNormalizationWarnings, setBuilderStateAndRef],
-  );
+    [applyNormalizationWarnings, setBuilderStateAndRef]
+  )
 
   useEffect(() => {
-    builderStateRef.current = builderState;
-  }, [builderState]);
+    builderStateRef.current = builderState
+  }, [builderState])
 
   useEffect(() => {
     return () => {
-      sceneManager.destroy();
-    };
-  }, [sceneManager]);
+      sceneManager.destroy()
+    }
+  }, [sceneManager])
 
   useEffect(() => {
     if (hasRestoredStorageRef.current) {
-      return;
+      return
     }
-    hasRestoredStorageRef.current = true;
+    hasRestoredStorageRef.current = true
 
-    if (typeof window === "undefined") {
-      setHasHydratedStorage(true);
-      return;
+    if (typeof window === 'undefined') {
+      setHasHydratedStorage(true)
+      return
     }
 
-    const persistedValue = window.localStorage.getItem(SHIP_BUILDER_STORAGE_KEY);
+    const persistedValue = window.localStorage.getItem(SHIP_BUILDER_STORAGE_KEY)
     if (!persistedValue) {
-      setHasHydratedStorage(true);
-      return;
+      setHasHydratedStorage(true)
+      return
     }
 
-    const imported = shipConfigIOManager.importFromJson(persistedValue);
+    const imported = shipConfigIOManager.importFromJson(persistedValue)
     if (!imported.ok) {
       setMessage({
-        kind: "warning",
-        text: "Saved configuration was invalid and could not be restored.",
-      });
-      setHasHydratedStorage(true);
-      return;
+        kind: 'warning',
+        text: 'Saved configuration was invalid and could not be restored.',
+      })
+      setHasHydratedStorage(true)
+      return
     }
 
-    const normalized = shipConfigManager.replaceConfig(imported.config);
+    const normalized = shipConfigManager.replaceConfig(imported.config)
     applyNextConfig({
       result: normalized,
       commitHistory: true,
-    });
+    })
 
-    const restoreWarnings = [...imported.warnings, ...normalized.warnings];
+    const restoreWarnings = [...imported.warnings, ...normalized.warnings]
     if (restoreWarnings.length > 0) {
       setMessage({
-        kind: "warning",
+        kind: 'warning',
         text: restoreWarnings[0],
-      });
-      setHasHydratedStorage(true);
-      return;
+      })
+      setHasHydratedStorage(true)
+      return
     }
 
     setMessage({
-      kind: "success",
-      text: "Previous session restored from local storage.",
-    });
-    setHasHydratedStorage(true);
-  }, [applyNextConfig, shipConfigIOManager, shipConfigManager]);
+      kind: 'success',
+      text: 'Previous session restored from local storage.',
+    })
+    setHasHydratedStorage(true)
+  }, [applyNextConfig, shipConfigIOManager, shipConfigManager])
 
   const updateSlot = useCallback<UpdateSlot>(
     (slot, patch, options) => {
       const result = shipConfigManager.updateSlot(
         builderStateRef.current.shipConfig,
         slot,
-        patch as ShipSlotPatch<typeof slot>,
-      );
+        patch as ShipSlotPatch<typeof slot>
+      )
 
       applyNextConfig({
         result,
         commitHistory: options?.commitHistory ?? true,
-      });
+      })
     },
-    [applyNextConfig, shipConfigManager],
-  );
+    [applyNextConfig, shipConfigManager]
+  )
 
   const resetSlot = useCallback(
     (slot: ShipSlot) => {
-      const result = shipConfigManager.resetSlot(builderStateRef.current.shipConfig, slot);
+      const result = shipConfigManager.resetSlot(builderStateRef.current.shipConfig, slot)
       applyNextConfig({
         result,
         commitHistory: true,
         successMessage: `Slot "${slot}" reset.`,
-      });
+      })
     },
-    [applyNextConfig, shipConfigManager],
-  );
+    [applyNextConfig, shipConfigManager]
+  )
 
   const resetShipConfig = useCallback(() => {
-    const defaultConfig = shipConfigManager.createDefaultConfig();
-    const result = shipConfigManager.replaceConfig(defaultConfig);
+    const defaultConfig = shipConfigManager.createDefaultConfig()
+    const result = shipConfigManager.replaceConfig(defaultConfig)
     applyNextConfig({
       result,
       commitHistory: true,
-      successMessage: "Ship configuration reset.",
-    });
-  }, [applyNextConfig, shipConfigManager]);
+      successMessage: 'Ship configuration reset.',
+    })
+  }, [applyNextConfig, shipConfigManager])
 
   const replaceShipConfig = useCallback(
     (config: ShipConfig) => {
-      const result = shipConfigManager.replaceConfig(config);
+      const result = shipConfigManager.replaceConfig(config)
       applyNextConfig({
         result,
         commitHistory: true,
-      });
+      })
     },
-    [applyNextConfig, shipConfigManager],
-  );
+    [applyNextConfig, shipConfigManager]
+  )
 
   const undo = useCallback(() => {
-    const currentState = builderStateRef.current;
+    const currentState = builderStateRef.current
     if (currentState.historyIndex <= 0) {
-      return;
+      return
     }
 
-    const nextHistoryIndex = currentState.historyIndex - 1;
-    const snapshot = currentState.historyEntries[nextHistoryIndex];
-    const normalized = shipConfigManager.replaceConfig(snapshot);
+    const nextHistoryIndex = currentState.historyIndex - 1
+    const snapshot = currentState.historyEntries[nextHistoryIndex]
+    const normalized = shipConfigManager.replaceConfig(snapshot)
     const nextState: ShipBuilderState = {
       shipConfig: normalized.config,
       historyEntries: currentState.historyEntries,
       historyIndex: nextHistoryIndex,
-    };
+    }
 
-    setBuilderStateAndRef(nextState);
-    applyNormalizationWarnings(normalized.warnings);
+    setBuilderStateAndRef(nextState)
+    applyNormalizationWarnings(normalized.warnings)
     if (normalized.warnings.length === 0) {
       setMessage({
-        kind: "info",
-        text: "Undo applied.",
-      });
+        kind: 'info',
+        text: 'Undo applied.',
+      })
     }
-  }, [applyNormalizationWarnings, setBuilderStateAndRef, shipConfigManager]);
+  }, [applyNormalizationWarnings, setBuilderStateAndRef, shipConfigManager])
 
   const redo = useCallback(() => {
-    const currentState = builderStateRef.current;
+    const currentState = builderStateRef.current
     if (currentState.historyIndex >= currentState.historyEntries.length - 1) {
-      return;
+      return
     }
 
-    const nextHistoryIndex = currentState.historyIndex + 1;
-    const snapshot = currentState.historyEntries[nextHistoryIndex];
-    const normalized = shipConfigManager.replaceConfig(snapshot);
+    const nextHistoryIndex = currentState.historyIndex + 1
+    const snapshot = currentState.historyEntries[nextHistoryIndex]
+    const normalized = shipConfigManager.replaceConfig(snapshot)
     const nextState: ShipBuilderState = {
       shipConfig: normalized.config,
       historyEntries: currentState.historyEntries,
       historyIndex: nextHistoryIndex,
-    };
+    }
 
-    setBuilderStateAndRef(nextState);
-    applyNormalizationWarnings(normalized.warnings);
+    setBuilderStateAndRef(nextState)
+    applyNormalizationWarnings(normalized.warnings)
     if (normalized.warnings.length === 0) {
       setMessage({
-        kind: "info",
-        text: "Redo applied.",
-      });
+        kind: 'info',
+        text: 'Redo applied.',
+      })
     }
-  }, [applyNormalizationWarnings, setBuilderStateAndRef, shipConfigManager]);
+  }, [applyNormalizationWarnings, setBuilderStateAndRef, shipConfigManager])
 
   const exportShipConfigToJson = useCallback(() => {
-    return shipConfigIOManager.exportToJson(builderStateRef.current.shipConfig);
-  }, [shipConfigIOManager]);
+    return shipConfigIOManager.exportToJson(builderStateRef.current.shipConfig)
+  }, [shipConfigIOManager])
 
   const importShipConfigFromJson = useCallback(
     (rawInput: string): ImportShipConfigResult => {
-      const importResult = shipConfigIOManager.importFromJson(rawInput);
+      const importResult = shipConfigIOManager.importFromJson(rawInput)
       if (!importResult.ok) {
         setMessage({
-          kind: "error",
+          kind: 'error',
           text: importResult.error,
-        });
-        return importResult;
+        })
+        return importResult
       }
 
-      const normalized = shipConfigManager.replaceConfig(importResult.config);
-      const warnings = [...importResult.warnings, ...normalized.warnings];
+      const normalized = shipConfigManager.replaceConfig(importResult.config)
+      const warnings = [...importResult.warnings, ...normalized.warnings]
       applyNextConfig({
         result: normalized,
         commitHistory: true,
-        successMessage: "Configuration imported.",
-      });
+        successMessage: 'Configuration imported.',
+      })
 
       if (warnings.length > 0) {
         setMessage({
-          kind: "warning",
+          kind: 'warning',
           text: warnings[0],
-        });
+        })
       }
 
       return {
         ok: true,
         config: normalized.config,
         warnings,
-      };
+      }
     },
-    [applyNextConfig, shipConfigIOManager, shipConfigManager],
-  );
+    [applyNextConfig, shipConfigIOManager, shipConfigManager]
+  )
 
   useEffect(() => {
-    if (typeof window === "undefined" || !hasHydratedStorage) {
-      return;
+    if (typeof window === 'undefined' || !hasHydratedStorage) {
+      return
     }
 
-    const serialized = shipConfigIOManager.exportToJson(builderState.shipConfig);
-    window.localStorage.setItem(SHIP_BUILDER_STORAGE_KEY, serialized);
-  }, [builderState.shipConfig, hasHydratedStorage, shipConfigIOManager]);
+    const serialized = shipConfigIOManager.exportToJson(builderState.shipConfig)
+    window.localStorage.setItem(SHIP_BUILDER_STORAGE_KEY, serialized)
+  }, [builderState.shipConfig, hasHydratedStorage, shipConfigIOManager])
 
   useEffect(() => {
     sceneManager.setSlotSelectionHandler((slot) => {
       if (!slot) {
-        return;
+        return
       }
 
-      setSelectedSlot(slot);
-    });
+      setSelectedSlot(slot)
+    })
 
     sceneManager.setSlotTransformHandler((slot, patch, options) => {
       updateSlot(slot, patch as ShipSlotPatch<typeof slot>, {
         commitHistory: options.commitHistory,
-      });
-    });
+      })
+    })
 
     sceneManager.setSlotValidationHandler((slots) => {
-      setOverlappingSlots(slots);
+      setOverlappingSlots(slots)
 
       if (slots.length === 0) {
-        return;
+        return
       }
 
       setMessage({
-        kind: "warning",
-        text: `Severe overlap detected for slots: ${slots.join(", ")}.`,
-      });
-    });
+        kind: 'warning',
+        text: `Severe overlap detected for slots: ${slots.join(', ')}.`,
+      })
+    })
 
     sceneManager.setSlotBodyContactHandler((slots) => {
-      setDetachedSlots(slots);
+      setDetachedSlots(slots)
       if (slots.length === 0) {
-        return;
+        return
       }
 
       setMessage({
-        kind: "warning",
-        text: `Body contact enforced for slots: ${slots.join(", ")}.`,
-      });
-    });
+        kind: 'warning',
+        text: `Body contact enforced for slots: ${slots.join(', ')}.`,
+      })
+    })
 
     return () => {
-      sceneManager.setSlotSelectionHandler(null);
-      sceneManager.setSlotTransformHandler(null);
-      sceneManager.setSlotValidationHandler(null);
-      sceneManager.setSlotBodyContactHandler(null);
-    };
-  }, [sceneManager, updateSlot]);
+      sceneManager.setSlotSelectionHandler(null)
+      sceneManager.setSlotTransformHandler(null)
+      sceneManager.setSlotValidationHandler(null)
+      sceneManager.setSlotBodyContactHandler(null)
+    }
+  }, [sceneManager, updateSlot])
 
   useEffect(() => {
-    sceneManager.setSelectedSlot(selectedSlot);
-  }, [sceneManager, selectedSlot]);
+    sceneManager.setSelectedSlot(selectedSlot)
+  }, [sceneManager, selectedSlot])
 
   useEffect(() => {
-    sceneManager.setTransformMode(transformMode);
-  }, [sceneManager, transformMode]);
+    sceneManager.setTransformMode(transformMode)
+  }, [sceneManager, transformMode])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (isEditableKeyboardTarget(event.target)) {
-        return;
+        return
       }
 
-      const isCommandPressed = event.metaKey || event.ctrlKey;
-      if (!isCommandPressed || event.key.toLowerCase() !== "z") {
-        return;
+      const isCommandPressed = event.metaKey || event.ctrlKey
+      if (!isCommandPressed || event.key.toLowerCase() !== 'z') {
+        return
       }
 
-      event.preventDefault();
+      event.preventDefault()
       if (event.shiftKey) {
-        redo();
-        return;
+        redo()
+        return
       }
 
-      undo();
-    };
+      undo()
+    }
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown)
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [redo, undo]);
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [redo, undo])
 
-  const canUndo = builderState.historyIndex > 0;
-  const canRedo = builderState.historyIndex < builderState.historyEntries.length - 1;
+  const canUndo = builderState.historyIndex > 0
+  const canRedo = builderState.historyIndex < builderState.historyEntries.length - 1
 
   const value = useMemo<ShipBuilderContextValue>(() => {
     return {
@@ -432,7 +432,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       replaceShipConfig,
       exportShipConfigToJson,
       importShipConfigFromJson,
-    };
+    }
   }, [
     sceneManager,
     builderState.shipConfig,
@@ -451,13 +451,9 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     replaceShipConfig,
     exportShipConfigToJson,
     importShipConfigFromJson,
-  ]);
+  ])
 
-  return (
-    <ShipBuilderContext.Provider value={value}>
-      {children}
-    </ShipBuilderContext.Provider>
-  );
-};
+  return <ShipBuilderContext.Provider value={value}>{children}</ShipBuilderContext.Provider>
+}
 
-export default ShipBuilderProvider;
+export default ShipBuilderProvider

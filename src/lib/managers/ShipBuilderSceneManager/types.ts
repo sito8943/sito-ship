@@ -1,28 +1,28 @@
-import type { ShipSlot, Vector3Tuple } from "@/lib/models/ShipConfig";
+import type { ShipSlot, Vector3Tuple } from '@/lib/models/ShipConfig'
 
 export type SceneSize = {
-  width: number;
-  height: number;
-};
+  width: number
+  height: number
+}
 
-export type TransformMode = "translate" | "rotate" | "scale";
+export type TransformMode = 'translate' | 'rotate' | 'scale'
 
 export type SceneSlotTransformPatch = {
-  offset?: Vector3Tuple;
-  rotation?: Vector3Tuple;
-  scale?: Vector3Tuple;
-};
+  offset?: Vector3Tuple
+  rotation?: Vector3Tuple
+  scale?: Vector3Tuple
+}
 
-export type SceneSlotSelectionHandler = (slot: ShipSlot | null) => void;
+export type SceneSlotSelectionHandler = (slot: ShipSlot | null) => void
 
 export type SceneSlotTransformHandler = (
   slot: ShipSlot,
   patch: SceneSlotTransformPatch,
   options: {
-    commitHistory: boolean;
-  },
-) => void;
+    commitHistory: boolean
+  }
+) => void
 
-export type SceneValidationHandler = (slots: ShipSlot[]) => void;
+export type SceneValidationHandler = (slots: ShipSlot[]) => void
 
-export type SceneBodyContactHandler = (slots: ShipSlot[]) => void;
+export type SceneBodyContactHandler = (slots: ShipSlot[]) => void

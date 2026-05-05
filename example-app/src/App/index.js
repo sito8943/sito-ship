@@ -17,54 +17,54 @@ import {
   Vector3,
   WebGLRenderer,
   PCFShadowMap,
-} from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
-import Stats from "stats.js";
-import resources from "./Resources";
-import PostProcessing from "./PostProcessing";
+} from 'three'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
+import Stats from 'stats.js'
+import resources from './Resources'
+import PostProcessing from './PostProcessing'
 
-const MAX_DPR = 2;
+const MAX_DPR = 2
 
 export default class App {
-  #renderer;
-  #camera;
-  #scene;
-  #stats;
-  #mesh;
-  #ambientLight;
-  #directionalLights;
-  #clock;
-  #controls;
-  #gui;
-  #lightHelpers;
-  #shadowHelpers;
-  #composer;
-  #guiState;
-  #rafId;
-  #isDestroyed;
-  #isSceneRotationEnabled;
-  #areLightsEnabled;
-  #lightSnapshot;
-  #rotateSceneButton;
-  #screenTexture;
-  #screenMaterialStates;
+  #renderer
+  #camera
+  #scene
+  #stats
+  #mesh
+  #ambientLight
+  #directionalLights
+  #clock
+  #controls
+  #gui
+  #lightHelpers
+  #shadowHelpers
+  #composer
+  #guiState
+  #rafId
+  #isDestroyed
+  #isSceneRotationEnabled
+  #areLightsEnabled
+  #lightSnapshot
+  #rotateSceneButton
+  #screenTexture
+  #screenMaterialStates
 
   constructor() {
-    this.#rafId = 0;
-    this.#isDestroyed = false;
-    this.#isSceneRotationEnabled = false;
-    this.#areLightsEnabled = true;
-    this.#lightSnapshot = null;
-    this.#rotateSceneButton = null;
-    this.#ambientLight = null;
-    this.#directionalLights = [];
-    this.#gui = null;
-    this.#lightHelpers = [];
-    this.#shadowHelpers = [];
-    this.#composer = null;
-    this.#screenTexture = null;
-    this.#screenMaterialStates = [];
+    this.#rafId = 0
+    this.#isDestroyed = false
+    this.#isSceneRotationEnabled = false
+    this.#areLightsEnabled = true
+    this.#lightSnapshot = null
+    this.#rotateSceneButton = null
+    this.#ambientLight = null
+    this.#directionalLights = []
+    this.#gui = null
+    this.#lightHelpers = []
+    this.#shadowHelpers = []
+    this.#composer = null
+    this.#screenTexture = null
+    this.#screenMaterialStates = []
     this.#guiState = {
       rotateScene: false,
       lightsEnabled: true,
@@ -78,115 +78,115 @@ export default class App {
       bloomRadius: 0.26,
       bloomThreshold: 1,
       toneMappingExposure: 0.82,
-    };
+    }
 
     this.#init().catch((error) => {
       // Keep errors visible during bootstrap without crashing silently.
-      console.error(error);
-    });
+      console.error(error)
+    })
   }
 
   async #init() {
-    this.#stats = new Stats();
-    this.#stats.showPanel(1); // 0: fps, 1: ms, 2: mb, 3+: custom
+    this.#stats = new Stats()
+    this.#stats.showPanel(1) // 0: fps, 1: ms, 2: mb, 3+: custom
 
-    document.body.appendChild(this.#stats.dom);
+    document.body.appendChild(this.#stats.dom)
 
-    const canvas = document.querySelector("#canvas");
+    const canvas = document.querySelector('#canvas')
     if (!canvas) {
-      throw new Error("Canvas element #canvas was not found");
+      throw new Error('Canvas element #canvas was not found')
     }
 
     this.#renderer = new WebGLRenderer({
       canvas,
       antialias: false,
-    });
+    })
 
-    this.#renderer.shadowMap.enabled = true;
-    this.#renderer.shadowMap.type = PCFShadowMap;
-    this.#renderer.toneMapping = ACESFilmicToneMapping;
-    this.#renderer.toneMappingExposure = this.#guiState.toneMappingExposure;
+    this.#renderer.shadowMap.enabled = true
+    this.#renderer.shadowMap.type = PCFShadowMap
+    this.#renderer.toneMapping = ACESFilmicToneMapping
+    this.#renderer.toneMappingExposure = this.#guiState.toneMappingExposure
 
-    this.#renderer.setPixelRatio(this.#getPixelRatio());
-    this.#renderer.setSize(window.innerWidth, window.innerHeight);
+    this.#renderer.setPixelRatio(this.#getPixelRatio())
+    this.#renderer.setSize(window.innerWidth, window.innerHeight)
 
-    this.#clock = new Clock();
+    this.#clock = new Clock()
 
-    const aspect = window.innerWidth / window.innerHeight;
+    const aspect = window.innerWidth / window.innerHeight
 
-    this.#camera = new PerspectiveCamera(60, aspect, 0.1, 100);
-    this.#camera.position.z = 20;
-    this.#camera.position.y = 15;
-    this.#camera.position.x = 30;
+    this.#camera = new PerspectiveCamera(60, aspect, 0.1, 100)
+    this.#camera.position.z = 20
+    this.#camera.position.y = 15
+    this.#camera.position.x = 30
 
-    this.#controls = new OrbitControls(this.#camera, this.#renderer.domElement);
-    this.#controls.enableDamping = false;
+    this.#controls = new OrbitControls(this.#camera, this.#renderer.domElement)
+    this.#controls.enableDamping = false
 
-    this.#scene = new Scene();
+    this.#scene = new Scene()
 
-    await this.#load();
-    this.#initPostProcessing();
-    this.#initUI();
-    this.#initGUI();
+    await this.#load()
+    this.#initPostProcessing()
+    this.#initUI()
+    this.#initGUI()
 
-    this.#animate();
-    this.#initEvents();
-    this.#setPresentationActive(true);
+    this.#animate()
+    this.#initEvents()
+    this.#setPresentationActive(true)
   }
 
   async #load() {
-    await resources.load();
+    await resources.load()
 
     // ENVIRONMENT
-    this.#applyEnvironment();
+    this.#applyEnvironment()
 
     // MESHES
-    this.#initMesh();
+    this.#initMesh()
 
     // LIGHTS
-    this.#initLights();
+    this.#initLights()
   }
 
   #applyEnvironment() {
-    const envMap = resources.get("envmap");
+    const envMap = resources.get('envmap')
     if (!envMap) {
-      throw new Error("HDR environment map was not loaded");
+      throw new Error('HDR environment map was not loaded')
     }
 
-    this.#scene.environment = envMap;
+    this.#scene.environment = envMap
     // Decrease environment intensity to make shadows more visible
-    this.#scene.environmentIntensity = 0.45;
+    this.#scene.environmentIntensity = 0.45
   }
 
   #initLights() {
-    const al = new AmbientLight("white", 0.2);
-    this.#ambientLight = al;
-    this.#scene.add(al);
+    const al = new AmbientLight('white', 0.2)
+    this.#ambientLight = al
+    this.#scene.add(al)
 
     const key = this.#createDirectionalLight({
-      color: "#ffe7c2",
+      color: '#ffe7c2',
       intensity: 2.1,
       position: [24, 33, 18],
       shadowSize: 2048,
       shadowBias: -0.00015,
-    });
+    })
     const fill = this.#createDirectionalLight({
-      color: "#c9dcff",
+      color: '#c9dcff',
       intensity: 0.95,
       position: [-26, 33, 10],
       shadowSize: 1024,
       shadowBias: -0.0001,
-    });
+    })
     const rim = this.#createDirectionalLight({
-      color: "#ffffff",
+      color: '#ffffff',
       intensity: 0.8,
       position: [0, 33, -28],
       shadowSize: 1024,
       shadowBias: -0.0001,
-    });
+    })
 
-    this.#directionalLights = [key, fill, rim];
-    this.#saveCurrentLightState();
+    this.#directionalLights = [key, fill, rim]
+    this.#saveCurrentLightState()
   }
 
   #createDirectionalLight({
@@ -197,66 +197,66 @@ export default class App {
     shadowBias = -0.0001,
     target = [0, 0, 0],
   }) {
-    const light = new DirectionalLight(color, intensity);
-    light.position.set(...position);
-    light.castShadow = true;
-    light.shadow.mapSize.set(shadowSize, shadowSize);
-    light.shadow.camera.near = 0.5;
-    light.shadow.camera.far = 120;
-    light.shadow.camera.left = -35;
-    light.shadow.camera.right = 35;
-    light.shadow.camera.top = 35;
-    light.shadow.camera.bottom = -35;
-    light.shadow.bias = shadowBias;
+    const light = new DirectionalLight(color, intensity)
+    light.position.set(...position)
+    light.castShadow = true
+    light.shadow.mapSize.set(shadowSize, shadowSize)
+    light.shadow.camera.near = 0.5
+    light.shadow.camera.far = 120
+    light.shadow.camera.left = -35
+    light.shadow.camera.right = 35
+    light.shadow.camera.top = 35
+    light.shadow.camera.bottom = -35
+    light.shadow.bias = shadowBias
 
-    this.#scene.add(light);
-    this.#scene.add(light.target);
-    light.target.position.set(...target);
+    this.#scene.add(light)
+    this.#scene.add(light.target)
+    light.target.position.set(...target)
 
-    return light;
+    return light
   }
 
   #setLightHelpersVisible(visible) {
     if (visible) {
       if (this.#lightHelpers.length === 0) {
         this.#directionalLights.forEach((light) => {
-          const helper = new DirectionalLightHelper(light, 5);
-          this.#scene.add(helper);
-          this.#lightHelpers.push(helper);
-        });
+          const helper = new DirectionalLightHelper(light, 5)
+          this.#scene.add(helper)
+          this.#lightHelpers.push(helper)
+        })
       }
-      return;
+      return
     }
 
     this.#lightHelpers.forEach((helper) => {
-      helper.dispose();
-      this.#scene.remove(helper);
-    });
-    this.#lightHelpers = [];
+      helper.dispose()
+      this.#scene.remove(helper)
+    })
+    this.#lightHelpers = []
   }
 
   #setShadowHelpersVisible(visible) {
     if (visible) {
       if (this.#shadowHelpers.length === 0) {
         this.#directionalLights.forEach((light) => {
-          const helper = new CameraHelper(light.shadow.camera);
-          this.#scene.add(helper);
-          this.#shadowHelpers.push(helper);
-        });
+          const helper = new CameraHelper(light.shadow.camera)
+          this.#scene.add(helper)
+          this.#shadowHelpers.push(helper)
+        })
       }
-      return;
+      return
     }
 
     this.#shadowHelpers.forEach((helper) => {
-      helper.dispose();
-      this.#scene.remove(helper);
-    });
-    this.#shadowHelpers = [];
+      helper.dispose()
+      this.#scene.remove(helper)
+    })
+    this.#shadowHelpers = []
   }
 
   #updateHelpers() {
-    this.#lightHelpers.forEach((helper) => helper.update());
-    this.#shadowHelpers.forEach((helper) => helper.update());
+    this.#lightHelpers.forEach((helper) => helper.update())
+    this.#shadowHelpers.forEach((helper) => helper.update())
   }
 
   #saveCurrentLightState() {
@@ -266,251 +266,235 @@ export default class App {
         castShadow: light.castShadow,
       })),
       ambient: this.#ambientLight?.intensity ?? 0,
-    };
+    }
   }
 
   #setLightsEnabled(enabled) {
     if (this.#directionalLights.length === 0) {
-      return;
+      return
     }
 
     if (enabled === this.#areLightsEnabled) {
-      return;
+      return
     }
 
     if (!enabled) {
-      this.#saveCurrentLightState();
+      this.#saveCurrentLightState()
       this.#directionalLights.forEach((light) => {
-        light.intensity = 0;
-        light.castShadow = false;
-      });
+        light.intensity = 0
+        light.castShadow = false
+      })
       if (this.#ambientLight) {
-        this.#ambientLight.intensity = Math.min(
-          this.#ambientLight.intensity,
-          0.06,
-        );
+        this.#ambientLight.intensity = Math.min(this.#ambientLight.intensity, 0.06)
       }
-      this.#renderer.shadowMap.needsUpdate = true;
-      this.#areLightsEnabled = false;
-      this.#guiState.lightsEnabled = false;
-      this.#syncRotateButton();
-      return;
+      this.#renderer.shadowMap.needsUpdate = true
+      this.#areLightsEnabled = false
+      this.#guiState.lightsEnabled = false
+      this.#syncRotateButton()
+      return
     }
 
-    const directionalSnapshot = this.#lightSnapshot?.directional ?? [];
+    const directionalSnapshot = this.#lightSnapshot?.directional ?? []
 
     this.#directionalLights.forEach((light, index) => {
-      const state = directionalSnapshot[index];
+      const state = directionalSnapshot[index]
 
-      light.intensity =
-        typeof state?.intensity === "number"
-          ? state.intensity
-          : light.intensity;
+      light.intensity = typeof state?.intensity === 'number' ? state.intensity : light.intensity
       light.castShadow =
-        typeof state?.castShadow === "boolean"
-          ? state.castShadow
-          : light.castShadow;
-    });
-    if (
-      this.#ambientLight &&
-      typeof this.#lightSnapshot?.ambient === "number"
-    ) {
-      this.#ambientLight.intensity = this.#lightSnapshot.ambient;
+        typeof state?.castShadow === 'boolean' ? state.castShadow : light.castShadow
+    })
+    if (this.#ambientLight && typeof this.#lightSnapshot?.ambient === 'number') {
+      this.#ambientLight.intensity = this.#lightSnapshot.ambient
     }
-    this.#renderer.shadowMap.needsUpdate = true;
-    this.#areLightsEnabled = true;
-    this.#guiState.lightsEnabled = true;
-    this.#syncRotateButton();
+    this.#renderer.shadowMap.needsUpdate = true
+    this.#areLightsEnabled = true
+    this.#guiState.lightsEnabled = true
+    this.#syncRotateButton()
   }
 
   #setSceneRotationEnabled(enabled) {
-    this.#isSceneRotationEnabled = enabled;
-    this.#syncRotateButton();
+    this.#isSceneRotationEnabled = enabled
+    this.#syncRotateButton()
   }
 
   #setPresentationActive(active) {
-    this.#setSceneRotationEnabled(active);
-    this.#setLightsEnabled(active);
-    this.#setScreenPowered(active);
+    this.#setSceneRotationEnabled(active)
+    this.#setLightsEnabled(active)
+    this.#setScreenPowered(active)
   }
 
   #initMesh() {
-    const model = this.#initTVModel();
+    const model = this.#initTVModel()
 
-    const geo = new PlaneGeometry(35, 35);
+    const geo = new PlaneGeometry(35, 35)
     const material = new MeshStandardMaterial({
       side: DoubleSide,
-    });
-    const floor = new Mesh(geo, material);
-    floor.rotateX(-Math.PI / 2);
-    const modelBounds = new Box3().setFromObject(model);
-    floor.position.y = modelBounds.min.y - 0.05;
-    floor.receiveShadow = true;
+    })
+    const floor = new Mesh(geo, material)
+    floor.rotateX(-Math.PI / 2)
+    const modelBounds = new Box3().setFromObject(model)
+    floor.position.y = modelBounds.min.y - 0.05
+    floor.receiveShadow = true
 
-    this.#scene.add(floor);
+    this.#scene.add(floor)
   }
 
   #initTVModel() {
-    const tvAsset = resources.get("tv");
+    const tvAsset = resources.get('tv')
     if (!tvAsset?.scene) {
-      throw new Error("TV model was not loaded");
+      throw new Error('TV model was not loaded')
     }
 
-    const model = tvAsset.scene;
-    const screenAsset = resources.get("screen");
+    const model = tvAsset.scene
+    const screenAsset = resources.get('screen')
 
     if (screenAsset?.scene) {
-      model.add(screenAsset.scene);
-      this.#initScreenImage(screenAsset.scene);
+      model.add(screenAsset.scene)
+      this.#initScreenImage(screenAsset.scene)
     }
 
     model.traverse((node) => {
       if (!node.isMesh) {
-        return;
+        return
       }
-      node.castShadow = true;
-      node.receiveShadow = true;
-    });
+      node.castShadow = true
+      node.receiveShadow = true
+    })
 
-    const box = new Box3().setFromObject(model);
-    const center = new Vector3();
-    box.getCenter(center);
+    const box = new Box3().setFromObject(model)
+    const center = new Vector3()
+    box.getCenter(center)
 
-    model.position.sub(center);
+    model.position.sub(center)
 
-    const size = new Vector3();
-    box.getSize(size);
-    const largestDimension = Math.max(size.x, size.y, size.z) || 1;
-    const targetSize = 16;
-    const scaleFactor = targetSize / largestDimension;
-    model.scale.setScalar(scaleFactor);
+    const size = new Vector3()
+    box.getSize(size)
+    const largestDimension = Math.max(size.x, size.y, size.z) || 1
+    const targetSize = 16
+    const scaleFactor = targetSize / largestDimension
+    model.scale.setScalar(scaleFactor)
 
-    const recenteredBox = new Box3().setFromObject(model);
-    const bottomY = recenteredBox.min.y;
-    model.position.y -= bottomY;
+    const recenteredBox = new Box3().setFromObject(model)
+    const bottomY = recenteredBox.min.y
+    model.position.y -= bottomY
 
-    this.#mesh = model;
-    this.#scene.add(model);
+    this.#mesh = model
+    this.#scene.add(model)
 
-    return model;
+    return model
   }
 
   #initScreenImage(screenScene) {
-    const texture = resources.get("windows");
+    const texture = resources.get('windows')
     if (!texture) {
-      return;
+      return
     }
 
-    texture.colorSpace = SRGBColorSpace;
-    texture.flipY = true;
-    texture.wrapS = RepeatWrapping;
-    texture.repeat.set(-1, 1);
-    texture.offset.x = 1;
-    texture.needsUpdate = true;
-    this.#screenTexture = texture;
-    this.#screenMaterialStates = [];
+    texture.colorSpace = SRGBColorSpace
+    texture.flipY = true
+    texture.wrapS = RepeatWrapping
+    texture.repeat.set(-1, 1)
+    texture.offset.x = 1
+    texture.needsUpdate = true
+    this.#screenTexture = texture
+    this.#screenMaterialStates = []
 
     screenScene.traverse((node) => {
       if (!node.isMesh) {
-        return;
+        return
       }
       if (Array.isArray(node.material)) {
         node.material.forEach((material) => {
-          this.#rememberScreenMaterialState(material);
-        });
-        return;
+          this.#rememberScreenMaterialState(material)
+        })
+        return
       }
 
-      this.#rememberScreenMaterialState(node.material);
-    });
+      this.#rememberScreenMaterialState(node.material)
+    })
 
-    this.#setScreenPowered(this.#guiState.screenEnabled);
+    this.#setScreenPowered(this.#guiState.screenEnabled)
   }
 
   #rememberScreenMaterialState(material) {
     if (!material) {
-      return;
+      return
     }
 
-    const isTracked = this.#screenMaterialStates.some(
-      (entry) => entry.material === material,
-    );
+    const isTracked = this.#screenMaterialStates.some((entry) => entry.material === material)
     if (isTracked) {
-      return;
+      return
     }
 
     this.#screenMaterialStates.push({
       material,
-      baseColor:
-        "color" in material && material.color?.isColor
-          ? material.color.clone()
-          : null,
-    });
+      baseColor: 'color' in material && material.color?.isColor ? material.color.clone() : null,
+    })
   }
 
   #setScreenPowered(enabled) {
-    this.#guiState.screenEnabled = enabled;
-    this.#syncRotateButton();
+    this.#guiState.screenEnabled = enabled
+    this.#syncRotateButton()
 
     if (!this.#screenTexture || this.#screenMaterialStates.length === 0) {
-      return;
+      return
     }
 
     this.#screenMaterialStates.forEach((entry) => {
-      const { material, baseColor } = entry;
+      const { material, baseColor } = entry
 
       if (enabled) {
-        if (baseColor && "color" in material) {
-          material.color.copy(baseColor);
+        if (baseColor && 'color' in material) {
+          material.color.copy(baseColor)
         }
-        this.#setScreenTextureOnMaterial(material, this.#screenTexture);
-        return;
+        this.#setScreenTextureOnMaterial(material, this.#screenTexture)
+        return
       }
 
-      if ("map" in material) {
-        material.map = null;
+      if ('map' in material) {
+        material.map = null
       }
-      if ("emissiveMap" in material) {
-        material.emissiveMap = null;
+      if ('emissiveMap' in material) {
+        material.emissiveMap = null
       }
-      if ("emissive" in material) {
-        material.emissive.set(0x000000);
+      if ('emissive' in material) {
+        material.emissive.set(0x000000)
       }
-      if ("emissiveIntensity" in material) {
-        material.emissiveIntensity = 0;
+      if ('emissiveIntensity' in material) {
+        material.emissiveIntensity = 0
       }
-      if ("color" in material) {
-        material.color.set(0x050505);
+      if ('color' in material) {
+        material.color.set(0x050505)
       }
 
-      material.needsUpdate = true;
-    });
+      material.needsUpdate = true
+    })
   }
 
   #setScreenTextureOnMaterial(material, texture) {
     if (!material) {
-      return;
+      return
     }
 
-    if ("map" in material) {
-      material.map = texture;
+    if ('map' in material) {
+      material.map = texture
     }
-    if ("emissiveMap" in material) {
-      material.emissiveMap = texture;
+    if ('emissiveMap' in material) {
+      material.emissiveMap = texture
     }
-    if ("emissive" in material) {
-      material.emissive.set(0xffffff);
+    if ('emissive' in material) {
+      material.emissive.set(0xffffff)
     }
-    if ("emissiveIntensity" in material) {
-      material.emissiveIntensity = Math.max(material.emissiveIntensity ?? 1, 1);
+    if ('emissiveIntensity' in material) {
+      material.emissiveIntensity = Math.max(material.emissiveIntensity ?? 1, 1)
     }
 
-    material.needsUpdate = true;
+    material.needsUpdate = true
   }
 
   #initPostProcessing() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const width = window.innerWidth
+    const height = window.innerHeight
 
     this.#composer = new PostProcessing({
       renderer: this.#renderer,
@@ -521,280 +505,264 @@ export default class App {
       bloomStrength: this.#guiState.bloomStrength,
       bloomRadius: this.#guiState.bloomRadius,
       bloomThreshold: this.#guiState.bloomThreshold,
-    });
-    this.#composer.resize(width, height);
+    })
+    this.#composer.resize(width, height)
   }
 
   #getPixelRatio() {
-    return Math.min(window.devicePixelRatio || 1, MAX_DPR);
+    return Math.min(window.devicePixelRatio || 1, MAX_DPR)
   }
 
   #resize = () => {
     if (this.#isDestroyed) {
-      return;
+      return
     }
 
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const dpr = this.#getPixelRatio();
+    const w = window.innerWidth
+    const h = window.innerHeight
+    const dpr = this.#getPixelRatio()
 
-    this.#renderer.setPixelRatio(dpr);
-    this.#renderer.setSize(w, h);
-    this.#composer.resize(w, h);
-    const aspect = w / h;
+    this.#renderer.setPixelRatio(dpr)
+    this.#renderer.setSize(w, h)
+    this.#composer.resize(w, h)
+    const aspect = w / h
 
-    this.#camera.aspect = aspect;
-    this.#camera.updateProjectionMatrix();
-  };
+    this.#camera.aspect = aspect
+    this.#camera.updateProjectionMatrix()
+  }
 
   #initEvents() {
-    window.addEventListener("resize", this.#resize);
+    window.addEventListener('resize', this.#resize)
   }
 
   #removeEvents() {
-    window.removeEventListener("resize", this.#resize);
+    window.removeEventListener('resize', this.#resize)
   }
 
   #initGUI() {
     this.#gui = new GUI({
-      title: "Scene Controls",
+      title: 'Scene Controls',
       width: 320,
-    });
+    })
 
-    const sceneFolder = this.#gui.addFolder("Scene");
+    const sceneFolder = this.#gui.addFolder('Scene')
     sceneFolder
-      .add(this.#guiState, "rotateScene")
-      .name("Rotate scene")
+      .add(this.#guiState, 'rotateScene')
+      .name('Rotate scene')
       .listen()
       .onChange((value) => {
-        this.#setSceneRotationEnabled(value);
-      });
+        this.#setSceneRotationEnabled(value)
+      })
     sceneFolder
-      .add(this.#guiState, "lightsEnabled")
-      .name("Lights enabled")
+      .add(this.#guiState, 'lightsEnabled')
+      .name('Lights enabled')
       .listen()
       .onChange((value) => {
-        this.#setLightsEnabled(value);
-      });
+        this.#setLightsEnabled(value)
+      })
     sceneFolder
-      .add(this.#guiState, "screenEnabled")
-      .name("TV screen enabled")
+      .add(this.#guiState, 'screenEnabled')
+      .name('TV screen enabled')
       .listen()
       .onChange((value) => {
-        this.#setScreenPowered(value);
-      });
-    sceneFolder
-      .add(this.#guiState, "rotateSpeed", 0.1, 2, 0.05)
-      .name("Rotate speed");
+        this.#setScreenPowered(value)
+      })
+    sceneFolder.add(this.#guiState, 'rotateSpeed', 0.1, 2, 0.05).name('Rotate speed')
 
-    const ambientFolder = this.#gui.addFolder("Ambient");
-    ambientFolder
-      .add(this.#ambientLight, "intensity", 0, 2, 0.01)
-      .name("Intensity");
+    const ambientFolder = this.#gui.addFolder('Ambient')
+    ambientFolder.add(this.#ambientLight, 'intensity', 0, 2, 0.01).name('Intensity')
 
-    const helpersFolder = this.#gui.addFolder("Helpers");
+    const helpersFolder = this.#gui.addFolder('Helpers')
     helpersFolder
-      .add(this.#guiState, "showLightHelpers")
-      .name("Directional helper")
+      .add(this.#guiState, 'showLightHelpers')
+      .name('Directional helper')
       .onChange((value) => {
-        this.#setLightHelpersVisible(value);
-      });
+        this.#setLightHelpersVisible(value)
+      })
     helpersFolder
-      .add(this.#guiState, "showShadowHelpers")
-      .name("Shadow camera helper")
+      .add(this.#guiState, 'showShadowHelpers')
+      .name('Shadow camera helper')
       .onChange((value) => {
-        this.#setShadowHelpersVisible(value);
-      });
+        this.#setShadowHelpersVisible(value)
+      })
 
-    const postFolder = this.#gui.addFolder("Post FX");
+    const postFolder = this.#gui.addFolder('Post FX')
     postFolder
-      .add(this.#guiState, "bloomEnabled")
-      .name("Bloom enabled")
+      .add(this.#guiState, 'bloomEnabled')
+      .name('Bloom enabled')
       .onChange((value) => {
-        this.#composer?.setBloomEnabled(value);
-      });
+        this.#composer?.setBloomEnabled(value)
+      })
     postFolder
-      .add(this.#guiState, "fxaaEnabled")
-      .name("FXAA enabled")
+      .add(this.#guiState, 'fxaaEnabled')
+      .name('FXAA enabled')
       .onChange((value) => {
-        this.#composer?.setFXAAEnabled(value);
-      });
+        this.#composer?.setFXAAEnabled(value)
+      })
     postFolder
-      .add(this.#guiState, "bloomStrength", 0, 2, 0.01)
-      .name("Bloom strength")
+      .add(this.#guiState, 'bloomStrength', 0, 2, 0.01)
+      .name('Bloom strength')
       .onChange((value) => {
-        this.#composer?.setBloomStrength(value);
-      });
+        this.#composer?.setBloomStrength(value)
+      })
     postFolder
-      .add(this.#guiState, "bloomRadius", 0, 2, 0.01)
-      .name("Bloom radius")
+      .add(this.#guiState, 'bloomRadius', 0, 2, 0.01)
+      .name('Bloom radius')
       .onChange((value) => {
-        this.#composer?.setBloomRadius(value);
-      });
+        this.#composer?.setBloomRadius(value)
+      })
     postFolder
-      .add(this.#guiState, "bloomThreshold", 0, 1, 0.01)
-      .name("Bloom threshold")
+      .add(this.#guiState, 'bloomThreshold', 0, 1, 0.01)
+      .name('Bloom threshold')
       .onChange((value) => {
-        this.#composer?.setBloomThreshold(value);
-      });
+        this.#composer?.setBloomThreshold(value)
+      })
     postFolder
-      .add(this.#guiState, "toneMappingExposure", 0.4, 2, 0.01)
-      .name("Exposure")
+      .add(this.#guiState, 'toneMappingExposure', 0.4, 2, 0.01)
+      .name('Exposure')
       .onChange((value) => {
-        this.#renderer.toneMappingExposure = value;
-      });
+        this.#renderer.toneMappingExposure = value
+      })
   }
 
   #removeGUI() {
     if (!this.#gui) {
-      return;
+      return
     }
 
-    this.#gui.destroy();
-    this.#gui = null;
+    this.#gui.destroy()
+    this.#gui = null
   }
 
   #initUI() {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = "Open piece of art";
-    button.style.position = "fixed";
-    button.style.right = "16px";
-    button.style.bottom = "16px";
-    button.style.zIndex = "10";
-    button.style.padding = "10px 14px";
-    button.style.border = "1px solid rgba(255, 255, 255, 0.4)";
-    button.style.borderRadius = "8px";
-    button.style.background = "rgba(20, 20, 20, 0.8)";
-    button.style.color = "#fff";
-    button.style.fontFamily = "system-ui, sans-serif";
-    button.style.cursor = "pointer";
-    button.style.backdropFilter = "blur(2px)";
-    button.setAttribute("aria-pressed", "false");
-    button.addEventListener("click", this.#togglePresentation);
+    const button = document.createElement('button')
+    button.type = 'button'
+    button.textContent = 'Open piece of art'
+    button.style.position = 'fixed'
+    button.style.right = '16px'
+    button.style.bottom = '16px'
+    button.style.zIndex = '10'
+    button.style.padding = '10px 14px'
+    button.style.border = '1px solid rgba(255, 255, 255, 0.4)'
+    button.style.borderRadius = '8px'
+    button.style.background = 'rgba(20, 20, 20, 0.8)'
+    button.style.color = '#fff'
+    button.style.fontFamily = 'system-ui, sans-serif'
+    button.style.cursor = 'pointer'
+    button.style.backdropFilter = 'blur(2px)'
+    button.setAttribute('aria-pressed', 'false')
+    button.addEventListener('click', this.#togglePresentation)
 
-    document.body.appendChild(button);
-    this.#rotateSceneButton = button;
+    document.body.appendChild(button)
+    this.#rotateSceneButton = button
   }
 
   #removeUI() {
     if (!this.#rotateSceneButton) {
-      return;
+      return
     }
 
-    this.#rotateSceneButton.removeEventListener(
-      "click",
-      this.#togglePresentation,
-    );
-    this.#rotateSceneButton.remove();
-    this.#rotateSceneButton = null;
+    this.#rotateSceneButton.removeEventListener('click', this.#togglePresentation)
+    this.#rotateSceneButton.remove()
+    this.#rotateSceneButton = null
   }
 
   #togglePresentation = () => {
     const isPresentationInactive =
-      !this.#isSceneRotationEnabled &&
-      !this.#areLightsEnabled &&
-      !this.#guiState.screenEnabled;
-    this.#setPresentationActive(isPresentationInactive);
-  };
+      !this.#isSceneRotationEnabled && !this.#areLightsEnabled && !this.#guiState.screenEnabled
+    this.#setPresentationActive(isPresentationInactive)
+  }
 
   #syncRotateButton() {
-    this.#guiState.rotateScene = this.#isSceneRotationEnabled;
+    this.#guiState.rotateScene = this.#isSceneRotationEnabled
 
     if (!this.#rotateSceneButton) {
-      return;
+      return
     }
 
     const isPresentationInactive =
-      !this.#isSceneRotationEnabled &&
-      !this.#areLightsEnabled &&
-      !this.#guiState.screenEnabled;
+      !this.#isSceneRotationEnabled && !this.#areLightsEnabled && !this.#guiState.screenEnabled
 
-    this.#rotateSceneButton.textContent = isPresentationInactive
-      ? "Open piece of art"
-      : "Close art";
-    this.#rotateSceneButton.setAttribute(
-      "aria-pressed",
-      isPresentationInactive ? "false" : "true",
-    );
+    this.#rotateSceneButton.textContent = isPresentationInactive ? 'Open piece of art' : 'Close art'
+    this.#rotateSceneButton.setAttribute('aria-pressed', isPresentationInactive ? 'false' : 'true')
   }
 
   #animate = () => {
     if (this.#isDestroyed) {
-      return;
+      return
     }
 
-    this.#stats.begin();
+    this.#stats.begin()
 
-    const delta = this.#clock.getDelta();
-    this.#controls.update(delta);
+    const delta = this.#clock.getDelta()
+    this.#controls.update(delta)
     if (this.#isSceneRotationEnabled) {
-      this.#scene.rotation.y += delta * this.#guiState.rotateSpeed;
+      this.#scene.rotation.y += delta * this.#guiState.rotateSpeed
     }
-    this.#updateHelpers();
+    this.#updateHelpers()
 
-    this.#composer?.render();
-    this.#stats.end();
+    this.#composer?.render()
+    this.#stats.end()
 
-    this.#rafId = window.requestAnimationFrame(this.#animate);
-  };
+    this.#rafId = window.requestAnimationFrame(this.#animate)
+  }
 
   destroy() {
     if (this.#isDestroyed) {
-      return;
+      return
     }
-    this.#isDestroyed = true;
+    this.#isDestroyed = true
 
     if (this.#rafId) {
-      window.cancelAnimationFrame(this.#rafId);
-      this.#rafId = 0;
+      window.cancelAnimationFrame(this.#rafId)
+      this.#rafId = 0
     }
 
-    this.#removeEvents();
-    this.#removeUI();
-    this.#setLightHelpersVisible(false);
-    this.#setShadowHelpersVisible(false);
-    this.#removeGUI();
-    this.#controls?.dispose();
-    this.#composer?.dispose();
+    this.#removeEvents()
+    this.#removeUI()
+    this.#setLightHelpersVisible(false)
+    this.#setShadowHelpersVisible(false)
+    this.#removeGUI()
+    this.#controls?.dispose()
+    this.#composer?.dispose()
 
     if (this.#scene) {
       this.#scene.traverse((object) => {
         if (!(object instanceof Mesh)) {
-          return;
+          return
         }
 
-        object.geometry?.dispose();
-        const { material } = object;
+        object.geometry?.dispose()
+        const { material } = object
         if (Array.isArray(material)) {
-          material.forEach((m) => m?.dispose?.());
-          return;
+          material.forEach((m) => m?.dispose?.())
+          return
         }
-        material?.dispose?.();
-      });
-      this.#scene.clear();
+        material?.dispose?.()
+      })
+      this.#scene.clear()
     }
 
-    this.#renderer?.dispose();
+    this.#renderer?.dispose()
 
     if (this.#stats?.dom?.parentNode) {
-      this.#stats.dom.parentNode.removeChild(this.#stats.dom);
+      this.#stats.dom.parentNode.removeChild(this.#stats.dom)
     }
 
-    this.#mesh = null;
-    this.#controls = null;
-    this.#clock = null;
-    this.#isSceneRotationEnabled = false;
-    this.#areLightsEnabled = false;
-    this.#lightSnapshot = null;
-    this.#ambientLight = null;
-    this.#directionalLights = [];
-    this.#scene = null;
-    this.#camera = null;
-    this.#composer = null;
-    this.#screenTexture = null;
-    this.#screenMaterialStates = [];
-    this.#renderer = null;
-    this.#stats = null;
+    this.#mesh = null
+    this.#controls = null
+    this.#clock = null
+    this.#isSceneRotationEnabled = false
+    this.#areLightsEnabled = false
+    this.#lightSnapshot = null
+    this.#ambientLight = null
+    this.#directionalLights = []
+    this.#scene = null
+    this.#camera = null
+    this.#composer = null
+    this.#screenTexture = null
+    this.#screenMaterialStates = []
+    this.#renderer = null
+    this.#stats = null
   }
 }

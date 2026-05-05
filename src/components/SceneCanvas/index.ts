@@ -1,1 +1,1 @@
-export { default } from "@/components/SceneCanvas/SceneCanvas";
+export { default } from '@/components/SceneCanvas/SceneCanvas'

@@ -1,15 +1,15 @@
-import type { ShipConfig, ShipSlot } from "@/lib/models/ShipConfig";
+import type { ShipConfig, ShipSlot } from '@/lib/models/ShipConfig'
 
 export const areShipConfigsEqual = (a: ShipConfig, b: ShipConfig): boolean => {
   if (a.version !== b.version) {
-    return false;
+    return false
   }
 
-  const slots: readonly ShipSlot[] = ["body", "cockpit", "wings", "engines", "weapons"];
+  const slots: readonly ShipSlot[] = ['body', 'cockpit', 'wings', 'engines', 'weapons']
 
   return slots.every((slot) => {
-    const currentSlot = a[slot];
-    const nextSlot = b[slot];
+    const currentSlot = a[slot]
+    const nextSlot = b[slot]
 
     return (
       currentSlot.variant === nextSlot.variant &&
@@ -23,9 +23,9 @@ export const areShipConfigsEqual = (a: ShipConfig, b: ShipConfig): boolean => {
       currentSlot.rotation[0] === nextSlot.rotation[0] &&
       currentSlot.rotation[1] === nextSlot.rotation[1] &&
       currentSlot.rotation[2] === nextSlot.rotation[2]
-    );
-  });
-};
+    )
+  })
+}
 
 export const pushHistorySnapshot = ({
   entries,
@@ -33,43 +33,43 @@ export const pushHistorySnapshot = ({
   snapshot,
   maxEntries,
 }: {
-  entries: ShipConfig[];
-  currentIndex: number;
-  snapshot: ShipConfig;
-  maxEntries: number;
+  entries: ShipConfig[]
+  currentIndex: number
+  snapshot: ShipConfig
+  maxEntries: number
 }) => {
-  const baseEntries = entries.slice(0, currentIndex + 1);
-  const previous = baseEntries[baseEntries.length - 1];
+  const baseEntries = entries.slice(0, currentIndex + 1)
+  const previous = baseEntries[baseEntries.length - 1]
 
   if (previous && areShipConfigsEqual(previous, snapshot)) {
     return {
       entries: baseEntries,
       currentIndex: baseEntries.length - 1,
       changed: false,
-    };
+    }
   }
 
-  const nextEntries = [...baseEntries, snapshot];
+  const nextEntries = [...baseEntries, snapshot]
   if (nextEntries.length > maxEntries) {
-    nextEntries.splice(0, nextEntries.length - maxEntries);
+    nextEntries.splice(0, nextEntries.length - maxEntries)
   }
 
   return {
     entries: nextEntries,
     currentIndex: nextEntries.length - 1,
     changed: true,
-  };
-};
+  }
+}
 
 export const isEditableKeyboardTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) {
-    return false;
+    return false
   }
 
-  const tagName = target.tagName.toLowerCase();
-  if (tagName === "input" || tagName === "textarea" || target.isContentEditable) {
-    return true;
+  const tagName = target.tagName.toLowerCase()
+  if (tagName === 'input' || tagName === 'textarea' || target.isContentEditable) {
+    return true
   }
 
-  return false;
-};
+  return false
+}

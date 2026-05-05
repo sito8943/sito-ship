@@ -1,54 +1,52 @@
-export type Vector3Tuple = [number, number, number];
+export type Vector3Tuple = [number, number, number]
 
-export type BodyVariant = "box" | "longBox" | "tapered";
-export type CockpitVariant = "sphere" | "oval" | "bubble";
-export type WingsVariant = "rect" | "triangular" | "double";
-export type EnginesVariant = "cylinder" | "cone" | "cylinderDual";
-export type WeaponsVariant = "none" | "singleCannon" | "dualCannon";
+export type BodyVariant = 'box' | 'longBox' | 'tapered'
+export type CockpitVariant = 'sphere' | 'oval' | 'bubble'
+export type WingsVariant = 'rect' | 'triangular' | 'double'
+export type EnginesVariant = 'cylinder' | 'cone' | 'cylinderDual'
+export type WeaponsVariant = 'none' | 'singleCannon' | 'dualCannon'
 
 export type ShipSlotBaseConfig = {
-  color: string;
-  scale: Vector3Tuple;
-  offset: Vector3Tuple;
-  rotation: Vector3Tuple;
-};
+  color: string
+  scale: Vector3Tuple
+  offset: Vector3Tuple
+  rotation: Vector3Tuple
+}
 
 export type BodySlotConfig = ShipSlotBaseConfig & {
-  variant: BodyVariant;
-};
+  variant: BodyVariant
+}
 
 export type CockpitSlotConfig = ShipSlotBaseConfig & {
-  variant: CockpitVariant;
-};
+  variant: CockpitVariant
+}
 
 export type WingsSlotConfig = ShipSlotBaseConfig & {
-  variant: WingsVariant;
-};
+  variant: WingsVariant
+}
 
 export type EnginesSlotConfig = ShipSlotBaseConfig & {
-  variant: EnginesVariant;
-};
+  variant: EnginesVariant
+}
 
 export type WeaponsSlotConfig = ShipSlotBaseConfig & {
-  variant: WeaponsVariant;
-};
+  variant: WeaponsVariant
+}
 
 export type ShipSlotConfigMap = {
-  body: BodySlotConfig;
-  cockpit: CockpitSlotConfig;
-  wings: WingsSlotConfig;
-  engines: EnginesSlotConfig;
-  weapons: WeaponsSlotConfig;
-};
+  body: BodySlotConfig
+  cockpit: CockpitSlotConfig
+  wings: WingsSlotConfig
+  engines: EnginesSlotConfig
+  weapons: WeaponsSlotConfig
+}
 
-export type ShipSlot = keyof ShipSlotConfigMap;
+export type ShipSlot = keyof ShipSlotConfigMap
 
 export type ShipConfig = {
-  version: 1;
-} & ShipSlotConfigMap;
+  version: 1
+} & ShipSlotConfigMap
 
-export type ShipConfigVersion = ShipConfig["version"];
+export type ShipConfigVersion = ShipConfig['version']
 
-export type ShipSlotPatch<TSlot extends ShipSlot> = Partial<
-  ShipSlotConfigMap[TSlot]
->;
+export type ShipSlotPatch<TSlot extends ShipSlot> = Partial<ShipSlotConfigMap[TSlot]>

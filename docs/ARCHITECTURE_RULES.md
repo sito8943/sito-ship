@@ -69,6 +69,7 @@ src/
 ```
 
 Notes:
+
 - `components/` is for shared/global UI blocks, not route-specific page composition.
 - `views/` should focus on screen composition and orchestration.
 - `layouts/` should hold reusable structures shared between multiple views.
@@ -89,6 +90,7 @@ FeatureName/
 ```
 
 Rules:
+
 - One hook per file (`useSomething.ts`).
 - One component per file (`Something.tsx`).
 - Do not declare reusable helpers/constants/types inside component or hook files.

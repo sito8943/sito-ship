@@ -2,8 +2,8 @@
 
 ## 🧠 Dificultad
 
-- **MVP:** 5/10  
-- **Editor pulido:** 7.5/10  
+- **MVP:** 5/10
+- **Editor pulido:** 7.5/10
 
 Más fácil que hacer un juego completo tipo Star Fox, pero igual tiene retos interesantes.
 

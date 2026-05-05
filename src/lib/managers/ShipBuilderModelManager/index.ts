@@ -1,1 +1,1 @@
-export { ShipBuilderModelManager } from "@/lib/managers/ShipBuilderModelManager/ShipBuilderModelManager";
+export { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager/ShipBuilderModelManager'

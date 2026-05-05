@@ -6,8 +6,8 @@ export {
   SHIP_SLOT_ROTATION_RANGES,
   SHIP_SLOT_SCALE_RANGES,
   SHIP_VARIANT_OPTIONS,
-} from "@/lib/models/ShipConfig/constants";
-export { cloneShipConfig, createDefaultShipConfig } from "@/lib/models/ShipConfig/utils";
+} from '@/lib/models/ShipConfig/constants'
+export { cloneShipConfig, createDefaultShipConfig } from '@/lib/models/ShipConfig/utils'
 export type {
   BodySlotConfig,
   BodyVariant,
@@ -26,4 +26,4 @@ export type {
   WeaponsVariant,
   WingsSlotConfig,
   WingsVariant,
-} from "@/lib/models/ShipConfig/types";
+} from '@/lib/models/ShipConfig/types'
