@@ -49,6 +49,83 @@ body {
   height: 100%;
 }
 
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition:
+    filter 0.16s ease,
+    transform 0.16s ease;
+}
+
+.ui-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.ui-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ui-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ui-button--solid {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.ui-button--ghost {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.ui-button--md {
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+.ui-button--sm {
+  padding: 5px 8px;
+  font-size: 0.72rem;
+}
+
+.ui-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ui-button__label {
+  line-height: 1;
+}
+
+.ui-icon-button {
+  padding: 0;
+  min-width: 32px;
+}
+
+.ui-icon-button.ui-button--md {
+  width: 32px;
+  height: 32px;
+}
+
+.ui-icon-button.ui-button--sm {
+  width: 28px;
+  height: 28px;
+}
+
+.ship-builder-controls__action-button.ui-icon-button {
+  padding: 0;
+}
+
 .ship-builder-controls {
   position: absolute;
   top: 16px;

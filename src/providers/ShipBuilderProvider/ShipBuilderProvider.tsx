@@ -362,7 +362,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
 
       setMessage({
         kind: 'warning',
-        text: `Body contact enforced for slots: ${slots.join(', ')}.`,
+        text: `Body contact violation for slots: ${slots.join(', ')}.`,
       })
     })
 

@@ -1,6 +1,16 @@
 import { useMemo, useState } from 'react'
+import {
+  faArrowRotateLeft,
+  faArrowRotateRight,
+  faArrowsRotate,
+  faFileExport,
+  faFileImport,
+  faRotateLeft,
+} from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { ShipSlot, ShipSlotConfigMap, ShipSlotPatch } from '@/lib/models/ShipConfig'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
+import { Button, IconButton } from '@/components/ui'
 import {
   OFFSET_AXIS_OPTIONS,
   SLOT_LABELS,
@@ -137,29 +147,27 @@ const ShipBuilderControls = () => {
       <header className="ship-builder-controls__header">
         <h2 className="ship-builder-controls__title">Ship Builder</h2>
         <div className="ship-builder-controls__header-actions">
-          <button
-            type="button"
+          <IconButton
             className="ship-builder-controls__action-button"
+            icon={faArrowRotateLeft}
+            label="Undo"
             onClick={undo}
             disabled={!canUndo}
-          >
-            Undo
-          </button>
-          <button
-            type="button"
+          />
+          <IconButton
             className="ship-builder-controls__action-button"
+            icon={faArrowRotateRight}
+            label="Redo"
             onClick={redo}
             disabled={!canRedo}
-          >
-            Redo
-          </button>
-          <button
-            type="button"
+          />
+          <Button
             className="ship-builder-controls__action-button"
             onClick={resetShipConfig}
+            leadingIcon={<FontAwesomeIcon icon={faArrowsRotate} fixedWidth />}
           >
             Reset Ship
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -213,15 +221,16 @@ const ShipBuilderControls = () => {
         <article className="ship-builder-controls__card">
           <div className="ship-builder-controls__card-header">
             <h3 className="ship-builder-controls__card-title">{SLOT_LABELS[selectedSlot]}</h3>
-            <button
-              type="button"
+            <Button
+              size="sm"
               className="ship-builder-controls__action-button ship-builder-controls__action-button--small"
               onClick={() => {
                 resetSlot(selectedSlot)
               }}
+              leadingIcon={<FontAwesomeIcon icon={faRotateLeft} fixedWidth />}
             >
               Reset Slot
-            </button>
+            </Button>
           </div>
 
           <label className="ship-builder-controls__field">
@@ -382,20 +391,20 @@ const ShipBuilderControls = () => {
 
       <section className="ship-builder-controls__io">
         <div className="ship-builder-controls__io-actions ship-builder-controls__io-actions--spaced">
-          <button
-            type="button"
+          <Button
             className="ship-builder-controls__action-button"
             onClick={handleExportJson}
+            leadingIcon={<FontAwesomeIcon icon={faFileExport} fixedWidth />}
           >
             Export JSON
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
             className="ship-builder-controls__action-button"
             onClick={handleImportJson}
+            leadingIcon={<FontAwesomeIcon icon={faFileImport} fixedWidth />}
           >
             Import JSON
-          </button>
+          </Button>
         </div>
 
         <label className="ship-builder-controls__field">
@@ -426,7 +435,7 @@ const ShipBuilderControls = () => {
 
         {detachedSlots.length > 0 ? (
           <p className="ship-builder-controls__io-message ship-builder-controls__io-message--warning">
-            Body contact enforced: {detachedSlots.map((slot) => SLOT_LABELS[slot]).join(', ')}
+            Body contact violation: {detachedSlots.map((slot) => SLOT_LABELS[slot]).join(', ')}
           </p>
         ) : null}
 
