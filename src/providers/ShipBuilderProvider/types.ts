@@ -33,6 +33,7 @@ export type ShipBuilderContextValue = {
   canUndo: boolean;
   canRedo: boolean;
   overlappingSlots: ShipSlot[];
+  detachedSlots: ShipSlot[];
   message: ShipBuilderMessage | null;
   updateSlot: UpdateSlot;
   setSelectedSlot: (slot: ShipSlot) => void;

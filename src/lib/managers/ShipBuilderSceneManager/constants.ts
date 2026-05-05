@@ -28,3 +28,14 @@ export const OVERLAP_SLOT_PAIRS: readonly [ShipSlot, ShipSlot][] = [
   ["wings", "weapons"],
   ["engines", "weapons"],
 ];
+
+export const BODY_CONTACT_SLOTS: readonly ShipSlot[] = [
+  "cockpit",
+  "wings",
+  "engines",
+  "weapons",
+];
+
+export const BODY_CONTACT_TOLERANCE = 0.04;
+export const BODY_CONTACT_SNAP_STEP = 0.05;
+export const BODY_CONTACT_MAX_STEPS = 140;

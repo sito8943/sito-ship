@@ -21,6 +21,10 @@ import {
 import { ShipBuilderModelManager } from "@/lib/managers/ShipBuilderModelManager";
 import type { ShipConfig, ShipSlot } from "@/lib/models/ShipConfig";
 import {
+  BODY_CONTACT_MAX_STEPS,
+  BODY_CONTACT_SLOTS,
+  BODY_CONTACT_SNAP_STEP,
+  BODY_CONTACT_TOLERANCE,
   CAMERA_SETTINGS,
   MAX_DEVICE_PIXEL_RATIO,
   OVERLAP_SLOT_PAIRS,
@@ -29,6 +33,7 @@ import {
 } from "@/lib/managers/ShipBuilderSceneManager/constants";
 import type {
   SceneSize,
+  SceneBodyContactHandler,
   SceneSlotSelectionHandler,
   SceneSlotTransformHandler,
   SceneValidationHandler,
@@ -62,6 +67,7 @@ export class ShipBuilderSceneManager {
   private slotSelectionHandler: SceneSlotSelectionHandler | null = null;
   private slotTransformHandler: SceneSlotTransformHandler | null = null;
   private slotValidationHandler: SceneValidationHandler | null = null;
+  private slotBodyContactHandler: SceneBodyContactHandler | null = null;
 
   mount(canvas: HTMLCanvasElement) {
     if (this.canvas === canvas && this.isMounted) {
@@ -95,6 +101,10 @@ export class ShipBuilderSceneManager {
     this.slotValidationHandler = handler;
   }
 
+  setSlotBodyContactHandler(handler: SceneBodyContactHandler | null) {
+    this.slotBodyContactHandler = handler;
+  }
+
   setSelectedSlot(slot: ShipSlot | null) {
     this.selectedSlot = slot;
     this.shipModelManager?.setSelectedSlot(slot);
@@ -112,8 +122,13 @@ export class ShipBuilderSceneManager {
     this.shipModelManager?.setSelectedSlot(this.selectedSlot);
     this.refreshTransformControlAttachment();
 
+    const detachedSlots = this.enforceBodyContactConstraint();
+    this.slotBodyContactHandler?.(detachedSlots);
+
     const overlappingSlots = this.detectSevereOverlaps();
-    this.shipModelManager?.setInvalidSlots(overlappingSlots);
+    this.shipModelManager?.setInvalidSlots([
+      ...new Set([...overlappingSlots, ...detachedSlots]),
+    ]);
     this.slotValidationHandler?.(overlappingSlots);
   }
 
@@ -507,6 +522,99 @@ export class ShipBuilderSceneManager {
     });
 
     return [...overlappingSlots];
+  }
+
+  private enforceBodyContactConstraint(): ShipSlot[] {
+    if (!this.shipModelManager) {
+      return [];
+    }
+
+    const bodySlotGroup = this.shipModelManager.getSlotGroup("body");
+    this.boxA.setFromObject(bodySlotGroup);
+    if (this.boxA.isEmpty()) {
+      return [];
+    }
+
+    const bodyCenter = this.sizeA;
+    this.boxA.getCenter(bodyCenter);
+    const bodyContactBox = this.intersectionBox.copy(this.boxA).expandByScalar(
+      BODY_CONTACT_TOLERANCE,
+    );
+    const detachedSlots: ShipSlot[] = [];
+
+    BODY_CONTACT_SLOTS.forEach((slot) => {
+      const slotGroup = this.shipModelManager?.getSlotGroup(slot);
+      if (!slotGroup) {
+        return;
+      }
+
+      this.boxB.setFromObject(slotGroup);
+      if (this.boxB.isEmpty() || bodyContactBox.intersectsBox(this.boxB)) {
+        return;
+      }
+
+      detachedSlots.push(slot);
+      this.snapSlotGroupToBody(slotGroup, bodyContactBox, bodyCenter);
+
+      const correctedOffset: [number, number, number] = [
+        slotGroup.position.x,
+        slotGroup.position.y,
+        slotGroup.position.z,
+      ];
+
+      if (!this.shouldEmitOffsetCorrection(slot, correctedOffset)) {
+        return;
+      }
+
+      this.slotTransformHandler?.(
+        slot,
+        {
+          offset: correctedOffset,
+        },
+        { commitHistory: false },
+      );
+    });
+
+    return detachedSlots;
+  }
+
+  private snapSlotGroupToBody(slotGroup: Group, bodyContactBox: Box3, bodyCenter: Vector3) {
+    this.boxB.setFromObject(slotGroup);
+    this.boxB.getCenter(this.sizeB);
+    this.intersectionSize.subVectors(bodyCenter, this.sizeB);
+
+    if (this.intersectionSize.lengthSq() <= Number.EPSILON) {
+      this.intersectionSize.set(0, 0, 1);
+    } else {
+      this.intersectionSize.normalize();
+    }
+
+    for (let index = 0; index < BODY_CONTACT_MAX_STEPS; index += 1) {
+      if (bodyContactBox.intersectsBox(this.boxB)) {
+        return;
+      }
+
+      slotGroup.position.addScaledVector(this.intersectionSize, BODY_CONTACT_SNAP_STEP);
+      slotGroup.updateMatrixWorld(true);
+      this.boxB.setFromObject(slotGroup);
+    }
+  }
+
+  private shouldEmitOffsetCorrection(
+    slot: ShipSlot,
+    offset: [number, number, number],
+  ): boolean {
+    const sourceOffset = this.pendingShipConfig?.[slot].offset;
+    if (!sourceOffset) {
+      return true;
+    }
+
+    const epsilon = 0.001;
+    return (
+      Math.abs(sourceOffset[0] - offset[0]) > epsilon ||
+      Math.abs(sourceOffset[1] - offset[1]) > epsilon ||
+      Math.abs(sourceOffset[2] - offset[2]) > epsilon
+    );
   }
 
   private animate = () => {

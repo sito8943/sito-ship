@@ -50,6 +50,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   const [selectedSlot, setSelectedSlot] = useState<ShipSlot>(DEFAULT_SELECTED_SLOT);
   const [transformMode, setTransformMode] = useState(DEFAULT_TRANSFORM_MODE);
   const [overlappingSlots, setOverlappingSlots] = useState<ShipSlot[]>([]);
+  const [detachedSlots, setDetachedSlots] = useState<ShipSlot[]>([]);
   const [message, setMessage] = useState<ShipBuilderMessage | null>(null);
   const [hasHydratedStorage, setHasHydratedStorage] = useState(false);
   const hasRestoredStorageRef = useRef(false);
@@ -353,10 +354,23 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       });
     });
 
+    sceneManager.setSlotBodyContactHandler((slots) => {
+      setDetachedSlots(slots);
+      if (slots.length === 0) {
+        return;
+      }
+
+      setMessage({
+        kind: "warning",
+        text: `Body contact enforced for slots: ${slots.join(", ")}.`,
+      });
+    });
+
     return () => {
       sceneManager.setSlotSelectionHandler(null);
       sceneManager.setSlotTransformHandler(null);
       sceneManager.setSlotValidationHandler(null);
+      sceneManager.setSlotBodyContactHandler(null);
     };
   }, [sceneManager, updateSlot]);
 
@@ -406,6 +420,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       canUndo,
       canRedo,
       overlappingSlots,
+      detachedSlots,
       message,
       updateSlot,
       setSelectedSlot,
@@ -426,6 +441,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     canUndo,
     canRedo,
     overlappingSlots,
+    detachedSlots,
     message,
     updateSlot,
     undo,

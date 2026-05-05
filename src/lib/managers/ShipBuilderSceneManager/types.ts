@@ -24,3 +24,5 @@ export type SceneSlotTransformHandler = (
 ) => void;
 
 export type SceneValidationHandler = (slots: ShipSlot[]) => void;
+
+export type SceneBodyContactHandler = (slots: ShipSlot[]) => void;

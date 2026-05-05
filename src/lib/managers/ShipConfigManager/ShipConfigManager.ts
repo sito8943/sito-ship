@@ -7,17 +7,12 @@ import {
   SHIP_SLOT_SCALE_RANGES,
   type ShipConfig,
   type ShipSlot,
-  type ShipSlotConfigMap,
   type Vector3Tuple,
 } from "@/lib/models/ShipConfig";
-import {
-  SLOT_OFFSET_RULES,
-  SYMMETRIC_SLOT_KEYS,
-} from "@/lib/managers/ShipConfigManager/constants";
+import { SYMMETRIC_SLOT_KEYS } from "@/lib/managers/ShipConfigManager/constants";
 import type {
   ShipConfigNormalizationResult,
   ShipSlotPatchInput,
-  ShipSlotOffsetRule,
 } from "@/lib/managers/ShipConfigManager/types";
 import {
   clampNumber,
@@ -121,14 +116,10 @@ export class ShipConfigManager {
     const offsetRange = SHIP_SLOT_OFFSET_RANGES[slot];
     const offsetBefore = this.cloneTupleForSlot(slotConfig.offset);
     slotConfig.offset = [
-      clampNumber(offsetBefore[0], offsetRange.x.min, offsetRange.x.max),
-      clampNumber(offsetBefore[1], offsetRange.y.min, offsetRange.y.max),
-      clampNumber(offsetBefore[2], offsetRange.z.min, offsetRange.z.max),
+      this.sanitizeOffsetValue(offsetBefore[0], offsetRange.x.min, offsetRange.x.max),
+      this.sanitizeOffsetValue(offsetBefore[1], offsetRange.y.min, offsetRange.y.max),
+      this.sanitizeOffsetValue(offsetBefore[2], offsetRange.z.min, offsetRange.z.max),
     ];
-    if (hasTupleChanged(offsetBefore, slotConfig.offset)) {
-      const axes = getTupleChangedAxes(offsetBefore, slotConfig.offset).join(", ");
-      warnings.push(`Slot "${slot}" offset was clamped on axis ${axes}.`);
-    }
 
     const rotationRange = SHIP_SLOT_ROTATION_RANGES[slot];
     const rotationBefore = this.cloneTupleForSlot(slotConfig.rotation);
@@ -142,11 +133,6 @@ export class ShipConfigManager {
       warnings.push(`Slot "${slot}" rotation was clamped on axis ${axes}.`);
     }
 
-    const customOffsetRule = SLOT_OFFSET_RULES[slot];
-    if (customOffsetRule) {
-      this.applyOffsetRule(slot, slotConfig, customOffsetRule, warnings);
-    }
-
     if (this.isSymmetricSlot(slot) && slotConfig.offset[0] !== 0) {
       // Keep paired slots centered to avoid visual asymmetry drift in mirrored groups.
       slotConfig.offset[0] = 0;
@@ -156,41 +142,22 @@ export class ShipConfigManager {
     }
   }
 
-  private applyOffsetRule(
-    slot: ShipSlot,
-    slotConfig: ShipSlotConfigMap[ShipSlot],
-    rule: ShipSlotOffsetRule,
-    warnings: string[],
-  ) {
-    const nextOffset = this.cloneTupleForSlot(slotConfig.offset);
-    const originalOffset = this.cloneTupleForSlot(slotConfig.offset);
-
-    if (rule.x) {
-      nextOffset[0] = clampNumber(nextOffset[0], rule.x.min, rule.x.max);
-    }
-    if (rule.y) {
-      nextOffset[1] = clampNumber(nextOffset[1], rule.y.min, rule.y.max);
-    }
-    if (rule.z) {
-      nextOffset[2] = clampNumber(nextOffset[2], rule.z.min, rule.z.max);
-    }
-
-    if (!hasTupleChanged(originalOffset, nextOffset)) {
-      return;
-    }
-
-    slotConfig.offset = nextOffset;
-    const axes = getTupleChangedAxes(originalOffset, nextOffset).join(", ");
-    warnings.push(
-      `Slot "${slot}" offset was auto-corrected on axis ${axes} by integrity rules.`,
-    );
-  }
-
   private cloneTupleForSlot(vector: Vector3Tuple): Vector3Tuple {
     return cloneVector3Tuple(vector);
   }
 
   private isSymmetricSlot(slot: ShipSlot): boolean {
     return SYMMETRIC_SLOT_KEYS.some((symmetrySlot) => symmetrySlot === slot);
+  }
+
+  private sanitizeOffsetValue(value: number, minFallback: number, maxFallback: number): number {
+    if (!Number.isFinite(value)) {
+      return clampNumber(0, minFallback, maxFallback);
+    }
+
+    // Keep offsets editable without arbitrary slot clamps while still protecting
+    // against extreme values that can break the scene.
+    const HARD_LIMIT = 50;
+    return clampNumber(value, -HARD_LIMIT, HARD_LIMIT);
   }
 }

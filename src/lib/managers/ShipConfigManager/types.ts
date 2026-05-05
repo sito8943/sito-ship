@@ -9,8 +9,4 @@ export type ShipConfigNormalizationResult = {
   warnings: string[];
 };
 
-export type ShipSlotOffsetRule = Partial<
-  Record<"x" | "y" | "z", { min: number; max: number }>
->;
-
 export type ShipSlotPatchInput<TSlot extends ShipSlot> = ShipSlotPatch<TSlot>;

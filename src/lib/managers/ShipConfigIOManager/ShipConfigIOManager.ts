@@ -1,7 +1,6 @@
 import {
   DEFAULT_SHIP_CONFIG,
   SHIP_CONFIG_VERSION,
-  SHIP_SLOT_OFFSET_RANGES,
   SHIP_SLOT_KEYS,
   SHIP_SLOT_ROTATION_RANGES,
   SHIP_SLOT_SCALE_RANGES,
@@ -141,14 +140,7 @@ export class ShipConfigIOManager {
       warnings.push(`Slot "${slot}" has an invalid offset. Using default offset.`);
     }
     const parsedOffset = parseVector3Tuple(sourceSlot.offset, defaultSlot.offset);
-    const clampedOffset = this.clampOffsetTuple(slot, parsedOffset);
-    if (this.hasTupleChanged(parsedOffset, clampedOffset)) {
-      const changedAxes = this.getChangedAxes(parsedOffset, clampedOffset).join(", ");
-      warnings.push(
-        `Slot "${slot}" offset exceeded allowed range on axis ${changedAxes} and was clamped.`,
-      );
-    }
-    nextSlot.offset = clampedOffset;
+    nextSlot.offset = parsedOffset;
 
     const rotationValue = sourceSlot.rotation;
     if (rotationValue !== undefined && !isValidVector3Tuple(rotationValue)) {
@@ -173,15 +165,6 @@ export class ShipConfigIOManager {
       this.clampNumber(scale[0], range.min, range.max),
       this.clampNumber(scale[1], range.min, range.max),
       this.clampNumber(scale[2], range.min, range.max),
-    ];
-  }
-
-  private clampOffsetTuple(slot: ShipSlot, offset: Vector3Tuple): Vector3Tuple {
-    const range = SHIP_SLOT_OFFSET_RANGES[slot];
-    return [
-      this.clampNumber(offset[0], range.x.min, range.x.max),
-      this.clampNumber(offset[1], range.y.min, range.y.max),
-      this.clampNumber(offset[2], range.z.min, range.z.max),
     ];
   }
 

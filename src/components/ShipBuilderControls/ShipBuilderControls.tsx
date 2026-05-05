@@ -31,6 +31,7 @@ const ShipBuilderControls = () => {
     canUndo,
     canRedo,
     overlappingSlots,
+    detachedSlots,
     message,
     updateSlot,
     setSelectedSlot,
@@ -412,6 +413,12 @@ const ShipBuilderControls = () => {
         {overlappingSlots.length > 0 ? (
           <p className="ship-builder-controls__io-message ship-builder-controls__io-message--warning">
             Overlap alert: {overlappingSlots.map((slot) => SLOT_LABELS[slot]).join(", ")}
+          </p>
+        ) : null}
+
+        {detachedSlots.length > 0 ? (
+          <p className="ship-builder-controls__io-message ship-builder-controls__io-message--warning">
+            Body contact enforced: {detachedSlots.map((slot) => SLOT_LABELS[slot]).join(", ")}
           </p>
         ) : null}
 
