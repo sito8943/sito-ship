@@ -120,13 +120,7 @@ export class ShipBuilderSceneManager {
     this.shipModelManager?.sync(shipConfig)
     this.shipModelManager?.setSelectedSlot(this.selectedSlot)
     this.refreshTransformControlAttachment()
-
-    const detachedSlots = this.enforceBodyContactConstraint()
-    this.slotBodyContactHandler?.(detachedSlots)
-
-    const overlappingSlots = this.detectSevereOverlaps()
-    this.shipModelManager?.setInvalidSlots([...new Set([...overlappingSlots, ...detachedSlots])])
-    this.slotValidationHandler?.(overlappingSlots)
+    this.refreshValidationState()
   }
 
   resize() {
@@ -547,6 +541,15 @@ export class ShipBuilderSceneManager {
     })
 
     return detachedSlots
+  }
+
+  private refreshValidationState() {
+    const detachedSlots = this.enforceBodyContactConstraint()
+    this.slotBodyContactHandler?.(detachedSlots)
+
+    const overlappingSlots = this.detectSevereOverlaps()
+    this.shipModelManager?.setInvalidSlots([...new Set([...overlappingSlots, ...detachedSlots])])
+    this.slotValidationHandler?.(overlappingSlots)
   }
 
   private animate = () => {

@@ -57,6 +57,13 @@ Archivos objetivo sugeridos:
 - `src/lib/managers/ShipBuilderModelManager/constants.ts`
 - `docs/plans/simetria_rotacion_local_puntos_1_4.md` (este plan como base)
 
+Nota tecnica (formula de reflejo usada por el proyecto):
+
+- Espacio de calculo: local de `shipGroup`.
+- Plano de simetria: `X = 0`, equivalente a `n · p + d = 0` con `n = (-1, 0, 0)` y `d = 0`.
+- Reflejo de punto general: `p' = p - 2 * (n · p + d) * n`.
+- Forma simplificada para `X = 0`: si `p = (x, y, z)`, entonces `p' = (-x, y, z)`.
+
 ---
 
 ## 4. Fase 2 - Estructura de datos `ShipPart` (punto 1)
@@ -201,3 +208,44 @@ Este orden permite avanzar sin romper `ShipConfig` ni el pipeline actual de mana
 - Existe utilidad de calculo de posicion espejo validada.
 - Existe utilidad de calculo de rotacion espejo validada.
 - Todo lo anterior convive con `ShipConfig version 1` sin romper flujo de edicion actual.
+
+---
+
+## 11. Extension aplicada: punto 6 (actualizacion final de malla visual)
+
+Estado aplicado en runtime:
+
+- El `mirroredPart` se recalcula siempre desde `masterPart` durante `sync`.
+- La malla visual de `masterSide` y `mirroredSide` se actualiza desde `ShipPartPair`.
+- Se preserva el `id` del espejo para evitar churn innecesario de identidad.
+- Slots no simetricos (`body`, `cockpit`) mantienen su camino de ejecucion sin cambios.
+
+Archivo principal:
+
+- `src/lib/managers/ShipBuilderModelManager/ShipBuilderModelManager.ts`
+
+---
+
+## 12. Extension aplicada: punto 5 (rotacion alrededor de pivot local)
+
+Estado aplicado en runtime:
+
+- Cada lado simetrico se renderiza como `wrapper + partContent`.
+- La transformacion del wrapper usa `localPosition`, `localRotation` y `localScale`.
+- Se aplica compensacion de pivot en `partContent` con `-pivotLocal`.
+- Con esto, rotacion y escala ocurren alrededor de `pivotLocal` en local ship-space.
+
+Archivo principal:
+
+- `src/lib/managers/ShipBuilderModelManager/ShipBuilderModelManager.ts`
+
+---
+
+## 13. Extension aplicada: persistencia `ShipConfig` v2 + migracion v1
+
+Estado aplicado:
+
+- `ShipConfig` actual persiste en `version: 2` con `pivotLocal` por slot.
+- Import JSON acepta `version: 1` y migra automaticamente a `version: 2`.
+- `pivotLocal` se valida y clampa durante import/normalizacion.
+- `pivotLocal` se edita desde UI via `updateSlot`, por lo que queda cubierto por `undo`/`redo`.

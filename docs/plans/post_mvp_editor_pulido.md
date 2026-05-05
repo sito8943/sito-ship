@@ -34,7 +34,7 @@ Fuera de este plan:
 - Mantener arquitectura modular actual (`SceneManager`, `ModelManager`, `ConfigManager`, `IOManager`)
 - Evitar rebuild completo en cada cambio; priorizar actualizacion por slot
 - Validar toda entrada externa (UI, canvas, JSON import)
-- Compatibilidad hacia atras con `version: 1` de `ShipConfig`
+- Compatibilidad hacia atras con `version: 1` y persistencia actual en `version: 2` de `ShipConfig`
 
 ---
 

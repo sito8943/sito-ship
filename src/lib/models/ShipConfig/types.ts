@@ -11,6 +11,7 @@ export type ShipSlotBaseConfig = {
   scale: Vector3Tuple
   offset: Vector3Tuple
   rotation: Vector3Tuple
+  pivotLocal: Vector3Tuple
 }
 
 export type BodySlotConfig = ShipSlotBaseConfig & {
@@ -27,6 +28,7 @@ export type WingsSlotConfig = ShipSlotBaseConfig & {
 
 export type EnginesSlotConfig = ShipSlotBaseConfig & {
   variant: EnginesVariant
+  aimRotation: Vector3Tuple
 }
 
 export type WeaponsSlotConfig = ShipSlotBaseConfig & {
@@ -44,7 +46,7 @@ export type ShipSlotConfigMap = {
 export type ShipSlot = keyof ShipSlotConfigMap
 
 export type ShipConfig = {
-  version: 1
+  version: 2
 } & ShipSlotConfigMap
 
 export type ShipConfigVersion = ShipConfig['version']

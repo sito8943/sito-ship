@@ -1,8 +1,10 @@
 import {
   cloneShipConfig,
   createDefaultShipConfig,
+  SHIP_ENGINE_AIM_ROTATION_RANGES,
   SHIP_SLOT_KEYS,
   SHIP_SLOT_OFFSET_RANGES,
+  SHIP_SLOT_PIVOT_LOCAL_RANGES,
   SHIP_SLOT_ROTATION_RANGES,
   SHIP_SLOT_SCALE_RANGES,
   type ShipConfig,
@@ -48,6 +50,16 @@ export class ShipConfigManager {
     if (patch.rotation) {
       clonedPatch.rotation = this.cloneTupleForSlot(patch.rotation)
     }
+    if (patch.pivotLocal) {
+      clonedPatch.pivotLocal = this.cloneTupleForSlot(patch.pivotLocal)
+    }
+    if (slot === 'engines') {
+      const enginePatch = patch as ShipSlotPatchInput<'engines'>
+      if (enginePatch.aimRotation) {
+        const clonedEnginesPatch = clonedPatch as ShipSlotPatchInput<'engines'>
+        clonedEnginesPatch.aimRotation = this.cloneTupleForSlot(enginePatch.aimRotation)
+      }
+    }
 
     nextConfig[slot] = {
       ...nextConfig[slot],
@@ -66,6 +78,10 @@ export class ShipConfigManager {
       scale: cloneVector3Tuple(defaultConfig[slot].scale),
       offset: cloneVector3Tuple(defaultConfig[slot].offset),
       rotation: cloneVector3Tuple(defaultConfig[slot].rotation),
+      pivotLocal: cloneVector3Tuple(defaultConfig[slot].pivotLocal),
+    }
+    if (slot === 'engines') {
+      nextConfig.engines.aimRotation = cloneVector3Tuple(defaultConfig.engines.aimRotation)
     }
 
     return this.normalizeConfig(nextConfig)
@@ -137,6 +153,44 @@ export class ShipConfigManager {
       // Keep paired slots centered to avoid visual asymmetry drift in mirrored groups.
       slotConfig.offset[0] = 0
       warnings.push(`Slot "${slot}" offset on axis x was centered to preserve symmetry.`)
+    }
+
+    const pivotRange = SHIP_SLOT_PIVOT_LOCAL_RANGES[slot]
+    const pivotBefore = this.cloneTupleForSlot(slotConfig.pivotLocal)
+    slotConfig.pivotLocal = [
+      clampNumber(pivotBefore[0], pivotRange.x.min, pivotRange.x.max),
+      clampNumber(pivotBefore[1], pivotRange.y.min, pivotRange.y.max),
+      clampNumber(pivotBefore[2], pivotRange.z.min, pivotRange.z.max),
+    ]
+    if (hasTupleChanged(pivotBefore, slotConfig.pivotLocal)) {
+      const axes = getTupleChangedAxes(pivotBefore, slotConfig.pivotLocal).join(', ')
+      warnings.push(`Slot "${slot}" pivotLocal was clamped on axis ${axes}.`)
+    }
+
+    if (slot === 'engines') {
+      const engineSlotConfig = slotConfig as ShipConfig['engines']
+      const aimRotationBefore = this.cloneTupleForSlot(engineSlotConfig.aimRotation)
+      engineSlotConfig.aimRotation = [
+        clampNumber(
+          aimRotationBefore[0],
+          SHIP_ENGINE_AIM_ROTATION_RANGES.x.min,
+          SHIP_ENGINE_AIM_ROTATION_RANGES.x.max
+        ),
+        clampNumber(
+          aimRotationBefore[1],
+          SHIP_ENGINE_AIM_ROTATION_RANGES.y.min,
+          SHIP_ENGINE_AIM_ROTATION_RANGES.y.max
+        ),
+        clampNumber(
+          aimRotationBefore[2],
+          SHIP_ENGINE_AIM_ROTATION_RANGES.z.min,
+          SHIP_ENGINE_AIM_ROTATION_RANGES.z.max
+        ),
+      ]
+      if (hasTupleChanged(aimRotationBefore, engineSlotConfig.aimRotation)) {
+        const axes = getTupleChangedAxes(aimRotationBefore, engineSlotConfig.aimRotation).join(', ')
+        warnings.push(`Slot "${slot}" aimRotation was clamped on axis ${axes}.`)
+      }
     }
   }
 

@@ -15,18 +15,23 @@ import type {
   ShipConfig,
   ShipSlot,
   ShipSlotConfigMap,
+  Vector3Tuple,
   WeaponsSlotConfig,
   WingsSlotConfig,
 } from '@/lib/models/ShipConfig'
+import type { ShipPart, ShipPartMirrorRole } from '@/lib/models'
 import {
   BODY_BASE_DEPTH,
   SHIP_SLOT_KEYS,
   SLOT_ANCHORS,
 } from '@/lib/managers/ShipBuilderModelManager/constants'
 import type {
+  ShipPartPair,
+  ShipPartPairMap,
   ShipSlotGroupMap,
   ShipSlotKey,
   ShipSlotSignatureMap,
+  ShipSymmetricSlotKey,
   SlotBuilderMap,
 } from '@/lib/managers/ShipBuilderModelManager/types'
 import {
@@ -36,21 +41,32 @@ import {
   createSlotRenderSignature,
   disposeGroupResources,
   markSlotInHierarchy,
+  mirrorPointAcrossShipLocalSymmetryPlane,
+  mirrorQuaternionAcrossShipLocalSymmetryPlane,
   setSlotHighlight,
 } from '@/lib/managers/ShipBuilderModelManager/utils'
 
 export class ShipBuilderModelManager {
+  private static readonly PART_CONTENT_GROUP_NAME = 'partContent'
+  private static readonly ENGINE_AIM_PIVOT_GROUP_NAME = 'engineAimPivot'
+  private static readonly ENGINE_AIM_CONTENT_GROUP_NAME = 'engineAimContent'
+  private static readonly ENGINE_OUTER_TIP_OFFSET_X = -0.85
+
   private readonly rootGroup: Group
   private readonly slotGroups: ShipSlotGroupMap
   private readonly slotSignatures: Partial<ShipSlotSignatureMap>
+  private readonly slotPartPairs: ShipPartPairMap
   private readonly slotBuilders: SlotBuilderMap
   private selectedSlot: ShipSlot | null = null
   private invalidSlots = new Set<ShipSlot>()
+  private symmetryGroupIdCounter = 0
+  private partIdCounter = 0
 
   constructor(rootGroup: Group) {
     this.rootGroup = rootGroup
     this.slotGroups = this.createSlotGroups()
     this.slotSignatures = {}
+    this.slotPartPairs = {}
     this.slotBuilders = {
       body: this.buildBodySlot,
       cockpit: this.buildCockpitSlot,
@@ -73,6 +89,12 @@ export class ShipBuilderModelManager {
 
       const slotGroup = this.slotGroups[slot]
       applySlotTransform(slotGroup, slotConfig)
+      if (this.isSymmetricSlot(slot)) {
+        this.syncSymmetricSlotVisual(slot, slotConfig.pivotLocal)
+      }
+      if (slot === 'engines') {
+        this.applyEngineAimVisual(slotConfig.aimRotation)
+      }
       this.applyVisualState(slot)
     })
   }
@@ -95,6 +117,11 @@ export class ShipBuilderModelManager {
     return this.slotGroups[slot]
   }
 
+  getSlotPartPair<TSlot extends ShipSymmetricSlotKey>(slot: TSlot): ShipPartPair<TSlot> | null {
+    const slotPair = this.slotPartPairs[slot]
+    return slotPair ? (slotPair as ShipPartPair<TSlot>) : null
+  }
+
   dispose() {
     SHIP_SLOT_KEYS.forEach((slot) => {
       const slotGroup = this.slotGroups[slot]
@@ -103,6 +130,10 @@ export class ShipBuilderModelManager {
       this.rootGroup.remove(slotGroup)
       delete this.slotSignatures[slot]
     })
+
+    delete this.slotPartPairs.wings
+    delete this.slotPartPairs.engines
+    delete this.slotPartPairs.weapons
   }
 
   private createSlotGroups(): ShipSlotGroupMap {
@@ -215,9 +246,14 @@ export class ShipBuilderModelManager {
 
   private buildWingsSlot = (slotConfig: WingsSlotConfig): Group => {
     const material = createSlotMaterial(slotConfig.color)
-    const group = this.createMirroredPair(() => {
-      return this.createWingLeftSide(slotConfig, material)
-    })
+    const group = this.createSymmetricSlotPair(
+      'wings',
+      slotConfig.variant,
+      slotConfig.pivotLocal,
+      () => {
+        return this.createWingLeftSide(slotConfig, material)
+      }
+    )
 
     applyShadowToObject(group)
     return group
@@ -265,9 +301,14 @@ export class ShipBuilderModelManager {
 
   private buildEnginesSlot = (slotConfig: EnginesSlotConfig): Group => {
     const material = createSlotMaterial(slotConfig.color)
-    const group = this.createMirroredPair(() => {
-      return this.createEngineLeftSide(slotConfig, material)
-    })
+    const group = this.createSymmetricSlotPair(
+      'engines',
+      slotConfig.variant,
+      slotConfig.pivotLocal,
+      () => {
+        return this.createEngineLeftSide(slotConfig, material)
+      }
+    )
 
     applyShadowToObject(group)
     return group
@@ -279,18 +320,21 @@ export class ShipBuilderModelManager {
   ): Group {
     const sideGroup = new Group()
     const anchor = SLOT_ANCHORS.engine
+    const aimPivot = this.createEngineAimPivotGroup(slotConfig, anchor)
+    const aimContent = this.getEngineAimContentGroup(aimPivot)
 
     if (slotConfig.variant === 'cylinder') {
       const engine = new Mesh(new CylinderGeometry(0.32, 0.38, 1.7, 18), material)
       engine.rotation.z = Math.PI / 2
       engine.position.set(anchor.x, anchor.y, anchor.z)
-      sideGroup.add(engine)
+      aimContent.add(engine)
 
       const nozzle = new Mesh(new ConeGeometry(0.26, 0.7, 18), createSlotMaterial('#1f2937'))
       nozzle.rotation.z = Math.PI / 2
       nozzle.position.set(anchor.x - 1.05, anchor.y, anchor.z)
-      sideGroup.add(nozzle)
+      aimContent.add(nozzle)
 
+      sideGroup.add(aimPivot)
       return sideGroup
     }
 
@@ -298,7 +342,7 @@ export class ShipBuilderModelManager {
       const cone = new Mesh(new ConeGeometry(0.44, 1.85, 20), material)
       cone.rotation.z = Math.PI / 2
       cone.position.set(anchor.x - 0.15, anchor.y, anchor.z)
-      sideGroup.add(cone)
+      aimContent.add(cone)
 
       const core = new Mesh(
         new CylinderGeometry(0.12, 0.12, 1.2, 14),
@@ -306,37 +350,45 @@ export class ShipBuilderModelManager {
       )
       core.rotation.z = Math.PI / 2
       core.position.set(anchor.x - 0.6, anchor.y, anchor.z)
-      sideGroup.add(core)
+      aimContent.add(core)
 
+      sideGroup.add(aimPivot)
       return sideGroup
     }
 
     const topEngine = new Mesh(new CylinderGeometry(0.2, 0.28, 1.5, 14), material)
     topEngine.rotation.z = Math.PI / 2
     topEngine.position.set(anchor.x, anchor.y + 0.2, anchor.z)
-    sideGroup.add(topEngine)
+    aimContent.add(topEngine)
 
     const bottomEngine = new Mesh(new CylinderGeometry(0.2, 0.28, 1.5, 14), material)
     bottomEngine.rotation.z = Math.PI / 2
     bottomEngine.position.set(anchor.x, anchor.y - 0.2, anchor.z)
-    sideGroup.add(bottomEngine)
+    aimContent.add(bottomEngine)
 
     const bridge = new Mesh(new BoxGeometry(0.25, 0.22, 0.95), createSlotMaterial('#334155'))
     bridge.position.set(anchor.x + 0.2, anchor.y, anchor.z)
-    sideGroup.add(bridge)
+    aimContent.add(bridge)
 
+    sideGroup.add(aimPivot)
     return sideGroup
   }
 
   private buildWeaponsSlot = (slotConfig: WeaponsSlotConfig): Group => {
     if (slotConfig.variant === 'none') {
+      delete this.slotPartPairs.weapons
       return new Group()
     }
 
     const material = createSlotMaterial(slotConfig.color)
-    const group = this.createMirroredPair(() => {
-      return this.createWeaponLeftSide(slotConfig, material)
-    })
+    const group = this.createSymmetricSlotPair(
+      'weapons',
+      slotConfig.variant,
+      slotConfig.pivotLocal,
+      () => {
+        return this.createWeaponLeftSide(slotConfig, material)
+      }
+    )
 
     applyShadowToObject(group)
     return group
@@ -380,18 +432,261 @@ export class ShipBuilderModelManager {
     return sideGroup
   }
 
-  private createMirroredPair(createLeftSide: () => Group): Group {
+  private createSymmetricSlotPair<TSlot extends ShipSymmetricSlotKey>(
+    slot: TSlot,
+    variant: ShipSlotConfigMap[TSlot]['variant'],
+    pivotLocal: Vector3Tuple,
+    createMasterSide: () => Group
+  ): Group {
     const pairGroup = new Group()
-    const leftSide = createLeftSide()
-    leftSide.name = 'leftSide'
+    const masterSide = this.createPartSideGroup('masterSide', createMasterSide())
 
-    const rightSide = leftSide.clone(true)
-    rightSide.name = 'rightSide'
-    rightSide.scale.x = -1
+    const symmetryGroupId = this.createNextSymmetryGroupId(slot)
+    const masterPart = this.createSymmetricPartFromGroup(
+      slot,
+      variant,
+      'original',
+      symmetryGroupId,
+      null,
+      masterSide
+    )
+    masterPart.pivotLocal = [...pivotLocal] as Vector3Tuple
+    const mirroredPart = this.createMirroredPart(masterPart)
+    this.slotPartPairs[slot] = {
+      symmetryGroupId,
+      masterPart,
+      mirroredPart,
+    }
 
-    pairGroup.add(leftSide)
-    pairGroup.add(rightSide)
+    const mirroredSide = masterSide.clone(true)
+    mirroredSide.name = 'mirroredSide'
+    this.applyMirroredContentReflection(mirroredSide)
+
+    this.applyPartTransform(masterSide, masterPart)
+    this.applyPartTransform(mirroredSide, mirroredPart)
+
+    masterSide.userData.shipPartId = masterPart.id
+    masterSide.userData.mirrorRole = masterPart.mirrorRole
+    mirroredSide.userData.shipPartId = mirroredPart.id
+    mirroredSide.userData.mirrorRole = mirroredPart.mirrorRole
+
+    pairGroup.add(masterSide)
+    pairGroup.add(mirroredSide)
 
     return pairGroup
+  }
+
+  private createSymmetricPartFromGroup<TSlot extends ShipSymmetricSlotKey>(
+    slot: TSlot,
+    variant: ShipSlotConfigMap[TSlot]['variant'],
+    mirrorRole: ShipPartMirrorRole,
+    symmetryGroupId: string | null,
+    mirrorOfPartId: string | null,
+    group: Group
+  ): ShipPart<TSlot> {
+    return {
+      id: this.createNextPartId(slot, mirrorRole),
+      slot,
+      variant,
+      mirrorRole,
+      symmetryGroupId,
+      mirrorOfPartId,
+      localPosition: [group.position.x, group.position.y, group.position.z],
+      localRotation: [
+        group.quaternion.x,
+        group.quaternion.y,
+        group.quaternion.z,
+        group.quaternion.w,
+      ],
+      localScale: [group.scale.x, group.scale.y, group.scale.z],
+      pivotLocal: [0, 0, 0],
+    }
+  }
+
+  private createMirroredPart<TSlot extends ShipSymmetricSlotKey>(
+    masterPart: ShipPart<TSlot>,
+    mirroredPartId?: string
+  ): ShipPart<TSlot> {
+    return {
+      ...masterPart,
+      id: mirroredPartId ?? this.createNextPartId(masterPart.slot, 'mirrored'),
+      mirrorRole: 'mirrored',
+      mirrorOfPartId: masterPart.id,
+      localPosition: mirrorPointAcrossShipLocalSymmetryPlane(masterPart.localPosition),
+      localRotation: mirrorQuaternionAcrossShipLocalSymmetryPlane(masterPart.localRotation),
+      localScale: [...masterPart.localScale] as Vector3Tuple,
+      pivotLocal: mirrorPointAcrossShipLocalSymmetryPlane(masterPart.pivotLocal),
+    }
+  }
+
+  private isSymmetricSlot(slot: ShipSlot): slot is ShipSymmetricSlotKey {
+    return slot === 'wings' || slot === 'engines' || slot === 'weapons'
+  }
+
+  private syncSymmetricSlotVisual(slot: ShipSymmetricSlotKey, pivotLocal?: Vector3Tuple) {
+    const slotPair = this.slotPartPairs[slot]
+    if (!slotPair) {
+      return
+    }
+
+    if (pivotLocal) {
+      slotPair.masterPart = {
+        ...slotPair.masterPart,
+        pivotLocal: [...pivotLocal] as Vector3Tuple,
+      }
+    }
+
+    slotPair.mirroredPart = this.createMirroredPart(slotPair.masterPart, slotPair.mirroredPart.id)
+
+    const slotGroup = this.slotGroups[slot]
+    const slotContent = slotGroup.children[0]
+    if (!(slotContent instanceof Group)) {
+      return
+    }
+
+    const masterSide = slotContent.children.find(
+      (node): node is Group => node instanceof Group && node.name === 'masterSide'
+    )
+    const mirroredSide = slotContent.children.find(
+      (node): node is Group => node instanceof Group && node.name === 'mirroredSide'
+    )
+
+    if (!masterSide || !mirroredSide) {
+      return
+    }
+
+    this.applyPartTransform(masterSide, slotPair.masterPart)
+    this.applyPartTransform(mirroredSide, slotPair.mirroredPart)
+
+    masterSide.userData.shipPartId = slotPair.masterPart.id
+    masterSide.userData.mirrorRole = slotPair.masterPart.mirrorRole
+    mirroredSide.userData.shipPartId = slotPair.mirroredPart.id
+    mirroredSide.userData.mirrorRole = slotPair.mirroredPart.mirrorRole
+  }
+
+  private applyPartTransform(group: Group, part: ShipPart) {
+    const positionWithPivot = [
+      part.localPosition[0] + part.pivotLocal[0],
+      part.localPosition[1] + part.pivotLocal[1],
+      part.localPosition[2] + part.pivotLocal[2],
+    ] as const
+    group.position.set(positionWithPivot[0], positionWithPivot[1], positionWithPivot[2])
+    group.quaternion.set(
+      part.localRotation[0],
+      part.localRotation[1],
+      part.localRotation[2],
+      part.localRotation[3]
+    )
+    group.scale.set(part.localScale[0], part.localScale[1], part.localScale[2])
+
+    // Pivot compensation lets rotation/scale happen around part.pivotLocal.
+    const partContent = group.children.find(
+      (node): node is Group =>
+        node instanceof Group && node.name === ShipBuilderModelManager.PART_CONTENT_GROUP_NAME
+    )
+    if (!partContent) {
+      return
+    }
+
+    partContent.position.set(-part.pivotLocal[0], -part.pivotLocal[1], -part.pivotLocal[2])
+  }
+
+  private applyMirroredContentReflection(sideGroup: Group) {
+    const partContent = sideGroup.children.find(
+      (node): node is Group =>
+        node instanceof Group && node.name === ShipBuilderModelManager.PART_CONTENT_GROUP_NAME
+    )
+    if (!partContent) {
+      return
+    }
+
+    partContent.scale.x = -Math.abs(partContent.scale.x)
+  }
+
+  private createPartSideGroup(name: 'masterSide' | 'mirroredSide', content: Group): Group {
+    const sideGroup = new Group()
+    sideGroup.name = name
+    content.name = ShipBuilderModelManager.PART_CONTENT_GROUP_NAME
+    sideGroup.add(content)
+    return sideGroup
+  }
+
+  private createEngineAimPivotGroup(
+    slotConfig: EnginesSlotConfig,
+    anchor: { x: number; y: number; z: number }
+  ): Group {
+    const aimPivot = new Group()
+    aimPivot.name = ShipBuilderModelManager.ENGINE_AIM_PIVOT_GROUP_NAME
+
+    const pivotPoint: Vector3Tuple = [
+      anchor.x + ShipBuilderModelManager.ENGINE_OUTER_TIP_OFFSET_X,
+      anchor.y,
+      anchor.z,
+    ]
+    aimPivot.position.set(pivotPoint[0], pivotPoint[1], pivotPoint[2])
+    aimPivot.rotation.set(
+      slotConfig.aimRotation[0],
+      slotConfig.aimRotation[1],
+      slotConfig.aimRotation[2]
+    )
+
+    const aimContent = new Group()
+    aimContent.name = ShipBuilderModelManager.ENGINE_AIM_CONTENT_GROUP_NAME
+    // Pivot compensation so aim rotations happen around the engine outer tip.
+    aimContent.position.set(-pivotPoint[0], -pivotPoint[1], -pivotPoint[2])
+    aimPivot.add(aimContent)
+
+    return aimPivot
+  }
+
+  private getEngineAimContentGroup(aimPivot: Group): Group {
+    const existingAimContent = aimPivot.children.find(
+      (node): node is Group =>
+        node instanceof Group && node.name === ShipBuilderModelManager.ENGINE_AIM_CONTENT_GROUP_NAME
+    )
+    if (existingAimContent) {
+      return existingAimContent
+    }
+
+    const aimContent = new Group()
+    aimContent.name = ShipBuilderModelManager.ENGINE_AIM_CONTENT_GROUP_NAME
+    aimPivot.add(aimContent)
+    return aimContent
+  }
+
+  private applyEngineAimVisual(aimRotation: Vector3Tuple) {
+    const enginesSlotGroup = this.slotGroups.engines
+    const slotContent = enginesSlotGroup.children[0]
+    if (!(slotContent instanceof Group)) {
+      return
+    }
+
+    const aimPivots = this.collectEngineAimPivots(slotContent)
+    aimPivots.forEach((aimPivot) => {
+      aimPivot.rotation.set(aimRotation[0], aimRotation[1], aimRotation[2])
+    })
+  }
+
+  private collectEngineAimPivots(root: Group): Group[] {
+    const aimPivots: Group[] = []
+    root.traverse((node) => {
+      if (
+        node instanceof Group &&
+        node.name === ShipBuilderModelManager.ENGINE_AIM_PIVOT_GROUP_NAME
+      ) {
+        aimPivots.push(node)
+      }
+    })
+    return aimPivots
+  }
+
+  private createNextSymmetryGroupId(slot: ShipSymmetricSlotKey): string {
+    this.symmetryGroupIdCounter += 1
+    return `${slot}SymmetryGroup${this.symmetryGroupIdCounter}`
+  }
+
+  private createNextPartId(slot: ShipSlot, mirrorRole: ShipPartMirrorRole): string {
+    this.partIdCounter += 1
+    return `${slot}Part${mirrorRole}${this.partIdCounter}`
   }
 }

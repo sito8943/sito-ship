@@ -1,7 +1,9 @@
 import {
   DEFAULT_SHIP_CONFIG,
   SHIP_CONFIG_VERSION,
+  SHIP_ENGINE_AIM_ROTATION_RANGES,
   SHIP_SLOT_KEYS,
+  SHIP_SLOT_PIVOT_LOCAL_RANGES,
   SHIP_SLOT_ROTATION_RANGES,
   SHIP_SLOT_SCALE_RANGES,
   SHIP_VARIANT_OPTIONS,
@@ -61,7 +63,9 @@ export class ShipConfigIOManager {
     const nextConfig = createDefaultShipConfig()
     const warnings: string[] = []
 
-    if (parsedJson.version !== SHIP_CONFIG_VERSION) {
+    if (parsedJson.version === 1) {
+      warnings.push(`Legacy config version 1 detected. Migrated to version ${SHIP_CONFIG_VERSION}.`)
+    } else if (parsedJson.version !== SHIP_CONFIG_VERSION) {
       warnings.push(`Version mismatch detected. Using supported version ${SHIP_CONFIG_VERSION}.`)
     }
 
@@ -152,6 +156,38 @@ export class ShipConfigIOManager {
     }
     nextSlot.rotation = clampedRotation
 
+    const pivotLocalValue = sourceSlot.pivotLocal
+    if (pivotLocalValue !== undefined && !isValidVector3Tuple(pivotLocalValue)) {
+      warnings.push(`Slot "${slot}" has an invalid pivotLocal. Using default pivotLocal.`)
+    }
+    const parsedPivotLocal = parseVector3Tuple(pivotLocalValue, defaultSlot.pivotLocal)
+    const clampedPivotLocal = this.clampPivotLocalTuple(slot, parsedPivotLocal)
+    if (this.hasTupleChanged(parsedPivotLocal, clampedPivotLocal)) {
+      const changedAxes = this.getChangedAxes(parsedPivotLocal, clampedPivotLocal).join(', ')
+      warnings.push(
+        `Slot "${slot}" pivotLocal exceeded allowed range on axis ${changedAxes} and was clamped.`
+      )
+    }
+    nextSlot.pivotLocal = clampedPivotLocal
+
+    if (slot === 'engines') {
+      const defaultEngineSlot = defaultSlot as ShipSlotConfigMap['engines']
+      const nextEngineSlot = nextSlot as ShipSlotConfigMap['engines']
+      const aimRotationValue = sourceSlot.aimRotation
+      if (aimRotationValue !== undefined && !isValidVector3Tuple(aimRotationValue)) {
+        warnings.push(`Slot "${slot}" has an invalid aimRotation. Using default aimRotation.`)
+      }
+      const parsedAimRotation = parseVector3Tuple(aimRotationValue, defaultEngineSlot.aimRotation)
+      const clampedAimRotation = this.clampEngineAimRotationTuple(parsedAimRotation)
+      if (this.hasTupleChanged(parsedAimRotation, clampedAimRotation)) {
+        const changedAxes = this.getChangedAxes(parsedAimRotation, clampedAimRotation).join(', ')
+        warnings.push(
+          `Slot "${slot}" aimRotation exceeded allowed range on axis ${changedAxes} and was clamped.`
+        )
+      }
+      nextEngineSlot.aimRotation = clampedAimRotation
+    }
+
     targetConfig[slot] = nextSlot
   }
 
@@ -170,6 +206,35 @@ export class ShipConfigIOManager {
       this.clampNumber(rotation[0], range.x.min, range.x.max),
       this.clampNumber(rotation[1], range.y.min, range.y.max),
       this.clampNumber(rotation[2], range.z.min, range.z.max),
+    ]
+  }
+
+  private clampPivotLocalTuple(slot: ShipSlot, pivotLocal: Vector3Tuple): Vector3Tuple {
+    const range = SHIP_SLOT_PIVOT_LOCAL_RANGES[slot]
+    return [
+      this.clampNumber(pivotLocal[0], range.x.min, range.x.max),
+      this.clampNumber(pivotLocal[1], range.y.min, range.y.max),
+      this.clampNumber(pivotLocal[2], range.z.min, range.z.max),
+    ]
+  }
+
+  private clampEngineAimRotationTuple(aimRotation: Vector3Tuple): Vector3Tuple {
+    return [
+      this.clampNumber(
+        aimRotation[0],
+        SHIP_ENGINE_AIM_ROTATION_RANGES.x.min,
+        SHIP_ENGINE_AIM_ROTATION_RANGES.x.max
+      ),
+      this.clampNumber(
+        aimRotation[1],
+        SHIP_ENGINE_AIM_ROTATION_RANGES.y.min,
+        SHIP_ENGINE_AIM_ROTATION_RANGES.y.max
+      ),
+      this.clampNumber(
+        aimRotation[2],
+        SHIP_ENGINE_AIM_ROTATION_RANGES.z.min,
+        SHIP_ENGINE_AIM_ROTATION_RANGES.z.max
+      ),
     ]
   }
 

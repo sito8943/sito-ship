@@ -53,11 +53,25 @@ export const cloneSlotState = <TSlot extends ShipSlot>(
   slot: TSlot
 ): ShipSlotConfigMap[TSlot] => {
   const slotState = config[slot]
-
-  return {
+  const clonedBaseSlotState = {
     ...slotState,
     scale: [slotState.scale[0], slotState.scale[1], slotState.scale[2]],
     offset: [slotState.offset[0], slotState.offset[1], slotState.offset[2]],
     rotation: [slotState.rotation[0], slotState.rotation[1], slotState.rotation[2]],
+    pivotLocal: [slotState.pivotLocal[0], slotState.pivotLocal[1], slotState.pivotLocal[2]],
   }
+
+  if (slot === 'engines') {
+    const engineSlotState = slotState as ShipSlotConfigMap['engines']
+    return {
+      ...clonedBaseSlotState,
+      aimRotation: [
+        engineSlotState.aimRotation[0],
+        engineSlotState.aimRotation[1],
+        engineSlotState.aimRotation[2],
+      ],
+    } as ShipSlotConfigMap[TSlot]
+  }
+
+  return clonedBaseSlotState as ShipSlotConfigMap[TSlot]
 }

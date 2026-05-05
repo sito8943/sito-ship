@@ -5,7 +5,7 @@ const cloneVector3Tuple = (vector: Vector3Tuple): Vector3Tuple => {
   return [vector[0], vector[1], vector[2]]
 }
 
-const cloneSlotConfig = <TSlotConfig extends ShipSlotBaseConfig>(
+const cloneSlotBaseConfig = <TSlotConfig extends ShipSlotBaseConfig>(
   slotConfig: TSlotConfig
 ): TSlotConfig => {
   return {
@@ -13,17 +13,21 @@ const cloneSlotConfig = <TSlotConfig extends ShipSlotBaseConfig>(
     scale: cloneVector3Tuple(slotConfig.scale),
     offset: cloneVector3Tuple(slotConfig.offset),
     rotation: cloneVector3Tuple(slotConfig.rotation),
+    pivotLocal: cloneVector3Tuple(slotConfig.pivotLocal),
   }
 }
 
 export const cloneShipConfig = (shipConfig: ShipConfig): ShipConfig => {
   return {
     version: shipConfig.version,
-    body: cloneSlotConfig(shipConfig.body),
-    cockpit: cloneSlotConfig(shipConfig.cockpit),
-    wings: cloneSlotConfig(shipConfig.wings),
-    engines: cloneSlotConfig(shipConfig.engines),
-    weapons: cloneSlotConfig(shipConfig.weapons),
+    body: cloneSlotBaseConfig(shipConfig.body),
+    cockpit: cloneSlotBaseConfig(shipConfig.cockpit),
+    wings: cloneSlotBaseConfig(shipConfig.wings),
+    engines: {
+      ...cloneSlotBaseConfig(shipConfig.engines),
+      aimRotation: cloneVector3Tuple(shipConfig.engines.aimRotation),
+    },
+    weapons: cloneSlotBaseConfig(shipConfig.weapons),
   }
 }
 

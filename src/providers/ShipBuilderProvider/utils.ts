@@ -10,6 +10,11 @@ export const areShipConfigsEqual = (a: ShipConfig, b: ShipConfig): boolean => {
   return slots.every((slot) => {
     const currentSlot = a[slot]
     const nextSlot = b[slot]
+    const hasSameEngineAimRotation =
+      slot !== 'engines' ||
+      (a.engines.aimRotation[0] === b.engines.aimRotation[0] &&
+        a.engines.aimRotation[1] === b.engines.aimRotation[1] &&
+        a.engines.aimRotation[2] === b.engines.aimRotation[2])
 
     return (
       currentSlot.variant === nextSlot.variant &&
@@ -22,7 +27,11 @@ export const areShipConfigsEqual = (a: ShipConfig, b: ShipConfig): boolean => {
       currentSlot.offset[2] === nextSlot.offset[2] &&
       currentSlot.rotation[0] === nextSlot.rotation[0] &&
       currentSlot.rotation[1] === nextSlot.rotation[1] &&
-      currentSlot.rotation[2] === nextSlot.rotation[2]
+      currentSlot.rotation[2] === nextSlot.rotation[2] &&
+      currentSlot.pivotLocal[0] === nextSlot.pivotLocal[0] &&
+      currentSlot.pivotLocal[1] === nextSlot.pivotLocal[1] &&
+      currentSlot.pivotLocal[2] === nextSlot.pivotLocal[2] &&
+      hasSameEngineAimRotation
     )
   })
 }
