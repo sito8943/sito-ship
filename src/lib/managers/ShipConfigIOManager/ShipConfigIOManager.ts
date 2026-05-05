@@ -91,7 +91,7 @@ export class ShipConfigIOManager {
   }: {
     slot: TSlot;
     sourceRoot: Record<string, unknown>;
-    targetConfig: ShipConfig;
+    targetConfig: ShipSlotConfigMap;
     warnings: string[];
   }) {
     const sourceSlot = sourceRoot[slot];

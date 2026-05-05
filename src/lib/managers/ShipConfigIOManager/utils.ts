@@ -1,5 +1,4 @@
 import type {
-  ShipConfig,
   ShipSlot,
   ShipSlotConfigMap,
   Vector3Tuple,
@@ -59,7 +58,7 @@ export const isAllowedVariant = <TSlot extends ShipSlot>(
 };
 
 export const cloneSlotState = <TSlot extends ShipSlot>(
-  config: ShipConfig,
+  config: ShipSlotConfigMap,
   slot: TSlot,
 ): ShipSlotConfigMap[TSlot] => {
   const slotState = config[slot];
