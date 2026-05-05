@@ -90,10 +90,13 @@ export class ShipBuilderModelManager {
       const slotGroup = this.slotGroups[slot]
       applySlotTransform(slotGroup, slotConfig)
       if (this.isSymmetricSlot(slot)) {
-        this.syncSymmetricSlotVisual(slot, slotConfig.pivotLocal)
+        const symmetricSlotConfig = slotConfig as
+          | ShipSlotConfigMap['wings']
+          | ShipSlotConfigMap['engines']
+          | ShipSlotConfigMap['weapons']
+        this.syncSymmetricSlotVisual(slot, slotConfig.pivotLocal, symmetricSlotConfig.pairSpread)
       }
       if (slot === 'engines') {
-        this.applyEnginePairSpreadVisual(slotConfig.pairSpread)
         this.applyEngineAimVisual(slotConfig.aimRotation)
       }
       this.applyVisualState(slot)
@@ -524,7 +527,11 @@ export class ShipBuilderModelManager {
     return slot === 'wings' || slot === 'engines' || slot === 'weapons'
   }
 
-  private syncSymmetricSlotVisual(slot: ShipSymmetricSlotKey, pivotLocal?: Vector3Tuple) {
+  private syncSymmetricSlotVisual(
+    slot: ShipSymmetricSlotKey,
+    pivotLocal?: Vector3Tuple,
+    pairSpread?: number
+  ) {
     const slotPair = this.slotPartPairs[slot]
     if (!slotPair) {
       return
@@ -534,6 +541,16 @@ export class ShipBuilderModelManager {
       slotPair.masterPart = {
         ...slotPair.masterPart,
         pivotLocal: [...pivotLocal] as Vector3Tuple,
+      }
+    }
+    if (pairSpread !== undefined) {
+      slotPair.masterPart = {
+        ...slotPair.masterPart,
+        localPosition: [
+          -pairSpread,
+          slotPair.masterPart.localPosition[1],
+          slotPair.masterPart.localPosition[2],
+        ],
       }
     }
 
@@ -667,39 +684,6 @@ export class ShipBuilderModelManager {
     aimPivots.forEach((aimPivot) => {
       aimPivot.rotation.set(aimRotation[0], aimRotation[1], aimRotation[2], 'YXZ')
     })
-  }
-
-  private applyEnginePairSpreadVisual(pairSpread: number) {
-    const slotPair = this.slotPartPairs.engines
-    if (!slotPair) {
-      return
-    }
-
-    const previousPosition = slotPair.masterPart.localPosition
-    slotPair.masterPart = {
-      ...slotPair.masterPart,
-      localPosition: [-pairSpread, previousPosition[1], previousPosition[2]],
-    }
-    slotPair.mirroredPart = this.createMirroredPart(slotPair.masterPart, slotPair.mirroredPart.id)
-
-    const enginesSlotGroup = this.slotGroups.engines
-    const slotContent = enginesSlotGroup.children[0]
-    if (!(slotContent instanceof Group)) {
-      return
-    }
-
-    const masterSide = slotContent.children.find(
-      (node): node is Group => node instanceof Group && node.name === 'masterSide'
-    )
-    const mirroredSide = slotContent.children.find(
-      (node): node is Group => node instanceof Group && node.name === 'mirroredSide'
-    )
-    if (!masterSide || !mirroredSide) {
-      return
-    }
-
-    this.applyPartTransform(masterSide, slotPair.masterPart)
-    this.applyPartTransform(mirroredSide, slotPair.mirroredPart)
   }
 
   private collectEngineAimPivots(root: Group): Group[] {

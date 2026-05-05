@@ -17,13 +17,13 @@ import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { Button, IconButton } from '@/components/ui'
 import {
   ENGINE_AIM_ROTATION_RANGES,
-  ENGINE_PAIR_SPREAD_RANGE,
   OFFSET_AXIS_OPTIONS,
   SLOT_LABELS,
   SLOT_OFFSET_RANGES,
   SLOT_ORDER,
   SLOT_ROTATION_RANGES,
   SLOT_SCALE_RANGES,
+  SYMMETRIC_PAIR_SPREAD_RANGES,
   SLOT_VARIANT_OPTIONS,
   TRANSFORM_MODE_OPTIONS,
 } from '@/components/ShipBuilderControls/constants'
@@ -34,6 +34,8 @@ import {
   getUniformScale,
   updateTupleAxis,
 } from '@/components/ShipBuilderControls/utils'
+
+type PairSpreadSlot = Extract<ShipSlot, 'wings' | 'engines' | 'weapons'>
 
 const ShipBuilderControls = () => {
   const {
@@ -146,12 +148,13 @@ const ShipBuilderControls = () => {
     )
   }
 
-  const handleEnginePairSpreadChange = (
+  const handlePairSpreadChange = (
+    slot: PairSpreadSlot,
     value: number,
     options?: { commitHistory?: boolean }
   ) => {
     updateSlot(
-      'engines',
+      slot,
       {
         pairSpread: value,
       },
@@ -179,7 +182,13 @@ const ShipBuilderControls = () => {
 
   const uniformScale = getUniformScale(activeSlotConfig.scale)
   const hasEngineAimControls = selectedSlot === 'engines'
-  const enginePairSpreadValue = shipConfig.engines.pairSpread
+  const pairSpreadSlot: PairSpreadSlot | null =
+    selectedSlot === 'wings' || selectedSlot === 'engines' || selectedSlot === 'weapons'
+      ? selectedSlot
+      : null
+  const hasPairSpreadControls =
+    pairSpreadSlot !== null &&
+    (pairSpreadSlot !== 'weapons' || shipConfig.weapons.variant !== 'none')
 
   return (
     <aside className="ship-builder-controls" aria-label="Ship Builder Controls">
@@ -426,28 +435,28 @@ const ShipBuilderControls = () => {
             )
           })}
 
-          {hasEngineAimControls ? (
+          {hasPairSpreadControls && pairSpreadSlot ? (
             <label key={`${selectedSlot}-pair-spread`} className="ship-builder-controls__field">
               <span className="ship-builder-controls__field-label">
-                Pair Spread {enginePairSpreadValue.toFixed(2)}
+                Pair Spread {shipConfig[pairSpreadSlot].pairSpread.toFixed(2)}
               </span>
               <input
                 className="ship-builder-controls__range"
                 type="range"
-                min={ENGINE_PAIR_SPREAD_RANGE.min}
-                max={ENGINE_PAIR_SPREAD_RANGE.max}
-                step={ENGINE_PAIR_SPREAD_RANGE.step}
-                value={enginePairSpreadValue}
+                min={SYMMETRIC_PAIR_SPREAD_RANGES[pairSpreadSlot].min}
+                max={SYMMETRIC_PAIR_SPREAD_RANGES[pairSpreadSlot].max}
+                step={SYMMETRIC_PAIR_SPREAD_RANGES[pairSpreadSlot].step}
+                value={shipConfig[pairSpreadSlot].pairSpread}
                 onChange={(event) => {
-                  handleEnginePairSpreadChange(Number(event.target.value))
+                  handlePairSpreadChange(pairSpreadSlot, Number(event.target.value))
                 }}
                 onPointerUp={(event) => {
-                  handleEnginePairSpreadChange(Number(event.currentTarget.value), {
+                  handlePairSpreadChange(pairSpreadSlot, Number(event.currentTarget.value), {
                     commitHistory: true,
                   })
                 }}
                 onBlur={(event) => {
-                  handleEnginePairSpreadChange(Number(event.currentTarget.value), {
+                  handlePairSpreadChange(pairSpreadSlot, Number(event.currentTarget.value), {
                     commitHistory: true,
                   })
                 }}

@@ -2,7 +2,7 @@ import {
   cloneShipConfig,
   createDefaultShipConfig,
   SHIP_ENGINE_AIM_ROTATION_RANGES,
-  SHIP_ENGINE_PAIR_SPREAD_RANGE,
+  SHIP_SYMMETRIC_PAIR_SPREAD_RANGES,
   SHIP_SLOT_KEYS,
   SHIP_SLOT_OFFSET_RANGES,
   SHIP_SLOT_PIVOT_LOCAL_RANGES,
@@ -54,15 +54,24 @@ export class ShipConfigManager {
     if (patch.pivotLocal) {
       clonedPatch.pivotLocal = this.cloneTupleForSlot(patch.pivotLocal)
     }
+    if (this.isSymmetricSlot(slot)) {
+      const symmetricPatch = patch as
+        | ShipSlotPatchInput<'wings'>
+        | ShipSlotPatchInput<'engines'>
+        | ShipSlotPatchInput<'weapons'>
+      const clonedSymmetricPatch = clonedPatch as
+        | ShipSlotPatchInput<'wings'>
+        | ShipSlotPatchInput<'engines'>
+        | ShipSlotPatchInput<'weapons'>
+      if (symmetricPatch.pairSpread !== undefined) {
+        clonedSymmetricPatch.pairSpread = symmetricPatch.pairSpread
+      }
+    }
     if (slot === 'engines') {
       const enginePatch = patch as ShipSlotPatchInput<'engines'>
       if (enginePatch.aimRotation) {
         const clonedEnginesPatch = clonedPatch as ShipSlotPatchInput<'engines'>
         clonedEnginesPatch.aimRotation = this.cloneTupleForSlot(enginePatch.aimRotation)
-      }
-      if (enginePatch.pairSpread !== undefined) {
-        const clonedEnginesPatch = clonedPatch as ShipSlotPatchInput<'engines'>
-        clonedEnginesPatch.pairSpread = enginePatch.pairSpread
       }
     }
 
@@ -197,13 +206,21 @@ export class ShipConfigManager {
         warnings.push(`Slot "${slot}" aimRotation was clamped on axis ${axes}.`)
       }
 
-      const pairSpreadBefore = engineSlotConfig.pairSpread
-      engineSlotConfig.pairSpread = clampNumber(
+    }
+
+    if (this.isSymmetricSlot(slot)) {
+      const symmetricSlotConfig = slotConfig as
+        | ShipConfig['wings']
+        | ShipConfig['engines']
+        | ShipConfig['weapons']
+      const pairSpreadRange = SHIP_SYMMETRIC_PAIR_SPREAD_RANGES[slot]
+      const pairSpreadBefore = symmetricSlotConfig.pairSpread
+      symmetricSlotConfig.pairSpread = clampNumber(
         pairSpreadBefore,
-        SHIP_ENGINE_PAIR_SPREAD_RANGE.min,
-        SHIP_ENGINE_PAIR_SPREAD_RANGE.max
+        pairSpreadRange.min,
+        pairSpreadRange.max
       )
-      if (pairSpreadBefore !== engineSlotConfig.pairSpread) {
+      if (pairSpreadBefore !== symmetricSlotConfig.pairSpread) {
         warnings.push(`Slot "${slot}" pairSpread was clamped.`)
       }
     }
@@ -213,7 +230,7 @@ export class ShipConfigManager {
     return cloneVector3Tuple(vector)
   }
 
-  private isSymmetricSlot(slot: ShipSlot): boolean {
+  private isSymmetricSlot(slot: ShipSlot): slot is (typeof SYMMETRIC_SLOT_KEYS)[number] {
     return SYMMETRIC_SLOT_KEYS.some((symmetrySlot) => symmetrySlot === slot)
   }
 

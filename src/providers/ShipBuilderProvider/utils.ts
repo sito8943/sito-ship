@@ -15,8 +15,10 @@ export const areShipConfigsEqual = (a: ShipConfig, b: ShipConfig): boolean => {
       (a.engines.aimRotation[0] === b.engines.aimRotation[0] &&
         a.engines.aimRotation[1] === b.engines.aimRotation[1] &&
         a.engines.aimRotation[2] === b.engines.aimRotation[2])
-    const hasSameEnginePairSpread =
-      slot !== 'engines' || a.engines.pairSpread === b.engines.pairSpread
+    const hasSameSymmetricPairSpread =
+      (slot !== 'wings' || a.wings.pairSpread === b.wings.pairSpread) &&
+      (slot !== 'engines' || a.engines.pairSpread === b.engines.pairSpread) &&
+      (slot !== 'weapons' || a.weapons.pairSpread === b.weapons.pairSpread)
 
     return (
       currentSlot.variant === nextSlot.variant &&
@@ -34,7 +36,7 @@ export const areShipConfigsEqual = (a: ShipConfig, b: ShipConfig): boolean => {
       currentSlot.pivotLocal[1] === nextSlot.pivotLocal[1] &&
       currentSlot.pivotLocal[2] === nextSlot.pivotLocal[2] &&
       hasSameEngineAimRotation &&
-      hasSameEnginePairSpread
+      hasSameSymmetricPairSpread
     )
   })
 }

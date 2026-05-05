@@ -108,17 +108,36 @@ export const SHIP_SLOT_ROTATION_RANGES: Record<ShipSlot, OffsetRangeMap> = {
   },
 }
 
-export const SHIP_ENGINE_AIM_ROTATION_RANGES: OffsetRangeMap = {
-  x: { min: -2.85, max: 2.85, step: 0.02 },
-  y: { min: -2.85, max: 2.85, step: 0.02 },
-  z: { min: -2.65, max: 2.65, step: 0.02 },
+type ShipSymmetricSlot = Extract<ShipSlot, 'wings' | 'engines' | 'weapons'>
+
+export const SHIP_SYMMETRIC_AIM_ROTATION_RANGES: Record<ShipSymmetricSlot, OffsetRangeMap> = {
+  wings: {
+    x: { min: -2.85, max: 2.85, step: 0.02 },
+    y: { min: -2.85, max: 2.85, step: 0.02 },
+    z: { min: -2.65, max: 2.65, step: 0.02 },
+  },
+  engines: {
+    x: { min: -2.85, max: 2.85, step: 0.02 },
+    y: { min: -2.85, max: 2.85, step: 0.02 },
+    z: { min: -2.65, max: 2.65, step: 0.02 },
+  },
+  weapons: {
+    x: { min: -2.85, max: 2.85, step: 0.02 },
+    y: { min: -2.85, max: 2.85, step: 0.02 },
+    z: { min: -2.65, max: 2.65, step: 0.02 },
+  },
 }
 
-export const SHIP_ENGINE_PAIR_SPREAD_RANGE: TransformRange = {
-  min: -2.2,
-  max: 1.4,
-  step: 0.02,
-}
+export const SHIP_ENGINE_AIM_ROTATION_RANGES = SHIP_SYMMETRIC_AIM_ROTATION_RANGES.engines
+
+export const SHIP_SYMMETRIC_PAIR_SPREAD_RANGES: Record<ShipSymmetricSlot, TransformRange> =
+  {
+    wings: { min: -2.2, max: 1.4, step: 0.02 },
+    engines: { min: -2.2, max: 1.4, step: 0.02 },
+    weapons: { min: -2.2, max: 1.4, step: 0.02 },
+  }
+
+export const SHIP_ENGINE_PAIR_SPREAD_RANGE = SHIP_SYMMETRIC_PAIR_SPREAD_RANGES.engines
 
 export const SHIP_SLOT_PIVOT_LOCAL_RANGES: Record<ShipSlot, OffsetRangeMap> = {
   body: {
@@ -173,6 +192,8 @@ export const DEFAULT_SHIP_CONFIG: ShipConfig = {
     offset: [0, 0, 0],
     rotation: [0, 0, 0],
     pivotLocal: [0, 0, 0],
+    aimRotation: [0, 0, 0],
+    pairSpread: 0,
   },
   engines: {
     variant: 'cylinderDual',
@@ -191,5 +212,7 @@ export const DEFAULT_SHIP_CONFIG: ShipConfig = {
     offset: [0, 0, 0.12],
     rotation: [0, 0, 0],
     pivotLocal: [0, 0, 0],
+    aimRotation: [0, 0, 0],
+    pairSpread: 0,
   },
 }
