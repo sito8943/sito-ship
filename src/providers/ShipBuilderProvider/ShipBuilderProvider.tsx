@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShipConfigManager } from "@/lib/managers/ShipConfigManager";
+import {
+  ShipConfigIOManager,
+  type ImportShipConfigResult,
+} from "@/lib/managers/ShipConfigIOManager";
 import { ShipBuilderSceneManager } from "@/lib/managers/ShipBuilderSceneManager";
 import type { ShipConfig } from "@/lib/models/ShipConfig";
 import { ShipBuilderContext } from "@/providers/ShipBuilderProvider/context";
@@ -12,6 +16,7 @@ import type {
 const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   const sceneManager = useMemo(() => new ShipBuilderSceneManager(), []);
   const shipConfigManager = useMemo(() => new ShipConfigManager(), []);
+  const shipConfigIOManager = useMemo(() => new ShipConfigIOManager(), []);
   const [shipConfig, setShipConfig] = useState<ShipConfig>(() => {
     return shipConfigManager.createDefaultConfig();
   });
@@ -42,6 +47,21 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     [shipConfigManager],
   );
 
+  const exportShipConfigToJson = useCallback(() => {
+    return shipConfigIOManager.exportToJson(shipConfig);
+  }, [shipConfig, shipConfigIOManager]);
+
+  const importShipConfigFromJson = useCallback(
+    (rawInput: string): ImportShipConfigResult => {
+      const result = shipConfigIOManager.importFromJson(rawInput);
+      if (result.ok) {
+        setShipConfig(result.config);
+      }
+      return result;
+    },
+    [shipConfigIOManager],
+  );
+
   const value = useMemo<ShipBuilderContextValue>(() => {
     return {
       sceneManager,
@@ -49,8 +69,18 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       updateSlot,
       resetShipConfig,
       replaceShipConfig,
+      exportShipConfigToJson,
+      importShipConfigFromJson,
     };
-  }, [replaceShipConfig, resetShipConfig, sceneManager, shipConfig, updateSlot]);
+  }, [
+    exportShipConfigToJson,
+    importShipConfigFromJson,
+    replaceShipConfig,
+    resetShipConfig,
+    sceneManager,
+    shipConfig,
+    updateSlot,
+  ]);
 
   return (
     <ShipBuilderContext.Provider value={value}>

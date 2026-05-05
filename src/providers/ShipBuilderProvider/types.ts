@@ -4,6 +4,7 @@ import type {
   ShipSlot,
   ShipSlotPatch,
 } from "@/lib/models/ShipConfig";
+import type { ImportShipConfigResult } from "@/lib/managers/ShipConfigIOManager";
 import type { ShipBuilderSceneManager } from "@/lib/managers/ShipBuilderSceneManager";
 
 export type ShipBuilderProviderProps = PropsWithChildren;
@@ -19,4 +20,6 @@ export type ShipBuilderContextValue = {
   updateSlot: UpdateSlot;
   resetShipConfig: () => void;
   replaceShipConfig: (config: ShipConfig) => void;
+  exportShipConfigToJson: () => string;
+  importShipConfigFromJson: (rawInput: string) => ImportShipConfigResult;
 };

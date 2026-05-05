@@ -1,10 +1,4 @@
-export const SHIP_SLOT_KEYS = [
-  "body",
-  "cockpit",
-  "wings",
-  "engines",
-  "weapons",
-] as const;
+export { SHIP_SLOT_KEYS } from "@/lib/models/ShipConfig";
 
 export const BODY_BASE_DEPTH = 6;
 

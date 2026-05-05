@@ -1,16 +1,11 @@
-import type { ShipSlot } from "@/lib/models/ShipConfig";
-import type {
-  OffsetAxisOption,
-  SlotVariantOptionsMap,
-} from "@/components/ShipBuilderControls/types";
+import {
+  SHIP_SLOT_KEYS,
+  SHIP_VARIANT_OPTIONS,
+  type ShipSlot,
+} from "@/lib/models/ShipConfig";
+import type { OffsetAxisOption } from "@/components/ShipBuilderControls/types";
 
-export const SLOT_ORDER: readonly ShipSlot[] = [
-  "body",
-  "cockpit",
-  "wings",
-  "engines",
-  "weapons",
-];
+export const SLOT_ORDER: readonly ShipSlot[] = SHIP_SLOT_KEYS;
 
 export const SLOT_LABELS: Record<ShipSlot, string> = {
   body: "Body",
@@ -20,13 +15,7 @@ export const SLOT_LABELS: Record<ShipSlot, string> = {
   weapons: "Weapons",
 };
 
-export const SLOT_VARIANT_OPTIONS = {
-  body: ["box", "longBox", "tapered"],
-  cockpit: ["sphere", "oval", "bubble"],
-  wings: ["rect", "triangular", "double"],
-  engines: ["cylinder", "cone", "cylinderDual"],
-  weapons: ["none", "singleCannon", "dualCannon"],
-} satisfies SlotVariantOptionsMap;
+export const SLOT_VARIANT_OPTIONS = SHIP_VARIANT_OPTIONS;
 
 export const SCALE_RANGE = {
   min: 0.6,

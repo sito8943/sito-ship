@@ -1,4 +1,9 @@
-export { DEFAULT_SHIP_CONFIG, SHIP_CONFIG_VERSION } from "@/lib/models/ShipConfig/constants";
+export {
+  DEFAULT_SHIP_CONFIG,
+  SHIP_CONFIG_VERSION,
+  SHIP_SLOT_KEYS,
+  SHIP_VARIANT_OPTIONS,
+} from "@/lib/models/ShipConfig/constants";
 export { cloneShipConfig, createDefaultShipConfig } from "@/lib/models/ShipConfig/utils";
 export type {
   BodySlotConfig,
