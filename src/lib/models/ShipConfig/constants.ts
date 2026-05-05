@@ -60,7 +60,7 @@ export const SHIP_SLOT_OFFSET_RANGES: Record<ShipSlot, OffsetRangeMap> = {
   },
   cockpit: {
     x: { min: -0.45, max: 0.45, step: 0.05 },
-    y: { min: -0.15, max: 0.95, step: 0.05 },
+    y: { min: -1.15, max: 0.95, step: 0.05 },
     z: { min: -0.45, max: 0.95, step: 0.05 },
   },
   wings: {

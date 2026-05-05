@@ -627,7 +627,8 @@ export class ShipBuilderModelManager {
     aimPivot.rotation.set(
       slotConfig.aimRotation[0],
       slotConfig.aimRotation[1],
-      slotConfig.aimRotation[2]
+      slotConfig.aimRotation[2],
+      'YXZ'
     )
 
     const aimContent = new Group()
@@ -663,7 +664,7 @@ export class ShipBuilderModelManager {
 
     const aimPivots = this.collectEngineAimPivots(slotContent)
     aimPivots.forEach((aimPivot) => {
-      aimPivot.rotation.set(aimRotation[0], aimRotation[1], aimRotation[2])
+      aimPivot.rotation.set(aimRotation[0], aimRotation[1], aimRotation[2], 'YXZ')
     })
   }
 
