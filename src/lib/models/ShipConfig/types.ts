@@ -10,6 +10,7 @@ export type ShipSlotBaseConfig = {
   color: string;
   scale: Vector3Tuple;
   offset: Vector3Tuple;
+  rotation: Vector3Tuple;
 };
 
 export type BodySlotConfig = ShipSlotBaseConfig & {

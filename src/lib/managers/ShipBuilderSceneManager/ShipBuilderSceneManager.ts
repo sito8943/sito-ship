@@ -1,6 +1,8 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { TransformControls } from "three/examples/jsm/controls/TransformControls.js";
 import {
   AmbientLight,
+  Box3,
   Clock,
   Color,
   DirectionalLight,
@@ -9,17 +11,29 @@ import {
   Mesh,
   PerspectiveCamera,
   PCFShadowMap,
+  Raycaster,
   Scene,
+  Vector2,
+  Vector3,
   WebGLRenderer,
+  type Object3D,
 } from "three";
 import { ShipBuilderModelManager } from "@/lib/managers/ShipBuilderModelManager";
-import type { ShipConfig } from "@/lib/models/ShipConfig";
+import type { ShipConfig, ShipSlot } from "@/lib/models/ShipConfig";
 import {
   CAMERA_SETTINGS,
   MAX_DEVICE_PIXEL_RATIO,
+  OVERLAP_SLOT_PAIRS,
+  OVERLAP_VOLUME_RATIO_THRESHOLD,
   SCENE_COLORS,
 } from "@/lib/managers/ShipBuilderSceneManager/constants";
-import type { SceneSize } from "@/lib/managers/ShipBuilderSceneManager/types";
+import type {
+  SceneSize,
+  SceneSlotSelectionHandler,
+  SceneSlotTransformHandler,
+  SceneValidationHandler,
+  TransformMode,
+} from "@/lib/managers/ShipBuilderSceneManager/types";
 
 export class ShipBuilderSceneManager {
   private canvas: HTMLCanvasElement | null = null;
@@ -27,12 +41,26 @@ export class ShipBuilderSceneManager {
   private scene: Scene | null = null;
   private camera: PerspectiveCamera | null = null;
   private controls: OrbitControls | null = null;
+  private transformControls: TransformControls | null = null;
   private clock: Clock | null = null;
   private shipGroup: Group | null = null;
   private shipModelManager: ShipBuilderModelManager | null = null;
   private pendingShipConfig: ShipConfig | null = null;
   private animationFrameId = 0;
   private isMounted = false;
+  private selectedSlot: ShipSlot | null = "body";
+  private transformMode: TransformMode = "translate";
+  private readonly raycaster = new Raycaster();
+  private readonly pointer = new Vector2();
+  private readonly boxA = new Box3();
+  private readonly boxB = new Box3();
+  private readonly intersectionBox = new Box3();
+  private readonly sizeA = new Vector3();
+  private readonly sizeB = new Vector3();
+  private readonly intersectionSize = new Vector3();
+  private slotSelectionHandler: SceneSlotSelectionHandler | null = null;
+  private slotTransformHandler: SceneSlotTransformHandler | null = null;
+  private slotValidationHandler: SceneValidationHandler | null = null;
 
   mount(canvas: HTMLCanvasElement) {
     if (this.canvas === canvas && this.isMounted) {
@@ -45,6 +73,7 @@ export class ShipBuilderSceneManager {
     this.isMounted = true;
 
     window.addEventListener("resize", this.handleResize);
+    this.canvas.addEventListener("pointerdown", this.handleCanvasPointerDown);
     this.resize();
     this.animate();
   }
@@ -53,9 +82,38 @@ export class ShipBuilderSceneManager {
     return this.shipGroup;
   }
 
+  setSlotSelectionHandler(handler: SceneSlotSelectionHandler | null) {
+    this.slotSelectionHandler = handler;
+  }
+
+  setSlotTransformHandler(handler: SceneSlotTransformHandler | null) {
+    this.slotTransformHandler = handler;
+  }
+
+  setSlotValidationHandler(handler: SceneValidationHandler | null) {
+    this.slotValidationHandler = handler;
+  }
+
+  setSelectedSlot(slot: ShipSlot | null) {
+    this.selectedSlot = slot;
+    this.shipModelManager?.setSelectedSlot(slot);
+    this.refreshTransformControlAttachment();
+  }
+
+  setTransformMode(mode: TransformMode) {
+    this.transformMode = mode;
+    this.transformControls?.setMode(mode);
+  }
+
   syncShipConfig(shipConfig: ShipConfig) {
     this.pendingShipConfig = shipConfig;
     this.shipModelManager?.sync(shipConfig);
+    this.shipModelManager?.setSelectedSlot(this.selectedSlot);
+    this.refreshTransformControlAttachment();
+
+    const overlappingSlots = this.detectSevereOverlaps();
+    this.shipModelManager?.setInvalidSlots(overlappingSlots);
+    this.slotValidationHandler?.(overlappingSlots);
   }
 
   resize() {
@@ -89,6 +147,19 @@ export class ShipBuilderSceneManager {
     }
 
     window.removeEventListener("resize", this.handleResize);
+    this.canvas?.removeEventListener("pointerdown", this.handleCanvasPointerDown);
+
+    if (this.transformControls) {
+      this.transformControls.removeEventListener(
+        "dragging-changed",
+        this.handleTransformDraggingChange,
+      );
+      this.transformControls.removeEventListener("objectChange", this.handleObjectTransform);
+      this.transformControls.removeEventListener("mouseUp", this.handleTransformMouseUp);
+      this.transformControls.detach();
+      this.scene?.remove(this.transformControls);
+      this.transformControls.dispose();
+    }
 
     this.controls?.dispose();
     this.shipModelManager?.dispose();
@@ -113,6 +184,7 @@ export class ShipBuilderSceneManager {
 
     this.clock = null;
     this.controls = null;
+    this.transformControls = null;
     this.shipGroup = null;
     this.shipModelManager = null;
     this.pendingShipConfig = null;
@@ -163,6 +235,7 @@ export class ShipBuilderSceneManager {
     this.initializeLights();
     this.initializeHelpers();
     this.initializeShipGroup();
+    this.initializeTransformControls();
   }
 
   private initializeLights() {
@@ -208,10 +281,41 @@ export class ShipBuilderSceneManager {
     this.shipGroup.name = "shipGroup";
     this.scene.add(this.shipGroup);
     this.shipModelManager = new ShipBuilderModelManager(this.shipGroup);
+    this.shipModelManager.setSelectedSlot(this.selectedSlot);
 
     if (this.pendingShipConfig) {
       this.shipModelManager.sync(this.pendingShipConfig);
     }
+  }
+
+  private initializeTransformControls() {
+    if (!this.scene || !this.camera || !this.renderer) {
+      return;
+    }
+
+    this.transformControls = new TransformControls(this.camera, this.renderer.domElement);
+    this.transformControls.setMode(this.transformMode);
+    this.transformControls.setSpace("local");
+    this.transformControls.size = 0.85;
+    this.transformControls.addEventListener(
+      "dragging-changed",
+      this.handleTransformDraggingChange,
+    );
+    this.transformControls.addEventListener("objectChange", this.handleObjectTransform);
+    this.transformControls.addEventListener("mouseUp", this.handleTransformMouseUp);
+    this.scene.add(this.transformControls);
+    this.refreshTransformControlAttachment();
+  }
+
+  private refreshTransformControlAttachment() {
+    if (!this.transformControls || !this.shipModelManager || !this.selectedSlot) {
+      this.transformControls?.detach();
+      return;
+    }
+
+    const slotGroup = this.shipModelManager.getSlotGroup(this.selectedSlot);
+    this.transformControls.setMode(this.transformMode);
+    this.transformControls.attach(slotGroup);
   }
 
   private getSceneSize(): SceneSize {
@@ -237,6 +341,166 @@ export class ShipBuilderSceneManager {
 
     this.resize();
   };
+
+  private handleCanvasPointerDown = (event: PointerEvent) => {
+    if (!this.camera || !this.shipGroup || !this.canvas) {
+      return;
+    }
+
+    if (this.transformControls?.dragging) {
+      return;
+    }
+
+    const rect = this.canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return;
+    }
+
+    this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.pointer, this.camera);
+    const intersections = this.raycaster.intersectObject(this.shipGroup, true);
+
+    const selectedSlot = intersections
+      .map((intersection) => this.getSlotFromObject(intersection.object))
+      .find((slot): slot is ShipSlot => slot !== null);
+
+    if (!selectedSlot) {
+      return;
+    }
+
+    this.setSelectedSlot(selectedSlot);
+    this.slotSelectionHandler?.(selectedSlot);
+  };
+
+  private getSlotFromObject(object: Object3D | null): ShipSlot | null {
+    let node: Object3D | null = object;
+
+    while (node) {
+      const slot = node.userData.shipSlot;
+      if (slot && this.isShipSlot(slot)) {
+        return slot;
+      }
+
+      node = node.parent;
+    }
+
+    return null;
+  }
+
+  private isShipSlot(value: unknown): value is ShipSlot {
+    return (
+      value === "body" ||
+      value === "cockpit" ||
+      value === "wings" ||
+      value === "engines" ||
+      value === "weapons"
+    );
+  }
+
+  private handleTransformDraggingChange = (event: Event) => {
+    const draggingEvent = event as Event & { value: boolean };
+    if (this.controls) {
+      this.controls.enabled = !draggingEvent.value;
+    }
+  };
+
+  private handleObjectTransform = () => {
+    this.emitTransformPatch(false);
+  };
+
+  private handleTransformMouseUp = () => {
+    this.emitTransformPatch(true);
+  };
+
+  private emitTransformPatch(commitHistory: boolean) {
+    if (!this.selectedSlot || !this.shipModelManager) {
+      return;
+    }
+
+    const slotGroup = this.shipModelManager.getSlotGroup(this.selectedSlot);
+
+    if (this.transformMode === "translate") {
+      this.slotTransformHandler?.(
+        this.selectedSlot,
+        {
+          offset: [slotGroup.position.x, slotGroup.position.y, slotGroup.position.z],
+        },
+        { commitHistory },
+      );
+      return;
+    }
+
+    if (this.transformMode === "rotate") {
+      this.slotTransformHandler?.(
+        this.selectedSlot,
+        {
+          rotation: [slotGroup.rotation.x, slotGroup.rotation.y, slotGroup.rotation.z],
+        },
+        { commitHistory },
+      );
+      return;
+    }
+
+    this.slotTransformHandler?.(
+      this.selectedSlot,
+      {
+        scale: [slotGroup.scale.x, slotGroup.scale.y, slotGroup.scale.z],
+      },
+      { commitHistory },
+    );
+  }
+
+  private detectSevereOverlaps(): ShipSlot[] {
+    if (!this.shipModelManager) {
+      return [];
+    }
+
+    const overlappingSlots = new Set<ShipSlot>();
+
+    OVERLAP_SLOT_PAIRS.forEach(([slotA, slotB]) => {
+      const groupA = this.shipModelManager?.getSlotGroup(slotA);
+      const groupB = this.shipModelManager?.getSlotGroup(slotB);
+      if (!groupA || !groupB) {
+        return;
+      }
+
+      this.boxA.setFromObject(groupA);
+      this.boxB.setFromObject(groupB);
+
+      if (this.boxA.isEmpty() || this.boxB.isEmpty()) {
+        return;
+      }
+
+      this.intersectionBox.copy(this.boxA).intersect(this.boxB);
+      if (this.intersectionBox.isEmpty()) {
+        return;
+      }
+
+      this.boxA.getSize(this.sizeA);
+      this.boxB.getSize(this.sizeB);
+      this.intersectionBox.getSize(this.intersectionSize);
+
+      const volumeA = this.sizeA.x * this.sizeA.y * this.sizeA.z;
+      const volumeB = this.sizeB.x * this.sizeB.y * this.sizeB.z;
+      const intersectionVolume =
+        this.intersectionSize.x * this.intersectionSize.y * this.intersectionSize.z;
+      const smallerVolume = Math.min(volumeA, volumeB);
+
+      if (smallerVolume <= 0) {
+        return;
+      }
+
+      const ratio = intersectionVolume / smallerVolume;
+      if (ratio >= OVERLAP_VOLUME_RATIO_THRESHOLD) {
+        overlappingSlots.add(slotA);
+        overlappingSlots.add(slotB);
+      }
+    });
+
+    return [...overlappingSlots];
+  }
 
   private animate = () => {
     if (!this.isMounted || !this.renderer || !this.scene || !this.camera) {

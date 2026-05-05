@@ -83,6 +83,34 @@ export const SHIP_SLOT_OFFSET_RANGES: Record<ShipSlot, OffsetRangeMap> = {
   },
 };
 
+export const SHIP_SLOT_ROTATION_RANGES: Record<ShipSlot, OffsetRangeMap> = {
+  body: {
+    x: { min: -0.45, max: 0.45, step: 0.02 },
+    y: { min: -0.75, max: 0.75, step: 0.02 },
+    z: { min: -0.4, max: 0.4, step: 0.02 },
+  },
+  cockpit: {
+    x: { min: -0.45, max: 0.45, step: 0.02 },
+    y: { min: -0.65, max: 0.65, step: 0.02 },
+    z: { min: -0.4, max: 0.4, step: 0.02 },
+  },
+  wings: {
+    x: { min: -0.35, max: 0.35, step: 0.02 },
+    y: { min: -0.55, max: 0.55, step: 0.02 },
+    z: { min: -0.35, max: 0.35, step: 0.02 },
+  },
+  engines: {
+    x: { min: -0.45, max: 0.45, step: 0.02 },
+    y: { min: -0.45, max: 0.45, step: 0.02 },
+    z: { min: -0.35, max: 0.35, step: 0.02 },
+  },
+  weapons: {
+    x: { min: -0.35, max: 0.35, step: 0.02 },
+    y: { min: -0.35, max: 0.35, step: 0.02 },
+    z: { min: -0.35, max: 0.35, step: 0.02 },
+  },
+};
+
 export const DEFAULT_SHIP_CONFIG: ShipConfig = {
   version: SHIP_CONFIG_VERSION,
   body: {
@@ -90,29 +118,34 @@ export const DEFAULT_SHIP_CONFIG: ShipConfig = {
     color: "#334155",
     scale: [1, 1, 1],
     offset: [0, 0, 0],
+    rotation: [0, 0, 0],
   },
   cockpit: {
     variant: "oval",
     color: "#93c5fd",
     scale: [1, 1, 1],
     offset: [0, 0.28, 0.42],
+    rotation: [0, 0, 0],
   },
   wings: {
     variant: "double",
     color: "#64748b",
     scale: [1, 1, 1],
     offset: [0, 0, 0],
+    rotation: [0, 0, 0],
   },
   engines: {
     variant: "cylinderDual",
     color: "#1f2937",
     scale: [1, 1, 1],
     offset: [0, -0.04, 1],
+    rotation: [0, 0, 0],
   },
   weapons: {
     variant: "singleCannon",
     color: "#94a3b8",
     scale: [1, 1, 1],
     offset: [0, 0, 0.12],
+    rotation: [0, 0, 0],
   },
 };

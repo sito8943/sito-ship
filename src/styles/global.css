@@ -92,6 +92,73 @@ body {
   cursor: pointer;
 }
 
+.ship-builder-controls__action-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.ship-builder-controls__action-button--small {
+  font-size: 0.72rem;
+  padding: 5px 8px;
+}
+
+.ship-builder-controls__section {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px 4px;
+}
+
+.ship-builder-controls__section-title {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.ship-builder-controls__slot-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ship-builder-controls__slot-tab {
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  padding: 5px 9px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.ship-builder-controls__slot-tab--active {
+  border-color: rgba(125, 211, 252, 0.85);
+  color: #e0f2fe;
+  background: rgba(12, 74, 110, 0.45);
+}
+
+.ship-builder-controls__mode-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.ship-builder-controls__mode-button {
+  flex: 1;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: rgba(15, 23, 42, 0.8);
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.ship-builder-controls__mode-button--active {
+  border-color: rgba(253, 224, 71, 0.8);
+  color: #fef9c3;
+  background: rgba(113, 63, 18, 0.36);
+}
+
 .ship-builder-controls__list {
   display: grid;
   gap: 10px;
@@ -106,6 +173,13 @@ body {
   border: 1px solid rgba(71, 85, 105, 0.55);
   border-radius: 10px;
   background: rgba(15, 23, 42, 0.6);
+}
+
+.ship-builder-controls__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .ship-builder-controls__card-title {
@@ -180,6 +254,10 @@ body {
   justify-content: flex-end;
 }
 
+.ship-builder-controls__io-actions--spaced {
+  justify-content: space-between;
+}
+
 .ship-builder-controls__io-message {
   margin: 0;
   font-size: 0.74rem;
@@ -191,6 +269,14 @@ body {
 
 .ship-builder-controls__io-message--error {
   color: #fca5a5;
+}
+
+.ship-builder-controls__io-message--warning {
+  color: #fcd34d;
+}
+
+.ship-builder-controls__io-message--info {
+  color: #bae6fd;
 }
 
 .ship-builder-controls__warning-list {

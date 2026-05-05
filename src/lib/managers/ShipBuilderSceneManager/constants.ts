@@ -1,3 +1,5 @@
+import type { ShipSlot } from "@/lib/models/ShipConfig";
+
 export const MAX_DEVICE_PIXEL_RATIO = 2;
 
 export const CAMERA_SETTINGS = {
@@ -16,3 +18,13 @@ export const SCENE_COLORS = {
   grid: "#16263f",
   gridCenter: "#44638f",
 } as const;
+
+export const OVERLAP_VOLUME_RATIO_THRESHOLD = 0.45;
+
+export const OVERLAP_SLOT_PAIRS: readonly [ShipSlot, ShipSlot][] = [
+  ["cockpit", "engines"],
+  ["cockpit", "weapons"],
+  ["wings", "engines"],
+  ["wings", "weapons"],
+  ["engines", "weapons"],
+];

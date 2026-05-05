@@ -13,6 +13,7 @@ import type {
   CockpitSlotConfig,
   EnginesSlotConfig,
   ShipConfig,
+  ShipSlot,
   ShipSlotConfigMap,
   WeaponsSlotConfig,
   WingsSlotConfig,
@@ -32,8 +33,10 @@ import {
   applyShadowToObject,
   applySlotTransform,
   createSlotMaterial,
-  createSlotSignature,
+  createSlotRenderSignature,
   disposeGroupResources,
+  markSlotInHierarchy,
+  setSlotHighlight,
 } from "@/lib/managers/ShipBuilderModelManager/utils";
 
 export class ShipBuilderModelManager {
@@ -41,6 +44,8 @@ export class ShipBuilderModelManager {
   private readonly slotGroups: ShipSlotGroupMap;
   private readonly slotSignatures: Partial<ShipSlotSignatureMap>;
   private readonly slotBuilders: SlotBuilderMap;
+  private selectedSlot: ShipSlot | null = null;
+  private invalidSlots = new Set<ShipSlot>();
 
   constructor(rootGroup: Group) {
     this.rootGroup = rootGroup;
@@ -58,16 +63,36 @@ export class ShipBuilderModelManager {
   sync(shipConfig: ShipConfig) {
     SHIP_SLOT_KEYS.forEach((slot) => {
       const slotConfig = shipConfig[slot];
-      const nextSignature = createSlotSignature(slotConfig);
+      const nextSignature = createSlotRenderSignature(slotConfig);
       const previousSignature = this.slotSignatures[slot];
 
-      if (previousSignature === nextSignature) {
-        return;
+      if (previousSignature !== nextSignature) {
+        this.rebuildSlot(slot, slotConfig);
+        this.slotSignatures[slot] = nextSignature;
       }
 
-      this.rebuildSlot(slot, slotConfig);
-      this.slotSignatures[slot] = nextSignature;
+      const slotGroup = this.slotGroups[slot];
+      applySlotTransform(slotGroup, slotConfig);
+      this.applyVisualState(slot);
     });
+  }
+
+  setSelectedSlot(slot: ShipSlot | null) {
+    this.selectedSlot = slot;
+    SHIP_SLOT_KEYS.forEach((slotKey) => {
+      this.applyVisualState(slotKey);
+    });
+  }
+
+  setInvalidSlots(slots: ShipSlot[]) {
+    this.invalidSlots = new Set(slots);
+    SHIP_SLOT_KEYS.forEach((slotKey) => {
+      this.applyVisualState(slotKey);
+    });
+  }
+
+  getSlotGroup(slot: ShipSlot): Group {
+    return this.slotGroups[slot];
   }
 
   dispose() {
@@ -92,6 +117,7 @@ export class ShipBuilderModelManager {
     SHIP_SLOT_KEYS.forEach((slot) => {
       const slotGroup = slotGroups[slot];
       slotGroup.name = `${slot}SlotGroup`;
+      markSlotInHierarchy(slotGroup, slot);
       this.rootGroup.add(slotGroup);
     });
 
@@ -110,7 +136,17 @@ export class ShipBuilderModelManager {
     const builder = this.slotBuilders[slot];
     const slotContent = builder(slotConfig);
     slotContent.name = `${slot}SlotContent`;
+    markSlotInHierarchy(slotContent, slot);
     slotGroup.add(slotContent);
+    this.applyVisualState(slot);
+  }
+
+  private applyVisualState(slot: ShipSlot) {
+    const slotGroup = this.slotGroups[slot];
+    setSlotHighlight(slotGroup, {
+      isSelected: this.selectedSlot === slot,
+      isInvalid: this.invalidSlots.has(slot),
+    });
   }
 
   private buildBodySlot = (slotConfig: BodySlotConfig): Group => {
@@ -122,8 +158,6 @@ export class ShipBuilderModelManager {
     group.add(bodyMesh);
 
     applyShadowToObject(group);
-    applySlotTransform(group, slotConfig);
-
     return group;
   };
 
@@ -166,8 +200,6 @@ export class ShipBuilderModelManager {
     }
 
     applyShadowToObject(group);
-    applySlotTransform(group, slotConfig);
-
     return group;
   };
 
@@ -192,8 +224,6 @@ export class ShipBuilderModelManager {
     });
 
     applyShadowToObject(group);
-    applySlotTransform(group, slotConfig);
-
     return group;
   };
 
@@ -248,8 +278,6 @@ export class ShipBuilderModelManager {
     });
 
     applyShadowToObject(group);
-    applySlotTransform(group, slotConfig);
-
     return group;
   };
 
@@ -322,8 +350,6 @@ export class ShipBuilderModelManager {
     });
 
     applyShadowToObject(group);
-    applySlotTransform(group, slotConfig);
-
     return group;
   };
 

@@ -67,5 +67,6 @@ export const cloneSlotState = <TSlot extends ShipSlot>(
     ...slotState,
     scale: [slotState.scale[0], slotState.scale[1], slotState.scale[2]],
     offset: [slotState.offset[0], slotState.offset[1], slotState.offset[2]],
+    rotation: [slotState.rotation[0], slotState.rotation[1], slotState.rotation[2]],
   };
 };

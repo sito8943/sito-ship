@@ -16,6 +16,7 @@ const cloneSlotConfig = <TSlotConfig extends ShipSlotBaseConfig>(
     ...slotConfig,
     scale: cloneVector3Tuple(slotConfig.scale),
     offset: cloneVector3Tuple(slotConfig.offset),
+    rotation: cloneVector3Tuple(slotConfig.rotation),
   };
 };
 

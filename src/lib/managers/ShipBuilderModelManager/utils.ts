@@ -37,18 +37,61 @@ export const applySlotTransform = (
     slotConfig.offset[1],
     slotConfig.offset[2],
   );
+  group.rotation.set(
+    slotConfig.rotation[0],
+    slotConfig.rotation[1],
+    slotConfig.rotation[2],
+  );
   group.scale.set(slotConfig.scale[0], slotConfig.scale[1], slotConfig.scale[2]);
 };
 
-export const createSlotSignature = (
+export const createSlotRenderSignature = (
   slotConfig: ShipSlotConfigMap[ShipSlot],
 ): string => {
-  return [
-    slotConfig.variant,
-    slotConfig.color,
-    slotConfig.scale.join(","),
-    slotConfig.offset.join(","),
-  ].join("|");
+  return [slotConfig.variant, slotConfig.color].join("|");
+};
+
+export const markSlotInHierarchy = (object: Object3D, slot: ShipSlot) => {
+  object.userData.shipSlot = slot;
+  object.traverse((node) => {
+    node.userData.shipSlot = slot;
+  });
+};
+
+export const setSlotHighlight = (
+  object: Object3D,
+  options: {
+    isSelected: boolean;
+    isInvalid: boolean;
+  },
+) => {
+  object.traverse((node) => {
+    if (!(node instanceof Mesh)) {
+      return;
+    }
+
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.forEach((material) => {
+      if (!(material instanceof MeshStandardMaterial)) {
+        return;
+      }
+
+      if (options.isInvalid) {
+        material.emissive.set("#dc2626");
+        material.emissiveIntensity = 0.45;
+        return;
+      }
+
+      if (options.isSelected) {
+        material.emissive.set("#38bdf8");
+        material.emissiveIntensity = 0.35;
+        return;
+      }
+
+      material.emissive.set("#000000");
+      material.emissiveIntensity = 0;
+    });
+  });
 };
 
 export const disposeGroupResources = (group: Group) => {
