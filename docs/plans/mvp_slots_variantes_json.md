@@ -164,6 +164,8 @@ Entregable: ida y vuelta JSON completa.
 
 ## Fase 7: Pulido mínimo
 
+Estado: completada (2026-05-05).
+
 - Defaults visuales coherentes
 - Límites de sliders para evitar combinaciones rotas
 - Ajuste de cámara y luces

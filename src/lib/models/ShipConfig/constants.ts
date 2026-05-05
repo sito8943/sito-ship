@@ -10,6 +10,18 @@ import type {
 
 export const SHIP_CONFIG_VERSION = 1;
 
+type TransformRange = {
+  min: number;
+  max: number;
+  step: number;
+};
+
+type OffsetRangeMap = {
+  x: TransformRange;
+  y: TransformRange;
+  z: TransformRange;
+};
+
 export const SHIP_SLOT_KEYS: readonly ShipSlot[] = [
   "body",
   "cockpit",
@@ -32,36 +44,75 @@ export const SHIP_VARIANT_OPTIONS: {
   weapons: ["none", "singleCannon", "dualCannon"],
 };
 
+export const SHIP_SLOT_SCALE_RANGES: Record<
+  ShipSlot,
+  TransformRange
+> = {
+  body: { min: 0.85, max: 1.35, step: 0.05 },
+  cockpit: { min: 0.75, max: 1.45, step: 0.05 },
+  wings: { min: 0.75, max: 1.3, step: 0.05 },
+  engines: { min: 0.8, max: 1.35, step: 0.05 },
+  weapons: { min: 0.75, max: 1.4, step: 0.05 },
+};
+
+export const SHIP_SLOT_OFFSET_RANGES: Record<ShipSlot, OffsetRangeMap> = {
+  body: {
+    x: { min: -0.4, max: 0.4, step: 0.05 },
+    y: { min: -0.35, max: 0.35, step: 0.05 },
+    z: { min: -0.6, max: 0.6, step: 0.05 },
+  },
+  cockpit: {
+    x: { min: -0.45, max: 0.45, step: 0.05 },
+    y: { min: -0.15, max: 0.95, step: 0.05 },
+    z: { min: -0.45, max: 0.95, step: 0.05 },
+  },
+  wings: {
+    x: { min: -0.35, max: 0.35, step: 0.05 },
+    y: { min: -0.65, max: 0.65, step: 0.05 },
+    z: { min: -1.15, max: 1.15, step: 0.05 },
+  },
+  engines: {
+    x: { min: -0.55, max: 0.55, step: 0.05 },
+    y: { min: -0.55, max: 0.55, step: 0.05 },
+    z: { min: -1.25, max: 1.75, step: 0.05 },
+  },
+  weapons: {
+    x: { min: -0.45, max: 0.45, step: 0.05 },
+    y: { min: -0.45, max: 0.45, step: 0.05 },
+    z: { min: -0.45, max: 1.25, step: 0.05 },
+  },
+};
+
 export const DEFAULT_SHIP_CONFIG: ShipConfig = {
   version: SHIP_CONFIG_VERSION,
   body: {
-    variant: "box",
-    color: "#4f46e5",
+    variant: "longBox",
+    color: "#334155",
     scale: [1, 1, 1],
     offset: [0, 0, 0],
   },
   cockpit: {
-    variant: "sphere",
-    color: "#38bdf8",
+    variant: "oval",
+    color: "#93c5fd",
     scale: [1, 1, 1],
-    offset: [0, 0.35, 0.2],
+    offset: [0, 0.28, 0.42],
   },
   wings: {
-    variant: "triangular",
+    variant: "double",
     color: "#64748b",
     scale: [1, 1, 1],
     offset: [0, 0, 0],
   },
   engines: {
     variant: "cylinderDual",
-    color: "#111827",
+    color: "#1f2937",
     scale: [1, 1, 1],
-    offset: [0, 0, 0],
+    offset: [0, -0.04, 1],
   },
   weapons: {
-    variant: "none",
+    variant: "singleCannon",
     color: "#94a3b8",
     scale: [1, 1, 1],
-    offset: [0, 0, 0],
+    offset: [0, 0, 0.12],
   },
 };

@@ -1,5 +1,7 @@
 import {
+  SHIP_SLOT_OFFSET_RANGES,
   SHIP_SLOT_KEYS,
+  SHIP_SLOT_SCALE_RANGES,
   SHIP_VARIANT_OPTIONS,
   type ShipSlot,
 } from "@/lib/models/ShipConfig";
@@ -17,14 +19,11 @@ export const SLOT_LABELS: Record<ShipSlot, string> = {
 
 export const SLOT_VARIANT_OPTIONS = SHIP_VARIANT_OPTIONS;
 
-export const SCALE_RANGE = {
-  min: 0.6,
-  max: 1.8,
-  step: 0.05,
-} as const;
+export const SLOT_SCALE_RANGES = SHIP_SLOT_SCALE_RANGES;
+export const SLOT_OFFSET_RANGES = SHIP_SLOT_OFFSET_RANGES;
 
 export const OFFSET_AXIS_OPTIONS: readonly OffsetAxisOption[] = [
-  { axis: "x", index: 0, min: -2.5, max: 2.5, step: 0.05 },
-  { axis: "y", index: 1, min: -2, max: 2, step: 0.05 },
-  { axis: "z", index: 2, min: -3.5, max: 3.5, step: 0.05 },
+  { axis: "x", index: 0 },
+  { axis: "y", index: 1 },
+  { axis: "z", index: 2 },
 ];

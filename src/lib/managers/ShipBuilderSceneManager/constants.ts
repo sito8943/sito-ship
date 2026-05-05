@@ -1,18 +1,18 @@
 export const MAX_DEVICE_PIXEL_RATIO = 2;
 
 export const CAMERA_SETTINGS = {
-  fov: 60,
+  fov: 55,
   near: 0.1,
   far: 200,
   position: {
-    x: 8,
-    y: 5,
-    z: 10,
+    x: 7.2,
+    y: 4.6,
+    z: 9.2,
   },
 } as const;
 
 export const SCENE_COLORS = {
-  background: "#05080f",
-  grid: "#142032",
-  gridCenter: "#355582",
+  background: "#040913",
+  grid: "#16263f",
+  gridCenter: "#44638f",
 } as const;

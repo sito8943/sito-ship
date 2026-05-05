@@ -7,9 +7,10 @@ import type {
 import { useShipBuilder } from "@/hooks/useShipBuilder";
 import {
   OFFSET_AXIS_OPTIONS,
-  SCALE_RANGE,
+  SLOT_OFFSET_RANGES,
   SLOT_LABELS,
   SLOT_ORDER,
+  SLOT_SCALE_RANGES,
   SLOT_VARIANT_OPTIONS,
 } from "@/components/ShipBuilderControls/constants";
 import {
@@ -166,9 +167,9 @@ const ShipBuilderControls = () => {
                 <input
                   className="ship-builder-controls__range"
                   type="range"
-                  min={SCALE_RANGE.min}
-                  max={SCALE_RANGE.max}
-                  step={SCALE_RANGE.step}
+                  min={SLOT_SCALE_RANGES[slot].min}
+                  max={SLOT_SCALE_RANGES[slot].max}
+                  step={SLOT_SCALE_RANGES[slot].step}
                   value={uniformScale}
                   onChange={(event) => {
                     handleScaleChange(slot, Number(event.target.value));
@@ -178,6 +179,7 @@ const ShipBuilderControls = () => {
 
               {OFFSET_AXIS_OPTIONS.map((axisOption) => {
                 const axisValue = slotConfig.offset[axisOption.index];
+                const axisRange = SLOT_OFFSET_RANGES[slot][axisOption.axis];
 
                 return (
                   <label
@@ -190,9 +192,9 @@ const ShipBuilderControls = () => {
                     <input
                       className="ship-builder-controls__range"
                       type="range"
-                      min={axisOption.min}
-                      max={axisOption.max}
-                      step={axisOption.step}
+                      min={axisRange.min}
+                      max={axisRange.max}
+                      step={axisRange.step}
                       value={axisValue}
                       onChange={(event) => {
                         handleOffsetAxisChange(

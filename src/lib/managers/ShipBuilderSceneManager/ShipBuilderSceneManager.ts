@@ -152,7 +152,11 @@ export class ShipBuilderSceneManager {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
-    this.controls.target.set(0, 0.5, 0);
+    this.controls.minDistance = 5.5;
+    this.controls.maxDistance = 20;
+    this.controls.minPolarAngle = Math.PI * 0.2;
+    this.controls.maxPolarAngle = Math.PI * 0.48;
+    this.controls.target.set(0, 0.35, 0.45);
 
     this.clock = new Clock();
 
@@ -166,18 +170,23 @@ export class ShipBuilderSceneManager {
       return;
     }
 
-    const ambientLight = new AmbientLight("#dbeafe", 0.45);
+    const ambientLight = new AmbientLight("#dbeafe", 0.55);
     this.scene.add(ambientLight);
 
-    const keyLight = new DirectionalLight("#fff6df", 2.2);
-    keyLight.position.set(8, 12, 10);
+    const keyLight = new DirectionalLight("#fff6df", 2);
+    keyLight.position.set(7, 10, 9);
     keyLight.castShadow = true;
-    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.mapSize.set(1536, 1536);
+    keyLight.shadow.bias = -0.0002;
     this.scene.add(keyLight);
 
-    const rimLight = new DirectionalLight("#9ec5ff", 1.1);
-    rimLight.position.set(-10, 8, -6);
+    const rimLight = new DirectionalLight("#9ec5ff", 1.2);
+    rimLight.position.set(-9, 7, -7);
     this.scene.add(rimLight);
+
+    const fillLight = new DirectionalLight("#a7f3d0", 0.35);
+    fillLight.position.set(2.5, 3.5, -9);
+    this.scene.add(fillLight);
   }
 
   private initializeHelpers() {
