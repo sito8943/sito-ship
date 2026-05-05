@@ -2,6 +2,7 @@ import {
   DEFAULT_SHIP_CONFIG,
   SHIP_CONFIG_VERSION,
   SHIP_ENGINE_AIM_ROTATION_RANGES,
+  SHIP_ENGINE_PAIR_SPREAD_RANGE,
   SHIP_SLOT_KEYS,
   SHIP_SLOT_PIVOT_LOCAL_RANGES,
   SHIP_SLOT_ROTATION_RANGES,
@@ -186,6 +187,27 @@ export class ShipConfigIOManager {
         )
       }
       nextEngineSlot.aimRotation = clampedAimRotation
+
+      const pairSpreadValue = sourceSlot.pairSpread
+      if (
+        pairSpreadValue !== undefined &&
+        (typeof pairSpreadValue !== 'number' || !Number.isFinite(pairSpreadValue))
+      ) {
+        warnings.push(`Slot "${slot}" has an invalid pairSpread. Using default pairSpread.`)
+      }
+      const parsedPairSpread =
+        typeof pairSpreadValue === 'number' && Number.isFinite(pairSpreadValue)
+          ? pairSpreadValue
+          : defaultEngineSlot.pairSpread
+      const clampedPairSpread = this.clampNumber(
+        parsedPairSpread,
+        SHIP_ENGINE_PAIR_SPREAD_RANGE.min,
+        SHIP_ENGINE_PAIR_SPREAD_RANGE.max
+      )
+      if (parsedPairSpread !== clampedPairSpread) {
+        warnings.push(`Slot "${slot}" pairSpread exceeded allowed range and was clamped.`)
+      }
+      nextEngineSlot.pairSpread = clampedPairSpread
     }
 
     targetConfig[slot] = nextSlot

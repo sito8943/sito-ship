@@ -29,6 +29,7 @@ export type WingsSlotConfig = ShipSlotBaseConfig & {
 export type EnginesSlotConfig = ShipSlotBaseConfig & {
   variant: EnginesVariant
   aimRotation: Vector3Tuple
+  pairSpread: number
 }
 
 export type WeaponsSlotConfig = ShipSlotBaseConfig & {

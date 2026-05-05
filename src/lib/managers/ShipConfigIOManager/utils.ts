@@ -70,6 +70,7 @@ export const cloneSlotState = <TSlot extends ShipSlot>(
         engineSlotState.aimRotation[1],
         engineSlotState.aimRotation[2],
       ],
+      pairSpread: engineSlotState.pairSpread,
     } as ShipSlotConfigMap[TSlot]
   }
 

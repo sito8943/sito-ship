@@ -114,6 +114,12 @@ export const SHIP_ENGINE_AIM_ROTATION_RANGES: OffsetRangeMap = {
   z: { min: -2.65, max: 2.65, step: 0.02 },
 }
 
+export const SHIP_ENGINE_PAIR_SPREAD_RANGE: TransformRange = {
+  min: -2.4,
+  max: 1.4,
+  step: 0.02,
+}
+
 export const SHIP_SLOT_PIVOT_LOCAL_RANGES: Record<ShipSlot, OffsetRangeMap> = {
   body: {
     x: { min: 0, max: 0, step: 0.02 },
@@ -176,6 +182,7 @@ export const DEFAULT_SHIP_CONFIG: ShipConfig = {
     rotation: [0, 0, 0],
     pivotLocal: [0, 0, 0],
     aimRotation: [0, 0, 0],
+    pairSpread: 0,
   },
   weapons: {
     variant: 'singleCannon',

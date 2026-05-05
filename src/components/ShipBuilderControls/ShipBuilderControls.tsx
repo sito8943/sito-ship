@@ -17,6 +17,7 @@ import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { Button, IconButton } from '@/components/ui'
 import {
   ENGINE_AIM_ROTATION_RANGES,
+  ENGINE_PAIR_SPREAD_RANGE,
   OFFSET_AXIS_OPTIONS,
   SLOT_LABELS,
   SLOT_OFFSET_RANGES,
@@ -168,6 +169,21 @@ const ShipBuilderControls = () => {
     )
   }
 
+  const handleEnginePairSpreadChange = (
+    value: number,
+    options?: { commitHistory?: boolean }
+  ) => {
+    updateSlot(
+      'engines',
+      {
+        pairSpread: value,
+      },
+      {
+        commitHistory: options?.commitHistory ?? false,
+      }
+    )
+  }
+
   const handleExportJson = () => {
     const exportedJson = exportShipConfigToJson()
     setJsonInput(exportedJson)
@@ -189,6 +205,7 @@ const ShipBuilderControls = () => {
     isSymmetricSlot(selectedSlot) &&
     (selectedSlot !== 'weapons' || activeSlotConfig.variant !== 'none')
   const hasEngineAimControls = selectedSlot === 'engines'
+  const enginePairSpreadValue = shipConfig.engines.pairSpread
 
   return (
     <aside className="ship-builder-controls" aria-label="Ship Builder Controls">
@@ -484,6 +501,35 @@ const ShipBuilderControls = () => {
                 )
               })
             : null}
+
+          {hasEngineAimControls ? (
+            <label key={`${selectedSlot}-pair-spread`} className="ship-builder-controls__field">
+              <span className="ship-builder-controls__field-label">
+                Pair Spread {enginePairSpreadValue.toFixed(2)}
+              </span>
+              <input
+                className="ship-builder-controls__range"
+                type="range"
+                min={ENGINE_PAIR_SPREAD_RANGE.min}
+                max={ENGINE_PAIR_SPREAD_RANGE.max}
+                step={ENGINE_PAIR_SPREAD_RANGE.step}
+                value={enginePairSpreadValue}
+                onChange={(event) => {
+                  handleEnginePairSpreadChange(Number(event.target.value))
+                }}
+                onPointerUp={(event) => {
+                  handleEnginePairSpreadChange(Number(event.currentTarget.value), {
+                    commitHistory: true,
+                  })
+                }}
+                onBlur={(event) => {
+                  handleEnginePairSpreadChange(Number(event.currentTarget.value), {
+                    commitHistory: true,
+                  })
+                }}
+              />
+            </label>
+          ) : null}
 
           {hasEngineAimControls
             ? OFFSET_AXIS_OPTIONS.map((axisOption) => {

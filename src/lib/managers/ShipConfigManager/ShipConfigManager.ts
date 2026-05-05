@@ -2,6 +2,7 @@ import {
   cloneShipConfig,
   createDefaultShipConfig,
   SHIP_ENGINE_AIM_ROTATION_RANGES,
+  SHIP_ENGINE_PAIR_SPREAD_RANGE,
   SHIP_SLOT_KEYS,
   SHIP_SLOT_OFFSET_RANGES,
   SHIP_SLOT_PIVOT_LOCAL_RANGES,
@@ -58,6 +59,10 @@ export class ShipConfigManager {
       if (enginePatch.aimRotation) {
         const clonedEnginesPatch = clonedPatch as ShipSlotPatchInput<'engines'>
         clonedEnginesPatch.aimRotation = this.cloneTupleForSlot(enginePatch.aimRotation)
+      }
+      if (enginePatch.pairSpread !== undefined) {
+        const clonedEnginesPatch = clonedPatch as ShipSlotPatchInput<'engines'>
+        clonedEnginesPatch.pairSpread = enginePatch.pairSpread
       }
     }
 
@@ -190,6 +195,16 @@ export class ShipConfigManager {
       if (hasTupleChanged(aimRotationBefore, engineSlotConfig.aimRotation)) {
         const axes = getTupleChangedAxes(aimRotationBefore, engineSlotConfig.aimRotation).join(', ')
         warnings.push(`Slot "${slot}" aimRotation was clamped on axis ${axes}.`)
+      }
+
+      const pairSpreadBefore = engineSlotConfig.pairSpread
+      engineSlotConfig.pairSpread = clampNumber(
+        pairSpreadBefore,
+        SHIP_ENGINE_PAIR_SPREAD_RANGE.min,
+        SHIP_ENGINE_PAIR_SPREAD_RANGE.max
+      )
+      if (pairSpreadBefore !== engineSlotConfig.pairSpread) {
+        warnings.push(`Slot "${slot}" pairSpread was clamped.`)
       }
     }
   }
