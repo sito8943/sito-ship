@@ -22,7 +22,6 @@ import {
   SLOT_LABELS,
   SLOT_OFFSET_RANGES,
   SLOT_ORDER,
-  SLOT_PIVOT_LOCAL_RANGES,
   SLOT_ROTATION_RANGES,
   SLOT_SCALE_RANGES,
   SLOT_VARIANT_OPTIONS,
@@ -131,28 +130,6 @@ const ShipBuilderControls = () => {
     )
   }
 
-  const isSymmetricSlot = (slot: ShipSlot): slot is 'wings' | 'engines' | 'weapons' => {
-    return slot === 'wings' || slot === 'engines' || slot === 'weapons'
-  }
-
-  const handlePivotLocalAxisChange = <TSlot extends ShipSlot>(
-    slot: TSlot,
-    axisIndex: 0 | 1 | 2,
-    value: number,
-    options?: { commitHistory?: boolean }
-  ) => {
-    const slotConfig = getSlotConfig(shipConfig, slot)
-    updateSlot(
-      slot,
-      {
-        pivotLocal: updateTupleAxis(slotConfig.pivotLocal, axisIndex, value),
-      } as ShipSlotPatch<TSlot>,
-      {
-        commitHistory: options?.commitHistory ?? false,
-      }
-    )
-  }
-
   const handleEngineAimAxisChange = (
     axisIndex: 0 | 1 | 2,
     value: number,
@@ -201,9 +178,6 @@ const ShipBuilderControls = () => {
   }
 
   const uniformScale = getUniformScale(activeSlotConfig.scale)
-  const hasPivotLocalControls =
-    isSymmetricSlot(selectedSlot) &&
-    (selectedSlot !== 'weapons' || activeSlotConfig.variant !== 'none')
   const hasEngineAimControls = selectedSlot === 'engines'
   const enginePairSpreadValue = shipConfig.engines.pairSpread
 
@@ -451,56 +425,6 @@ const ShipBuilderControls = () => {
               </label>
             )
           })}
-
-          {hasPivotLocalControls
-            ? OFFSET_AXIS_OPTIONS.map((axisOption) => {
-                const pivotLocal = activeSlotConfig.pivotLocal
-                const axisValue = pivotLocal[axisOption.index]
-                const axisRange = SLOT_PIVOT_LOCAL_RANGES[selectedSlot][axisOption.axis]
-
-                return (
-                  <label
-                    key={`${selectedSlot}-pivot-local-${axisOption.axis}`}
-                    className="ship-builder-controls__field"
-                  >
-                    <span className="ship-builder-controls__field-label">
-                      Pivot Local {axisOption.axis.toUpperCase()} {axisValue.toFixed(2)}
-                    </span>
-                    <input
-                      className="ship-builder-controls__range"
-                      type="range"
-                      min={axisRange.min}
-                      max={axisRange.max}
-                      step={axisRange.step}
-                      value={axisValue}
-                      onChange={(event) => {
-                        handlePivotLocalAxisChange(
-                          selectedSlot,
-                          axisOption.index,
-                          Number(event.target.value)
-                        )
-                      }}
-                      onPointerUp={(event) => {
-                        handlePivotLocalAxisChange(
-                          selectedSlot,
-                          axisOption.index,
-                          Number(event.currentTarget.value),
-                          { commitHistory: true }
-                        )
-                      }}
-                      onBlur={(event) => {
-                        handlePivotLocalAxisChange(
-                          selectedSlot,
-                          axisOption.index,
-                          Number(event.currentTarget.value),
-                          { commitHistory: true }
-                        )
-                      }}
-                    />
-                  </label>
-                )
-              })
-            : null}
 
           {hasEngineAimControls ? (
             <label key={`${selectedSlot}-pair-spread`} className="ship-builder-controls__field">

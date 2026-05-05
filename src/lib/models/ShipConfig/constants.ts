@@ -115,7 +115,7 @@ export const SHIP_ENGINE_AIM_ROTATION_RANGES: OffsetRangeMap = {
 }
 
 export const SHIP_ENGINE_PAIR_SPREAD_RANGE: TransformRange = {
-  min: -2.4,
+  min: -2.2,
   max: 1.4,
   step: 0.02,
 }
