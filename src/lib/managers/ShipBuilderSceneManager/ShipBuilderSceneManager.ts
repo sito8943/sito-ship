@@ -42,6 +42,7 @@ export class ShipBuilderSceneManager {
   private camera: PerspectiveCamera | null = null;
   private controls: OrbitControls | null = null;
   private transformControls: TransformControls | null = null;
+  private transformControlHelper: Object3D | null = null;
   private clock: Clock | null = null;
   private shipGroup: Group | null = null;
   private shipModelManager: ShipBuilderModelManager | null = null;
@@ -157,8 +158,12 @@ export class ShipBuilderSceneManager {
       this.transformControls.removeEventListener("objectChange", this.handleObjectTransform);
       this.transformControls.removeEventListener("mouseUp", this.handleTransformMouseUp);
       this.transformControls.detach();
-      this.scene?.remove(this.transformControls);
       this.transformControls.dispose();
+    }
+
+    if (this.transformControlHelper) {
+      this.scene?.remove(this.transformControlHelper);
+      this.transformControlHelper = null;
     }
 
     this.controls?.dispose();
@@ -185,6 +190,7 @@ export class ShipBuilderSceneManager {
     this.clock = null;
     this.controls = null;
     this.transformControls = null;
+    this.transformControlHelper = null;
     this.shipGroup = null;
     this.shipModelManager = null;
     this.pendingShipConfig = null;
@@ -303,7 +309,8 @@ export class ShipBuilderSceneManager {
     );
     this.transformControls.addEventListener("objectChange", this.handleObjectTransform);
     this.transformControls.addEventListener("mouseUp", this.handleTransformMouseUp);
-    this.scene.add(this.transformControls);
+    this.transformControlHelper = this.transformControls.getHelper();
+    this.scene.add(this.transformControlHelper);
     this.refreshTransformControlAttachment();
   }
 

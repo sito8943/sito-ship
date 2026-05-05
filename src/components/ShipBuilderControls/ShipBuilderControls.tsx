@@ -65,32 +65,44 @@ const ShipBuilderControls = () => {
     } as ShipSlotPatch<TSlot>);
   };
 
-  const handleScaleChange = <TSlot extends ShipSlot>(slot: TSlot, scale: number) => {
+  const handleScaleChange = <TSlot extends ShipSlot>(
+    slot: TSlot,
+    scale: number,
+    options?: { commitHistory?: boolean },
+  ) => {
     updateSlot(slot, {
       scale: createVector3Tuple(scale, scale, scale),
-    } as ShipSlotPatch<TSlot>);
+    } as ShipSlotPatch<TSlot>, {
+      commitHistory: options?.commitHistory ?? false,
+    });
   };
 
   const handleOffsetAxisChange = <TSlot extends ShipSlot>(
     slot: TSlot,
     axisIndex: 0 | 1 | 2,
     value: number,
+    options?: { commitHistory?: boolean },
   ) => {
     const slotConfig = getSlotConfig(shipConfig, slot);
     updateSlot(slot, {
       offset: updateTupleAxis(slotConfig.offset, axisIndex, value),
-    } as ShipSlotPatch<TSlot>);
+    } as ShipSlotPatch<TSlot>, {
+      commitHistory: options?.commitHistory ?? false,
+    });
   };
 
   const handleRotationAxisChange = <TSlot extends ShipSlot>(
     slot: TSlot,
     axisIndex: 0 | 1 | 2,
     value: number,
+    options?: { commitHistory?: boolean },
   ) => {
     const slotConfig = getSlotConfig(shipConfig, slot);
     updateSlot(slot, {
       rotation: updateTupleAxis(slotConfig.rotation, axisIndex, value),
-    } as ShipSlotPatch<TSlot>);
+    } as ShipSlotPatch<TSlot>, {
+      commitHistory: options?.commitHistory ?? false,
+    });
   };
 
   const handleExportJson = () => {
@@ -250,6 +262,16 @@ const ShipBuilderControls = () => {
               onChange={(event) => {
                 handleScaleChange(selectedSlot, Number(event.target.value));
               }}
+              onPointerUp={(event) => {
+                handleScaleChange(selectedSlot, Number(event.currentTarget.value), {
+                  commitHistory: true,
+                });
+              }}
+              onBlur={(event) => {
+                handleScaleChange(selectedSlot, Number(event.currentTarget.value), {
+                  commitHistory: true,
+                });
+              }}
             />
           </label>
 
@@ -277,6 +299,22 @@ const ShipBuilderControls = () => {
                       selectedSlot,
                       axisOption.index,
                       Number(event.target.value),
+                    );
+                  }}
+                  onPointerUp={(event) => {
+                    handleOffsetAxisChange(
+                      selectedSlot,
+                      axisOption.index,
+                      Number(event.currentTarget.value),
+                      { commitHistory: true },
+                    );
+                  }}
+                  onBlur={(event) => {
+                    handleOffsetAxisChange(
+                      selectedSlot,
+                      axisOption.index,
+                      Number(event.currentTarget.value),
+                      { commitHistory: true },
                     );
                   }}
                 />
@@ -308,6 +346,22 @@ const ShipBuilderControls = () => {
                       selectedSlot,
                       axisOption.index,
                       Number(event.target.value),
+                    );
+                  }}
+                  onPointerUp={(event) => {
+                    handleRotationAxisChange(
+                      selectedSlot,
+                      axisOption.index,
+                      Number(event.currentTarget.value),
+                      { commitHistory: true },
+                    );
+                  }}
+                  onBlur={(event) => {
+                    handleRotationAxisChange(
+                      selectedSlot,
+                      axisOption.index,
+                      Number(event.currentTarget.value),
+                      { commitHistory: true },
                     );
                   }}
                 />
