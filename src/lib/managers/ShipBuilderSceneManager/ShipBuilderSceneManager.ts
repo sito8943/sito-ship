@@ -1,6 +1,13 @@
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import {
+  BloomEffect,
+  EffectComposer,
+  EffectPass,
+  FXAAEffect,
+  RenderPass,
+} from 'postprocessing'
+import {
   AmbientLight,
   Box3,
   Clock,
@@ -28,6 +35,7 @@ import {
   MAX_DEVICE_PIXEL_RATIO,
   OVERLAP_SLOT_PAIRS,
   OVERLAP_VOLUME_RATIO_THRESHOLD,
+  POST_PROCESSING_SETTINGS,
   SCENE_COLORS,
 } from '@/lib/managers/ShipBuilderSceneManager/constants'
 import type {
@@ -45,6 +53,7 @@ export class ShipBuilderSceneManager {
   private scene: Scene | null = null
   private camera: PerspectiveCamera | null = null
   private controls: OrbitControls | null = null
+  private composer: EffectComposer | null = null
   private transformControls: TransformControls | null = null
   private transformControlHelper: Object3D | null = null
   private clock: Clock | null = null
@@ -137,7 +146,11 @@ export class ShipBuilderSceneManager {
     const devicePixelRatio = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO)
 
     this.renderer.setPixelRatio(devicePixelRatio)
-    this.renderer.setSize(width, height, false)
+    if (this.composer) {
+      this.composer.setSize(width, height, false)
+    } else {
+      this.renderer.setSize(width, height, false)
+    }
 
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
@@ -188,10 +201,12 @@ export class ShipBuilderSceneManager {
       this.scene.clear()
     }
 
+    this.composer?.dispose()
     this.renderer?.dispose()
 
     this.clock = null
     this.controls = null
+    this.composer = null
     this.transformControls = null
     this.transformControlHelper = null
     this.shipGroup = null
@@ -245,6 +260,30 @@ export class ShipBuilderSceneManager {
     this.initializeHelpers()
     this.initializeShipGroup()
     this.initializeTransformControls()
+    this.initializePostProcessing()
+  }
+
+  private initializePostProcessing() {
+    if (!this.renderer || !this.scene || !this.camera) {
+      return
+    }
+
+    this.composer = new EffectComposer(this.renderer)
+    this.composer.addPass(new RenderPass(this.scene, this.camera))
+
+    const bloomEffect = new BloomEffect({
+      intensity: POST_PROCESSING_SETTINGS.bloom.intensity,
+      radius: POST_PROCESSING_SETTINGS.bloom.radius,
+      luminanceThreshold: POST_PROCESSING_SETTINGS.bloom.threshold,
+      mipmapBlur: true,
+    })
+    const bloomPass = new EffectPass(this.camera, bloomEffect)
+    bloomPass.enabled = POST_PROCESSING_SETTINGS.bloom.enabled
+    this.composer.addPass(bloomPass)
+
+    const fxaaPass = new EffectPass(this.camera, new FXAAEffect())
+    fxaaPass.enabled = POST_PROCESSING_SETTINGS.fxaa.enabled
+    this.composer.addPass(fxaaPass)
   }
 
   private initializeLights() {
@@ -559,7 +598,11 @@ export class ShipBuilderSceneManager {
 
     const delta = this.clock?.getDelta() ?? 0
     this.controls?.update(delta)
-    this.renderer.render(this.scene, this.camera)
+    if (this.composer) {
+      this.composer.render()
+    } else {
+      this.renderer.render(this.scene, this.camera)
+    }
 
     this.animationFrameId = window.requestAnimationFrame(this.animate)
   }
