@@ -9,10 +9,13 @@ import {
 } from 'postprocessing'
 import {
   AmbientLight,
+  AxesHelper,
   Box3,
+  CameraHelper,
   Clock,
   Color,
   DirectionalLight,
+  DirectionalLightHelper,
   GridHelper,
   Group,
   Mesh,
@@ -48,12 +51,16 @@ import type {
 } from '@/lib/managers/ShipBuilderSceneManager/types'
 
 export class ShipBuilderSceneManager {
+  private readonly isDevEnvironment = import.meta.env.DEV
   private canvas: HTMLCanvasElement | null = null
   private renderer: WebGLRenderer | null = null
   private scene: Scene | null = null
   private camera: PerspectiveCamera | null = null
   private controls: OrbitControls | null = null
   private composer: EffectComposer | null = null
+  private directionalLights: DirectionalLight[] = []
+  private lightHelpers: DirectionalLightHelper[] = []
+  private shadowHelpers: CameraHelper[] = []
   private transformControls: TransformControls | null = null
   private transformControlHelper: Object3D | null = null
   private clock: Clock | null = null
@@ -184,6 +191,7 @@ export class ShipBuilderSceneManager {
 
     this.controls?.dispose()
     this.shipModelManager?.dispose()
+    this.disposeDebugLightHelpers()
 
     if (this.scene) {
       this.scene.traverse((object) => {
@@ -207,6 +215,9 @@ export class ShipBuilderSceneManager {
     this.clock = null
     this.controls = null
     this.composer = null
+    this.directionalLights = []
+    this.lightHelpers = []
+    this.shadowHelpers = []
     this.transformControls = null
     this.transformControlHelper = null
     this.shipGroup = null
@@ -308,6 +319,11 @@ export class ShipBuilderSceneManager {
     const fillLight = new DirectionalLight('#a7f3d0', 0.35)
     fillLight.position.set(2.5, 3.5, -9)
     this.scene.add(fillLight)
+
+    this.directionalLights = [keyLight, rimLight, fillLight]
+    if (this.isDevEnvironment) {
+      this.initializeDebugLightHelpers()
+    }
   }
 
   private initializeHelpers() {
@@ -318,6 +334,44 @@ export class ShipBuilderSceneManager {
     const gridHelper = new GridHelper(40, 40, SCENE_COLORS.gridCenter, SCENE_COLORS.grid)
     gridHelper.position.y = -1
     this.scene.add(gridHelper)
+
+    const axesHelper = new AxesHelper(5)
+    this.scene.add(axesHelper)
+  }
+
+  private initializeDebugLightHelpers() {
+    if (!this.scene || this.directionalLights.length === 0) {
+      return
+    }
+
+    this.disposeDebugLightHelpers()
+
+    this.directionalLights.forEach((light) => {
+      const lightHelper = new DirectionalLightHelper(light, 3.5)
+      this.scene?.add(lightHelper)
+      this.lightHelpers.push(lightHelper)
+
+      if (!light.castShadow) {
+        return
+      }
+
+      const shadowHelper = new CameraHelper(light.shadow.camera)
+      this.scene?.add(shadowHelper)
+      this.shadowHelpers.push(shadowHelper)
+    })
+  }
+
+  private disposeDebugLightHelpers() {
+    this.lightHelpers.forEach((helper) => {
+      helper.dispose()
+      this.scene?.remove(helper)
+    })
+    this.shadowHelpers.forEach((helper) => {
+      helper.dispose()
+      this.scene?.remove(helper)
+    })
+    this.lightHelpers = []
+    this.shadowHelpers = []
   }
 
   private initializeShipGroup() {
@@ -598,6 +652,10 @@ export class ShipBuilderSceneManager {
 
     const delta = this.clock?.getDelta() ?? 0
     this.controls?.update(delta)
+    if (this.isDevEnvironment) {
+      this.lightHelpers.forEach((helper) => helper.update())
+      this.shadowHelpers.forEach((helper) => helper.update())
+    }
     if (this.composer) {
       this.composer.render()
     } else {
