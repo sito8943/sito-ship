@@ -50,7 +50,6 @@ export class ShipBuilderModelManager {
   private static readonly PART_CONTENT_GROUP_NAME = 'partContent'
   private static readonly SYMMETRIC_AIM_PIVOT_GROUP_NAME = 'symmetricAimPivot'
   private static readonly SYMMETRIC_AIM_CONTENT_GROUP_NAME = 'symmetricAimContent'
-  private static readonly LEGACY_ENGINE_AIM_PIVOT_GROUP_NAME = 'engineAimPivot'
   private static readonly ENGINE_OUTER_TIP_OFFSET_X = -0.85
 
   private readonly rootGroup: Group
@@ -719,8 +718,7 @@ export class ShipBuilderModelManager {
     root.traverse((node) => {
       if (
         node instanceof Group &&
-        (node.name === ShipBuilderModelManager.SYMMETRIC_AIM_PIVOT_GROUP_NAME ||
-          node.name === ShipBuilderModelManager.LEGACY_ENGINE_AIM_PIVOT_GROUP_NAME)
+        node.name === ShipBuilderModelManager.SYMMETRIC_AIM_PIVOT_GROUP_NAME
       ) {
         aimPivots.push(node)
       }

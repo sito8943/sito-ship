@@ -18,6 +18,7 @@ import {
   ERROR_EMPTY_INPUT,
   ERROR_INVALID_JSON,
   ERROR_INVALID_ROOT,
+  ERROR_UNSUPPORTED_VERSION,
   JSON_INDENT_SPACES,
 } from '@/lib/managers/ShipConfigIOManager/constants'
 import type { ImportShipConfigResult } from '@/lib/managers/ShipConfigIOManager/types'
@@ -61,14 +62,15 @@ export class ShipConfigIOManager {
       }
     }
 
+    if (parsedJson.version !== SHIP_CONFIG_VERSION) {
+      return {
+        ok: false,
+        error: `${ERROR_UNSUPPORTED_VERSION} Expected version ${SHIP_CONFIG_VERSION}.`,
+      }
+    }
+
     const nextConfig = createDefaultShipConfig()
     const warnings: string[] = []
-
-    if (parsedJson.version === 1) {
-      warnings.push(`Legacy config version 1 detected. Migrated to version ${SHIP_CONFIG_VERSION}.`)
-    } else if (parsedJson.version !== SHIP_CONFIG_VERSION) {
-      warnings.push(`Version mismatch detected. Using supported version ${SHIP_CONFIG_VERSION}.`)
-    }
 
     SHIP_SLOT_KEYS.forEach((slot) => {
       this.mergeSlotConfig({

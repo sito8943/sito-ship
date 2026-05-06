@@ -45,7 +45,7 @@ export const SHIP_VARIANT_OPTIONS: {
 }
 
 export const SHIP_SLOT_SCALE_RANGES: Record<ShipSlot, TransformRange> = {
-  body: { min: 0.85, max: 2.0, step: 0.05 },
+  body: { min: 0.55, max: 2.0, step: 0.05 },
   cockpit: { min: 0.75, max: 2.45, step: 0.05 },
   wings: { min: 0.75, max: 2.0, step: 0.05 },
   engines: { min: 0.8, max: 1.35, step: 0.05 },
