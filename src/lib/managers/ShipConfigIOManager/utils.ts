@@ -61,16 +61,19 @@ export const cloneSlotState = <TSlot extends ShipSlot>(
     pivotLocal: [slotState.pivotLocal[0], slotState.pivotLocal[1], slotState.pivotLocal[2]],
   }
 
-  if (slot === 'engines') {
-    const engineSlotState = slotState as ShipSlotConfigMap['engines']
+  if (slot === 'wings' || slot === 'engines' || slot === 'weapons') {
+    const symmetricSlotState = slotState as
+      | ShipSlotConfigMap['wings']
+      | ShipSlotConfigMap['engines']
+      | ShipSlotConfigMap['weapons']
     return {
       ...clonedBaseSlotState,
       aimRotation: [
-        engineSlotState.aimRotation[0],
-        engineSlotState.aimRotation[1],
-        engineSlotState.aimRotation[2],
+        symmetricSlotState.aimRotation[0],
+        symmetricSlotState.aimRotation[1],
+        symmetricSlotState.aimRotation[2],
       ],
-      pairSpread: engineSlotState.pairSpread,
+      pairSpread: symmetricSlotState.pairSpread,
     } as ShipSlotConfigMap[TSlot]
   }
 

@@ -1,7 +1,7 @@
 import {
   cloneShipConfig,
   createDefaultShipConfig,
-  SHIP_ENGINE_AIM_ROTATION_RANGES,
+  SHIP_SYMMETRIC_AIM_ROTATION_RANGES,
   SHIP_SYMMETRIC_PAIR_SPREAD_RANGES,
   SHIP_SLOT_KEYS,
   SHIP_SLOT_OFFSET_RANGES,
@@ -66,12 +66,8 @@ export class ShipConfigManager {
       if (symmetricPatch.pairSpread !== undefined) {
         clonedSymmetricPatch.pairSpread = symmetricPatch.pairSpread
       }
-    }
-    if (slot === 'engines') {
-      const enginePatch = patch as ShipSlotPatchInput<'engines'>
-      if (enginePatch.aimRotation) {
-        const clonedEnginesPatch = clonedPatch as ShipSlotPatchInput<'engines'>
-        clonedEnginesPatch.aimRotation = this.cloneTupleForSlot(enginePatch.aimRotation)
+      if (symmetricPatch.aimRotation) {
+        clonedSymmetricPatch.aimRotation = this.cloneTupleForSlot(symmetricPatch.aimRotation)
       }
     }
 
@@ -94,8 +90,16 @@ export class ShipConfigManager {
       rotation: cloneVector3Tuple(defaultConfig[slot].rotation),
       pivotLocal: cloneVector3Tuple(defaultConfig[slot].pivotLocal),
     }
-    if (slot === 'engines') {
-      nextConfig.engines.aimRotation = cloneVector3Tuple(defaultConfig.engines.aimRotation)
+    if (this.isSymmetricSlot(slot)) {
+      const nextSymmetricSlot = nextConfig[slot] as
+        | ShipConfig['wings']
+        | ShipConfig['engines']
+        | ShipConfig['weapons']
+      const defaultSymmetricSlot = defaultConfig[slot] as
+        | ShipConfig['wings']
+        | ShipConfig['engines']
+        | ShipConfig['weapons']
+      nextSymmetricSlot.aimRotation = cloneVector3Tuple(defaultSymmetricSlot.aimRotation)
     }
 
     return this.normalizeConfig(nextConfig)
@@ -181,38 +185,25 @@ export class ShipConfigManager {
       warnings.push(`Slot "${slot}" pivotLocal was clamped on axis ${axes}.`)
     }
 
-    if (slot === 'engines') {
-      const engineSlotConfig = slotConfig as ShipConfig['engines']
-      const aimRotationBefore = this.cloneTupleForSlot(engineSlotConfig.aimRotation)
-      engineSlotConfig.aimRotation = [
-        clampNumber(
-          aimRotationBefore[0],
-          SHIP_ENGINE_AIM_ROTATION_RANGES.x.min,
-          SHIP_ENGINE_AIM_ROTATION_RANGES.x.max
-        ),
-        clampNumber(
-          aimRotationBefore[1],
-          SHIP_ENGINE_AIM_ROTATION_RANGES.y.min,
-          SHIP_ENGINE_AIM_ROTATION_RANGES.y.max
-        ),
-        clampNumber(
-          aimRotationBefore[2],
-          SHIP_ENGINE_AIM_ROTATION_RANGES.z.min,
-          SHIP_ENGINE_AIM_ROTATION_RANGES.z.max
-        ),
-      ]
-      if (hasTupleChanged(aimRotationBefore, engineSlotConfig.aimRotation)) {
-        const axes = getTupleChangedAxes(aimRotationBefore, engineSlotConfig.aimRotation).join(', ')
-        warnings.push(`Slot "${slot}" aimRotation was clamped on axis ${axes}.`)
-      }
-
-    }
-
     if (this.isSymmetricSlot(slot)) {
       const symmetricSlotConfig = slotConfig as
         | ShipConfig['wings']
         | ShipConfig['engines']
         | ShipConfig['weapons']
+      const aimRange = SHIP_SYMMETRIC_AIM_ROTATION_RANGES[slot]
+      const aimRotationBefore = this.cloneTupleForSlot(symmetricSlotConfig.aimRotation)
+      symmetricSlotConfig.aimRotation = [
+        clampNumber(aimRotationBefore[0], aimRange.x.min, aimRange.x.max),
+        clampNumber(aimRotationBefore[1], aimRange.y.min, aimRange.y.max),
+        clampNumber(aimRotationBefore[2], aimRange.z.min, aimRange.z.max),
+      ]
+      if (hasTupleChanged(aimRotationBefore, symmetricSlotConfig.aimRotation)) {
+        const axes = getTupleChangedAxes(aimRotationBefore, symmetricSlotConfig.aimRotation).join(
+          ', '
+        )
+        warnings.push(`Slot "${slot}" aimRotation was clamped on axis ${axes}.`)
+      }
+
       const pairSpreadRange = SHIP_SYMMETRIC_PAIR_SPREAD_RANGES[slot]
       const pairSpreadBefore = symmetricSlotConfig.pairSpread
       symmetricSlotConfig.pairSpread = clampNumber(

@@ -48,8 +48,9 @@ import {
 
 export class ShipBuilderModelManager {
   private static readonly PART_CONTENT_GROUP_NAME = 'partContent'
-  private static readonly ENGINE_AIM_PIVOT_GROUP_NAME = 'engineAimPivot'
-  private static readonly ENGINE_AIM_CONTENT_GROUP_NAME = 'engineAimContent'
+  private static readonly SYMMETRIC_AIM_PIVOT_GROUP_NAME = 'symmetricAimPivot'
+  private static readonly SYMMETRIC_AIM_CONTENT_GROUP_NAME = 'symmetricAimContent'
+  private static readonly LEGACY_ENGINE_AIM_PIVOT_GROUP_NAME = 'engineAimPivot'
   private static readonly ENGINE_OUTER_TIP_OFFSET_X = -0.85
 
   private readonly rootGroup: Group
@@ -95,9 +96,7 @@ export class ShipBuilderModelManager {
           | ShipSlotConfigMap['engines']
           | ShipSlotConfigMap['weapons']
         this.syncSymmetricSlotVisual(slot, slotConfig.pivotLocal, symmetricSlotConfig.pairSpread)
-      }
-      if (slot === 'engines') {
-        this.applyEngineAimVisual(slotConfig.aimRotation)
+        this.applySymmetricAimVisual(slot, symmetricSlotConfig.aimRotation)
       }
       this.applyVisualState(slot)
     })
@@ -268,11 +267,18 @@ export class ShipBuilderModelManager {
     material: ReturnType<typeof createSlotMaterial>
   ): Group {
     const sideGroup = new Group()
+    const aimPivot = this.createSymmetricAimPivotGroup({
+      slot: 'wings',
+      aimRotation: slotConfig.aimRotation,
+      pivotPoint: [SLOT_ANCHORS.wing.x, SLOT_ANCHORS.wing.y, SLOT_ANCHORS.wing.z],
+    })
+    const aimContent = this.getSymmetricAimContentGroup(aimPivot)
 
     if (slotConfig.variant === 'rect') {
       const wing = new Mesh(new BoxGeometry(2.2, 0.16, 1.5), material)
       wing.position.set(SLOT_ANCHORS.wing.x, SLOT_ANCHORS.wing.y, SLOT_ANCHORS.wing.z)
-      sideGroup.add(wing)
+      aimContent.add(wing)
+      sideGroup.add(aimPivot)
       return sideGroup
     }
 
@@ -283,7 +289,7 @@ export class ShipBuilderModelManager {
         SLOT_ANCHORS.wing.y + 0.12,
         SLOT_ANCHORS.wing.z + 0.5
       )
-      sideGroup.add(upperWing)
+      aimContent.add(upperWing)
 
       const lowerWing = new Mesh(new BoxGeometry(2.3, 0.12, 1.2), material)
       lowerWing.position.set(
@@ -291,15 +297,17 @@ export class ShipBuilderModelManager {
         SLOT_ANCHORS.wing.y - 0.1,
         SLOT_ANCHORS.wing.z - 0.4
       )
-      sideGroup.add(lowerWing)
+      aimContent.add(lowerWing)
+      sideGroup.add(aimPivot)
       return sideGroup
     }
 
     const triangularWing = new Mesh(new ConeGeometry(0.85, 2.6, 4), material)
     triangularWing.rotation.z = Math.PI * 0.5
     triangularWing.position.set(SLOT_ANCHORS.wing.x, SLOT_ANCHORS.wing.y, SLOT_ANCHORS.wing.z)
-    sideGroup.add(triangularWing)
+    aimContent.add(triangularWing)
 
+    sideGroup.add(aimPivot)
     return sideGroup
   }
 
@@ -325,7 +333,7 @@ export class ShipBuilderModelManager {
     const sideGroup = new Group()
     const anchor = SLOT_ANCHORS.engine
     const aimPivot = this.createEngineAimPivotGroup(slotConfig, anchor)
-    const aimContent = this.getEngineAimContentGroup(aimPivot)
+    const aimContent = this.getSymmetricAimContentGroup(aimPivot)
 
     if (slotConfig.variant === 'cylinder') {
       const engine = new Mesh(new CylinderGeometry(0.32, 0.38, 1.7, 18), material)
@@ -404,35 +412,43 @@ export class ShipBuilderModelManager {
   ): Group {
     const sideGroup = new Group()
     const anchor = SLOT_ANCHORS.weapon
+    const aimPivot = this.createSymmetricAimPivotGroup({
+      slot: 'weapons',
+      aimRotation: slotConfig.aimRotation,
+      pivotPoint: [anchor.x, anchor.y, anchor.z],
+    })
+    const aimContent = this.getSymmetricAimContentGroup(aimPivot)
 
     if (slotConfig.variant === 'singleCannon') {
       const cannon = new Mesh(new CylinderGeometry(0.09, 0.11, 1.35, 14), material)
       cannon.rotation.z = Math.PI / 2
       cannon.position.set(anchor.x, anchor.y, anchor.z)
-      sideGroup.add(cannon)
+      aimContent.add(cannon)
 
       const tip = new Mesh(new ConeGeometry(0.1, 0.34, 12), createSlotMaterial('#0b1220'))
       tip.rotation.z = Math.PI / 2
       tip.position.set(anchor.x - 0.82, anchor.y, anchor.z)
-      sideGroup.add(tip)
+      aimContent.add(tip)
 
+      sideGroup.add(aimPivot)
       return sideGroup
     }
 
     const upperCannon = new Mesh(new CylinderGeometry(0.07, 0.09, 1.15, 12), material)
     upperCannon.rotation.z = Math.PI / 2
     upperCannon.position.set(anchor.x, anchor.y + 0.12, anchor.z)
-    sideGroup.add(upperCannon)
+    aimContent.add(upperCannon)
 
     const lowerCannon = new Mesh(new CylinderGeometry(0.07, 0.09, 1.15, 12), material)
     lowerCannon.rotation.z = Math.PI / 2
     lowerCannon.position.set(anchor.x, anchor.y - 0.12, anchor.z)
-    sideGroup.add(lowerCannon)
+    aimContent.add(lowerCannon)
 
     const mount = new Mesh(new BoxGeometry(0.25, 0.34, 0.26), createSlotMaterial('#1e293b'))
     mount.position.set(anchor.x + 0.3, anchor.y, anchor.z)
-    sideGroup.add(mount)
+    aimContent.add(mount)
 
+    sideGroup.add(aimPivot)
     return sideGroup
   }
 
@@ -633,65 +649,78 @@ export class ShipBuilderModelManager {
     slotConfig: EnginesSlotConfig,
     anchor: { x: number; y: number; z: number }
   ): Group {
-    const aimPivot = new Group()
-    aimPivot.name = ShipBuilderModelManager.ENGINE_AIM_PIVOT_GROUP_NAME
-
     const pivotPoint: Vector3Tuple = [
       anchor.x + ShipBuilderModelManager.ENGINE_OUTER_TIP_OFFSET_X,
       anchor.y,
       anchor.z,
     ]
+    return this.createSymmetricAimPivotGroup({
+      slot: 'engines',
+      aimRotation: slotConfig.aimRotation,
+      pivotPoint,
+    })
+  }
+
+  private createSymmetricAimPivotGroup({
+    slot,
+    aimRotation,
+    pivotPoint,
+  }: {
+    slot: ShipSymmetricSlotKey
+    aimRotation: Vector3Tuple
+    pivotPoint: Vector3Tuple
+  }): Group {
+    const aimPivot = new Group()
+    aimPivot.name = ShipBuilderModelManager.SYMMETRIC_AIM_PIVOT_GROUP_NAME
+    aimPivot.userData.aimSlot = slot
     aimPivot.position.set(pivotPoint[0], pivotPoint[1], pivotPoint[2])
-    aimPivot.rotation.set(
-      slotConfig.aimRotation[0],
-      slotConfig.aimRotation[1],
-      slotConfig.aimRotation[2],
-      'YXZ'
-    )
+    aimPivot.rotation.set(aimRotation[0], aimRotation[1], aimRotation[2], 'YXZ')
 
     const aimContent = new Group()
-    aimContent.name = ShipBuilderModelManager.ENGINE_AIM_CONTENT_GROUP_NAME
-    // Pivot compensation so aim rotations happen around the engine outer tip.
+    aimContent.name = ShipBuilderModelManager.SYMMETRIC_AIM_CONTENT_GROUP_NAME
+    // Pivot compensation so aim rotations happen around pivotPoint.
     aimContent.position.set(-pivotPoint[0], -pivotPoint[1], -pivotPoint[2])
     aimPivot.add(aimContent)
 
     return aimPivot
   }
 
-  private getEngineAimContentGroup(aimPivot: Group): Group {
+  private getSymmetricAimContentGroup(aimPivot: Group): Group {
     const existingAimContent = aimPivot.children.find(
       (node): node is Group =>
-        node instanceof Group && node.name === ShipBuilderModelManager.ENGINE_AIM_CONTENT_GROUP_NAME
+        node instanceof Group &&
+        node.name === ShipBuilderModelManager.SYMMETRIC_AIM_CONTENT_GROUP_NAME
     )
     if (existingAimContent) {
       return existingAimContent
     }
 
     const aimContent = new Group()
-    aimContent.name = ShipBuilderModelManager.ENGINE_AIM_CONTENT_GROUP_NAME
+    aimContent.name = ShipBuilderModelManager.SYMMETRIC_AIM_CONTENT_GROUP_NAME
     aimPivot.add(aimContent)
     return aimContent
   }
 
-  private applyEngineAimVisual(aimRotation: Vector3Tuple) {
-    const enginesSlotGroup = this.slotGroups.engines
-    const slotContent = enginesSlotGroup.children[0]
+  private applySymmetricAimVisual(slot: ShipSymmetricSlotKey, aimRotation: Vector3Tuple) {
+    const slotGroup = this.slotGroups[slot]
+    const slotContent = slotGroup.children[0]
     if (!(slotContent instanceof Group)) {
       return
     }
 
-    const aimPivots = this.collectEngineAimPivots(slotContent)
+    const aimPivots = this.collectSymmetricAimPivots(slotContent)
     aimPivots.forEach((aimPivot) => {
       aimPivot.rotation.set(aimRotation[0], aimRotation[1], aimRotation[2], 'YXZ')
     })
   }
 
-  private collectEngineAimPivots(root: Group): Group[] {
+  private collectSymmetricAimPivots(root: Group): Group[] {
     const aimPivots: Group[] = []
     root.traverse((node) => {
       if (
         node instanceof Group &&
-        node.name === ShipBuilderModelManager.ENGINE_AIM_PIVOT_GROUP_NAME
+        (node.name === ShipBuilderModelManager.SYMMETRIC_AIM_PIVOT_GROUP_NAME ||
+          node.name === ShipBuilderModelManager.LEGACY_ENGINE_AIM_PIVOT_GROUP_NAME)
       ) {
         aimPivots.push(node)
       }

@@ -22,12 +22,18 @@ export const cloneShipConfig = (shipConfig: ShipConfig): ShipConfig => {
     version: shipConfig.version,
     body: cloneSlotBaseConfig(shipConfig.body),
     cockpit: cloneSlotBaseConfig(shipConfig.cockpit),
-    wings: cloneSlotBaseConfig(shipConfig.wings),
+    wings: {
+      ...cloneSlotBaseConfig(shipConfig.wings),
+      aimRotation: cloneVector3Tuple(shipConfig.wings.aimRotation),
+    },
     engines: {
       ...cloneSlotBaseConfig(shipConfig.engines),
       aimRotation: cloneVector3Tuple(shipConfig.engines.aimRotation),
     },
-    weapons: cloneSlotBaseConfig(shipConfig.weapons),
+    weapons: {
+      ...cloneSlotBaseConfig(shipConfig.weapons),
+      aimRotation: cloneVector3Tuple(shipConfig.weapons.aimRotation),
+    },
   }
 }
 

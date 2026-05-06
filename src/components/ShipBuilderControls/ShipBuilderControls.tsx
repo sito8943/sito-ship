@@ -16,13 +16,13 @@ import type {
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { Button, IconButton } from '@/components/ui'
 import {
-  ENGINE_AIM_ROTATION_RANGES,
   OFFSET_AXIS_OPTIONS,
   SLOT_LABELS,
   SLOT_OFFSET_RANGES,
   SLOT_ORDER,
   SLOT_ROTATION_RANGES,
   SLOT_SCALE_RANGES,
+  SYMMETRIC_AIM_ROTATION_RANGES,
   SYMMETRIC_PAIR_SPREAD_RANGES,
   SLOT_VARIANT_OPTIONS,
   TRANSFORM_MODE_OPTIONS,
@@ -35,7 +35,7 @@ import {
   updateTupleAxis,
 } from '@/components/ShipBuilderControls/utils'
 
-type PairSpreadSlot = Extract<ShipSlot, 'wings' | 'engines' | 'weapons'>
+type SymmetricSlot = Extract<ShipSlot, 'wings' | 'engines' | 'weapons'>
 
 const ShipBuilderControls = () => {
   const {
@@ -132,15 +132,16 @@ const ShipBuilderControls = () => {
     )
   }
 
-  const handleEngineAimAxisChange = (
+  const handleAimAxisChange = (
+    slot: SymmetricSlot,
     axisIndex: 0 | 1 | 2,
     value: number,
     options?: { commitHistory?: boolean }
   ) => {
     updateSlot(
-      'engines',
+      slot,
       {
-        aimRotation: updateTupleAxis(shipConfig.engines.aimRotation, axisIndex, value),
+        aimRotation: updateTupleAxis(shipConfig[slot].aimRotation, axisIndex, value),
       },
       {
         commitHistory: options?.commitHistory ?? false,
@@ -149,7 +150,7 @@ const ShipBuilderControls = () => {
   }
 
   const handlePairSpreadChange = (
-    slot: PairSpreadSlot,
+    slot: SymmetricSlot,
     value: number,
     options?: { commitHistory?: boolean }
   ) => {
@@ -181,14 +182,12 @@ const ShipBuilderControls = () => {
   }
 
   const uniformScale = getUniformScale(activeSlotConfig.scale)
-  const hasEngineAimControls = selectedSlot === 'engines'
-  const pairSpreadSlot: PairSpreadSlot | null =
+  const symmetricSlot: SymmetricSlot | null =
     selectedSlot === 'wings' || selectedSlot === 'engines' || selectedSlot === 'weapons'
       ? selectedSlot
       : null
-  const hasPairSpreadControls =
-    pairSpreadSlot !== null &&
-    (pairSpreadSlot !== 'weapons' || shipConfig.weapons.variant !== 'none')
+  const hasSymmetricControls =
+    symmetricSlot !== null && (symmetricSlot !== 'weapons' || shipConfig.weapons.variant !== 'none')
 
   return (
     <aside className="ship-builder-controls" aria-label="Ship Builder Controls">
@@ -435,28 +434,28 @@ const ShipBuilderControls = () => {
             )
           })}
 
-          {hasPairSpreadControls && pairSpreadSlot ? (
+          {hasSymmetricControls && symmetricSlot ? (
             <label key={`${selectedSlot}-pair-spread`} className="ship-builder-controls__field">
               <span className="ship-builder-controls__field-label">
-                Pair Spread {shipConfig[pairSpreadSlot].pairSpread.toFixed(2)}
+                Pair Spread {shipConfig[symmetricSlot].pairSpread.toFixed(2)}
               </span>
               <input
                 className="ship-builder-controls__range"
                 type="range"
-                min={SYMMETRIC_PAIR_SPREAD_RANGES[pairSpreadSlot].min}
-                max={SYMMETRIC_PAIR_SPREAD_RANGES[pairSpreadSlot].max}
-                step={SYMMETRIC_PAIR_SPREAD_RANGES[pairSpreadSlot].step}
-                value={shipConfig[pairSpreadSlot].pairSpread}
+                min={SYMMETRIC_PAIR_SPREAD_RANGES[symmetricSlot].min}
+                max={SYMMETRIC_PAIR_SPREAD_RANGES[symmetricSlot].max}
+                step={SYMMETRIC_PAIR_SPREAD_RANGES[symmetricSlot].step}
+                value={shipConfig[symmetricSlot].pairSpread}
                 onChange={(event) => {
-                  handlePairSpreadChange(pairSpreadSlot, Number(event.target.value))
+                  handlePairSpreadChange(symmetricSlot, Number(event.target.value))
                 }}
                 onPointerUp={(event) => {
-                  handlePairSpreadChange(pairSpreadSlot, Number(event.currentTarget.value), {
+                  handlePairSpreadChange(symmetricSlot, Number(event.currentTarget.value), {
                     commitHistory: true,
                   })
                 }}
                 onBlur={(event) => {
-                  handlePairSpreadChange(pairSpreadSlot, Number(event.currentTarget.value), {
+                  handlePairSpreadChange(symmetricSlot, Number(event.currentTarget.value), {
                     commitHistory: true,
                   })
                 }}
@@ -464,10 +463,10 @@ const ShipBuilderControls = () => {
             </label>
           ) : null}
 
-          {hasEngineAimControls
+          {hasSymmetricControls && symmetricSlot
             ? OFFSET_AXIS_OPTIONS.map((axisOption) => {
-                const axisValue = shipConfig.engines.aimRotation[axisOption.index]
-                const axisRange = ENGINE_AIM_ROTATION_RANGES[axisOption.axis]
+                const axisValue = shipConfig[symmetricSlot].aimRotation[axisOption.index]
+                const axisRange = SYMMETRIC_AIM_ROTATION_RANGES[symmetricSlot][axisOption.axis]
 
                 return (
                   <label
@@ -485,17 +484,23 @@ const ShipBuilderControls = () => {
                       step={axisRange.step}
                       value={axisValue}
                       onChange={(event) => {
-                        handleEngineAimAxisChange(axisOption.index, Number(event.target.value))
+                        handleAimAxisChange(
+                          symmetricSlot,
+                          axisOption.index,
+                          Number(event.target.value)
+                        )
                       }}
                       onPointerUp={(event) => {
-                        handleEngineAimAxisChange(
+                        handleAimAxisChange(
+                          symmetricSlot,
                           axisOption.index,
                           Number(event.currentTarget.value),
                           { commitHistory: true }
                         )
                       }}
                       onBlur={(event) => {
-                        handleEngineAimAxisChange(
+                        handleAimAxisChange(
+                          symmetricSlot,
                           axisOption.index,
                           Number(event.currentTarget.value),
                           { commitHistory: true }
