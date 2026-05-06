@@ -1,5 +1,6 @@
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import {
   BloomEffect,
   EffectComposer,
@@ -50,6 +51,12 @@ import type {
   TransformMode,
 } from '@/lib/managers/ShipBuilderSceneManager/types'
 
+type DebugHelpersVisibility = {
+  axes: boolean
+  light: boolean
+  shadow: boolean
+}
+
 export class ShipBuilderSceneManager {
   private readonly isDevEnvironment = import.meta.env.DEV
   private canvas: HTMLCanvasElement | null = null
@@ -57,10 +64,17 @@ export class ShipBuilderSceneManager {
   private scene: Scene | null = null
   private camera: PerspectiveCamera | null = null
   private controls: OrbitControls | null = null
+  private debugGui: GUI | null = null
   private composer: EffectComposer | null = null
+  private axesHelper: AxesHelper | null = null
   private directionalLights: DirectionalLight[] = []
   private lightHelpers: DirectionalLightHelper[] = []
   private shadowHelpers: CameraHelper[] = []
+  private debugHelpersVisibility: DebugHelpersVisibility = {
+    axes: true,
+    light: true,
+    shadow: true,
+  }
   private transformControls: TransformControls | null = null
   private transformControlHelper: Object3D | null = null
   private clock: Clock | null = null
@@ -131,6 +145,23 @@ export class ShipBuilderSceneManager {
     this.transformControls?.setMode(mode)
   }
 
+  getDebugHelpersVisibility(): DebugHelpersVisibility {
+    return { ...this.debugHelpersVisibility }
+  }
+
+  setDebugHelpersVisibility(visibility: Partial<DebugHelpersVisibility>) {
+    if (visibility.axes !== undefined) {
+      this.debugHelpersVisibility.axes = visibility.axes
+    }
+    if (visibility.light !== undefined) {
+      this.debugHelpersVisibility.light = visibility.light
+    }
+    if (visibility.shadow !== undefined) {
+      this.debugHelpersVisibility.shadow = visibility.shadow
+    }
+    this.updateDebugHelpersVisibility()
+  }
+
   syncShipConfig(shipConfig: ShipConfig) {
     this.pendingShipConfig = shipConfig
     this.shipModelManager?.sync(shipConfig)
@@ -190,8 +221,14 @@ export class ShipBuilderSceneManager {
     }
 
     this.controls?.dispose()
+    this.disposeDebugGui()
     this.shipModelManager?.dispose()
     this.disposeDebugLightHelpers()
+    if (this.axesHelper) {
+      this.axesHelper.dispose()
+      this.scene?.remove(this.axesHelper)
+      this.axesHelper = null
+    }
 
     if (this.scene) {
       this.scene.traverse((object) => {
@@ -214,6 +251,7 @@ export class ShipBuilderSceneManager {
 
     this.clock = null
     this.controls = null
+    this.debugGui = null
     this.composer = null
     this.directionalLights = []
     this.lightHelpers = []
@@ -272,6 +310,43 @@ export class ShipBuilderSceneManager {
     this.initializeShipGroup()
     this.initializeTransformControls()
     this.initializePostProcessing()
+    this.initializeDebugGui()
+  }
+
+  private initializeDebugGui() {
+    if (!this.isDevEnvironment) {
+      return
+    }
+
+    this.disposeDebugGui()
+    this.debugGui = new GUI({
+      title: 'Debug Helpers',
+      width: 280,
+    })
+
+    this.debugGui
+      .add(this.debugHelpersVisibility, 'axes')
+      .name('Axes Helper')
+      .onChange((value: boolean) => {
+        this.setDebugHelpersVisibility({ axes: value })
+      })
+    this.debugGui
+      .add(this.debugHelpersVisibility, 'light')
+      .name('Light Helpers')
+      .onChange((value: boolean) => {
+        this.setDebugHelpersVisibility({ light: value })
+      })
+    this.debugGui
+      .add(this.debugHelpersVisibility, 'shadow')
+      .name('Shadow Helpers')
+      .onChange((value: boolean) => {
+        this.setDebugHelpersVisibility({ shadow: value })
+      })
+  }
+
+  private disposeDebugGui() {
+    this.debugGui?.destroy()
+    this.debugGui = null
   }
 
   private initializePostProcessing() {
@@ -335,8 +410,9 @@ export class ShipBuilderSceneManager {
     gridHelper.position.y = -1
     this.scene.add(gridHelper)
 
-    const axesHelper = new AxesHelper(5)
-    this.scene.add(axesHelper)
+    this.axesHelper = new AxesHelper(5)
+    this.scene.add(this.axesHelper)
+    this.updateDebugHelpersVisibility()
   }
 
   private initializeDebugLightHelpers() {
@@ -359,6 +435,8 @@ export class ShipBuilderSceneManager {
       this.scene?.add(shadowHelper)
       this.shadowHelpers.push(shadowHelper)
     })
+
+    this.updateDebugHelpersVisibility()
   }
 
   private disposeDebugLightHelpers() {
@@ -372,6 +450,20 @@ export class ShipBuilderSceneManager {
     })
     this.lightHelpers = []
     this.shadowHelpers = []
+  }
+
+  private updateDebugHelpersVisibility() {
+    if (this.axesHelper) {
+      this.axesHelper.visible = this.debugHelpersVisibility.axes
+    }
+
+    this.lightHelpers.forEach((helper) => {
+      helper.visible = this.debugHelpersVisibility.light
+    })
+
+    this.shadowHelpers.forEach((helper) => {
+      helper.visible = this.debugHelpersVisibility.shadow
+    })
   }
 
   private initializeShipGroup() {
