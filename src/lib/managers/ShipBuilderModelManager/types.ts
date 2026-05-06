@@ -15,9 +15,7 @@ export type ShipPartPair<TSlot extends ShipSymmetricSlotKey = ShipSymmetricSlotK
   mirroredPart: ShipPart<TSlot>
 }
 
-export type ShipPartPairMap = Partial<{
-  [TSlot in ShipSymmetricSlotKey]: ShipPartPair<TSlot>
-}>
+export type ShipPartPairMap = Partial<Record<ShipSymmetricSlotKey, ShipPartPair>>
 
 export type SlotBuilderMap = {
   [TSlot in ShipSlotKey]: (slotConfig: ShipSlotConfigMap[TSlot]) => Group

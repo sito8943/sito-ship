@@ -79,7 +79,10 @@ export class ShipConfigManager {
     return this.normalizeConfig(nextConfig)
   }
 
-  resetSlot(config: ShipConfig, slot: ShipSlot): ShipConfigNormalizationResult {
+  resetSlot<TSlot extends ShipSlot>(
+    config: ShipConfig,
+    slot: TSlot
+  ): ShipConfigNormalizationResult {
     const nextConfig = cloneShipConfig(config)
     const defaultConfig = createDefaultShipConfig()
 

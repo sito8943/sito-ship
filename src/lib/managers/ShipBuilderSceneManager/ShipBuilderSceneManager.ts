@@ -410,7 +410,7 @@ export class ShipBuilderSceneManager {
     event: { value: unknown } & ThreeEvent<'dragging-changed', TransformControls>
   ) => {
     if (this.controls) {
-      this.controls.enabled = !Boolean(event.value)
+      this.controls.enabled = !event.value
     }
   }
 
