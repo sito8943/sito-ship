@@ -38,4 +38,6 @@ export const TRANSFORM_MODE_OPTIONS: readonly TransformModeOption[] = [
   { value: 'translate', label: 'Move' },
   { value: 'rotate', label: 'Rotate' },
   { value: 'scale', label: 'Scale' },
+  { value: 'pairSpread', label: 'Pair Spread', symmetricOnly: true },
+  { value: 'aimRotate', label: 'Aim Rotate', symmetricOnly: true },
 ]

@@ -5,12 +5,14 @@ export type SceneSize = {
   height: number
 }
 
-export type TransformMode = 'translate' | 'rotate' | 'scale'
+export type TransformMode = 'translate' | 'rotate' | 'scale' | 'pairSpread' | 'aimRotate'
 
 export type SceneSlotTransformPatch = {
   offset?: Vector3Tuple
   rotation?: Vector3Tuple
   scale?: Vector3Tuple
+  aimRotation?: Vector3Tuple
+  pairSpread?: number
 }
 
 export type SceneSlotSelectionHandler = (slot: ShipSlot | null) => void

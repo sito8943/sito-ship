@@ -244,6 +244,8 @@ const ShipBuilderControls = () => {
         <span className="ship-builder-controls__section-title">Gizmo Mode</span>
         <div className="ship-builder-controls__mode-toggle">
           {TRANSFORM_MODE_OPTIONS.map((modeOption) => {
+            const isDisabled = modeOption.symmetricOnly === true && !hasSymmetricControls
+
             return (
               <button
                 key={modeOption.value}
@@ -253,6 +255,7 @@ const ShipBuilderControls = () => {
                     ? 'ship-builder-controls__mode-button--active'
                     : ''
                 }`}
+                disabled={isDisabled}
                 onClick={() => {
                   setTransformMode(modeOption.value)
                 }}

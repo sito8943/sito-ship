@@ -124,6 +124,26 @@ export class ShipBuilderModelManager {
     return slotPair ? (slotPair as ShipPartPair<TSlot>) : null
   }
 
+  getSymmetricMasterSideGroup(slot: ShipSlot): Group | null {
+    if (!this.isSymmetricSlot(slot)) {
+      return null
+    }
+
+    return this.findSymmetricMasterSideGroup(slot)
+  }
+
+  getSymmetricAimPivotGroup(slot: ShipSlot): Group | null {
+    const masterSide = this.getSymmetricMasterSideGroup(slot)
+    if (!masterSide) {
+      return null
+    }
+
+    const aimPivot = masterSide.getObjectByName(
+      ShipBuilderModelManager.SYMMETRIC_AIM_PIVOT_GROUP_NAME
+    )
+    return aimPivot instanceof Group ? aimPivot : null
+  }
+
   dispose() {
     SHIP_SLOT_KEYS.forEach((slot) => {
       const slotGroup = this.slotGroups[slot]
@@ -155,6 +175,19 @@ export class ShipBuilderModelManager {
     })
 
     return slotGroups
+  }
+
+  private findSymmetricMasterSideGroup(slot: ShipSymmetricSlotKey): Group | null {
+    const slotGroup = this.slotGroups[slot]
+    const slotContent = slotGroup.children[0]
+    if (!(slotContent instanceof Group)) {
+      return null
+    }
+
+    const masterSide = slotContent.children.find(
+      (node): node is Group => node instanceof Group && node.name === 'masterSide'
+    )
+    return masterSide ?? null
   }
 
   private rebuildSlot<TSlot extends ShipSlotKey>(

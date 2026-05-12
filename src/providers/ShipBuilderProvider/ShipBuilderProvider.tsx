@@ -379,6 +379,20 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   }, [sceneManager, selectedSlot])
 
   useEffect(() => {
+    const supportsSymmetricGizmos =
+      selectedSlot === 'wings' ||
+      selectedSlot === 'engines' ||
+      (selectedSlot === 'weapons' && builderState.shipConfig.weapons.variant !== 'none')
+
+    if (
+      (transformMode === 'pairSpread' || transformMode === 'aimRotate') &&
+      !supportsSymmetricGizmos
+    ) {
+      setTransformMode('translate')
+    }
+  }, [builderState.shipConfig.weapons.variant, selectedSlot, transformMode])
+
+  useEffect(() => {
     sceneManager.setTransformMode(transformMode)
   }, [sceneManager, transformMode])
 

@@ -1,3 +1,5 @@
+import type { TransformMode } from '@/lib/managers/ShipBuilderSceneManager/types'
+
 export type OffsetAxis = 'x' | 'y' | 'z'
 export type OffsetAxisOption = {
   axis: OffsetAxis
@@ -5,6 +7,7 @@ export type OffsetAxisOption = {
 }
 
 export type TransformModeOption = {
-  value: 'translate' | 'rotate' | 'scale'
+  value: TransformMode
   label: string
+  symmetricOnly?: boolean
 }

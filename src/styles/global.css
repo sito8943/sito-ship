@@ -222,6 +222,7 @@ body {
 .ship-builder-controls__mode-toggle {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .ship-builder-controls__mode-button {
@@ -233,6 +234,11 @@ body {
   color: #cbd5e1;
   font-size: 0.74rem;
   cursor: pointer;
+}
+
+.ship-builder-controls__mode-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .ship-builder-controls__mode-button--active {

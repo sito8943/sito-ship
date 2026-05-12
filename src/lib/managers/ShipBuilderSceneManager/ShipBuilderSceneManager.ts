@@ -31,7 +31,12 @@ import {
   type Object3D,
 } from 'three'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
-import type { ShipConfig, ShipSlot } from '@/lib/models/ShipConfig'
+import {
+  SHIP_SYMMETRIC_AIM_ROTATION_RANGES,
+  SHIP_SYMMETRIC_PAIR_SPREAD_RANGES,
+  type ShipConfig,
+  type ShipSlot,
+} from '@/lib/models/ShipConfig'
 import {
   BODY_CONTACT_SLOTS,
   BODY_CONTACT_TOLERANCE,
@@ -56,6 +61,9 @@ type DebugHelpersVisibility = {
   light: boolean
   shadow: boolean
 }
+
+type SymmetricSlot = Extract<ShipSlot, 'wings' | 'engines' | 'weapons'>
+type TransformControlMode = 'translate' | 'rotate' | 'scale'
 
 export class ShipBuilderSceneManager {
   private readonly isDevEnvironment = import.meta.env.DEV
@@ -142,7 +150,7 @@ export class ShipBuilderSceneManager {
 
   setTransformMode(mode: TransformMode) {
     this.transformMode = mode
-    this.transformControls?.setMode(mode)
+    this.refreshTransformControlAttachment()
   }
 
   getDebugHelpersVisibility(): DebugHelpersVisibility {
@@ -488,7 +496,6 @@ export class ShipBuilderSceneManager {
     }
 
     this.transformControls = new TransformControls(this.camera, this.renderer.domElement)
-    this.transformControls.setMode(this.transformMode)
     this.transformControls.setSpace('local')
     this.transformControls.size = 0.85
     this.transformControls.addEventListener('dragging-changed', this.handleTransformDraggingChange)
@@ -505,9 +512,70 @@ export class ShipBuilderSceneManager {
       return
     }
 
-    const slotGroup = this.shipModelManager.getSlotGroup(this.selectedSlot)
-    this.transformControls.setMode(this.transformMode)
-    this.transformControls.attach(slotGroup)
+    const target = this.getTransformControlTarget(this.selectedSlot)
+    if (!target) {
+      this.transformControls.detach()
+      return
+    }
+
+    this.configureTransformControlsForMode(this.transformMode)
+    this.transformControls.attach(target)
+  }
+
+  private getTransformControlTarget(slot: ShipSlot): Object3D | null {
+    if (!this.shipModelManager) {
+      return null
+    }
+
+    if (this.transformMode === 'pairSpread') {
+      if (!this.isSymmetricSlot(slot)) {
+        return null
+      }
+
+      return this.shipModelManager.getSymmetricMasterSideGroup(slot)
+    }
+
+    if (this.transformMode === 'aimRotate') {
+      if (!this.isSymmetricSlot(slot)) {
+        return null
+      }
+
+      return this.shipModelManager.getSymmetricAimPivotGroup(slot)
+    }
+
+    return this.shipModelManager.getSlotGroup(slot)
+  }
+
+  private configureTransformControlsForMode(mode: TransformMode) {
+    if (!this.transformControls) {
+      return
+    }
+
+    this.transformControls.setMode(this.resolveTransformControlMode(mode))
+    this.transformControls.setSpace('local')
+
+    if (mode === 'pairSpread') {
+      this.transformControls.showX = true
+      this.transformControls.showY = false
+      this.transformControls.showZ = false
+      return
+    }
+
+    this.transformControls.showX = true
+    this.transformControls.showY = true
+    this.transformControls.showZ = true
+  }
+
+  private resolveTransformControlMode(mode: TransformMode): TransformControlMode {
+    if (mode === 'pairSpread') {
+      return 'translate'
+    }
+
+    if (mode === 'aimRotate') {
+      return 'rotate'
+    }
+
+    return mode
   }
 
   private getSceneSize(): SceneSize {
@@ -591,6 +659,10 @@ export class ShipBuilderSceneManager {
     )
   }
 
+  private isSymmetricSlot(slot: ShipSlot): slot is SymmetricSlot {
+    return slot === 'wings' || slot === 'engines' || slot === 'weapons'
+  }
+
   private handleTransformDraggingChange = (
     event: { value: unknown } & ThreeEvent<'dragging-changed', TransformControls>
   ) => {
@@ -609,6 +681,16 @@ export class ShipBuilderSceneManager {
 
   private emitTransformPatch(commitHistory: boolean) {
     if (!this.selectedSlot || !this.shipModelManager) {
+      return
+    }
+
+    if (this.transformMode === 'pairSpread') {
+      this.emitPairSpreadPatch(commitHistory)
+      return
+    }
+
+    if (this.transformMode === 'aimRotate') {
+      this.emitAimRotationPatch(commitHistory)
       return
     }
 
@@ -643,6 +725,58 @@ export class ShipBuilderSceneManager {
       },
       { commitHistory }
     )
+  }
+
+  private emitPairSpreadPatch(commitHistory: boolean) {
+    if (!this.selectedSlot || !this.shipModelManager || !this.isSymmetricSlot(this.selectedSlot)) {
+      return
+    }
+
+    const masterSide = this.shipModelManager.getSymmetricMasterSideGroup(this.selectedSlot)
+    const slotPartPair = this.shipModelManager.getSlotPartPair(this.selectedSlot)
+    if (!masterSide || !slotPartPair) {
+      return
+    }
+
+    const range = SHIP_SYMMETRIC_PAIR_SPREAD_RANGES[this.selectedSlot]
+    const rawPairSpread = slotPartPair.masterPart.pivotLocal[0] - masterSide.position.x
+    const pairSpread = this.clampNumber(rawPairSpread, range.min, range.max)
+
+    this.slotTransformHandler?.(
+      this.selectedSlot,
+      {
+        pairSpread,
+      },
+      { commitHistory }
+    )
+  }
+
+  private emitAimRotationPatch(commitHistory: boolean) {
+    if (!this.selectedSlot || !this.shipModelManager || !this.isSymmetricSlot(this.selectedSlot)) {
+      return
+    }
+
+    const aimPivot = this.shipModelManager.getSymmetricAimPivotGroup(this.selectedSlot)
+    if (!aimPivot) {
+      return
+    }
+
+    const range = SHIP_SYMMETRIC_AIM_ROTATION_RANGES[this.selectedSlot]
+    this.slotTransformHandler?.(
+      this.selectedSlot,
+      {
+        aimRotation: [
+          this.clampNumber(aimPivot.rotation.x, range.x.min, range.x.max),
+          this.clampNumber(aimPivot.rotation.y, range.y.min, range.y.max),
+          this.clampNumber(aimPivot.rotation.z, range.z.min, range.z.max),
+        ],
+      },
+      { commitHistory }
+    )
+  }
+
+  private clampNumber(value: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, value))
   }
 
   private detectSevereOverlaps(): ShipSlot[] {
