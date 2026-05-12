@@ -188,6 +188,11 @@ const ShipBuilderControls = () => {
       : null
   const hasSymmetricControls =
     symmetricSlot !== null && (symmetricSlot !== 'weapons' || shipConfig.weapons.variant !== 'none')
+  const showScaleControls = transformMode === 'scale'
+  const showOffsetControls = transformMode === 'translate'
+  const showRotationControls = transformMode === 'rotate'
+  const showPairSpreadControl = transformMode === 'pairSpread'
+  const showAimRotationControls = transformMode === 'aimRotate'
 
   return (
     <aside className="ship-builder-controls" aria-label="Ship Builder Controls">
@@ -316,128 +321,134 @@ const ShipBuilderControls = () => {
             />
           </label>
 
-          <label className="ship-builder-controls__field">
-            <span className="ship-builder-controls__field-label">
-              Uniform Scale {uniformScale.toFixed(2)}
-            </span>
-            <input
-              className="ship-builder-controls__range"
-              type="range"
-              min={SLOT_SCALE_RANGES[selectedSlot].min}
-              max={SLOT_SCALE_RANGES[selectedSlot].max}
-              step={SLOT_SCALE_RANGES[selectedSlot].step}
-              value={uniformScale}
-              onChange={(event) => {
-                handleScaleChange(selectedSlot, Number(event.target.value))
-              }}
-              onPointerUp={(event) => {
-                handleScaleChange(selectedSlot, Number(event.currentTarget.value), {
-                  commitHistory: true,
-                })
-              }}
-              onBlur={(event) => {
-                handleScaleChange(selectedSlot, Number(event.currentTarget.value), {
-                  commitHistory: true,
-                })
-              }}
-            />
-          </label>
+          {showScaleControls ? (
+            <label className="ship-builder-controls__field">
+              <span className="ship-builder-controls__field-label">
+                Uniform Scale {uniformScale.toFixed(2)}
+              </span>
+              <input
+                className="ship-builder-controls__range"
+                type="range"
+                min={SLOT_SCALE_RANGES[selectedSlot].min}
+                max={SLOT_SCALE_RANGES[selectedSlot].max}
+                step={SLOT_SCALE_RANGES[selectedSlot].step}
+                value={uniformScale}
+                onChange={(event) => {
+                  handleScaleChange(selectedSlot, Number(event.target.value))
+                }}
+                onPointerUp={(event) => {
+                  handleScaleChange(selectedSlot, Number(event.currentTarget.value), {
+                    commitHistory: true,
+                  })
+                }}
+                onBlur={(event) => {
+                  handleScaleChange(selectedSlot, Number(event.currentTarget.value), {
+                    commitHistory: true,
+                  })
+                }}
+              />
+            </label>
+          ) : null}
 
-          {OFFSET_AXIS_OPTIONS.map((axisOption) => {
-            const axisValue = activeSlotConfig.offset[axisOption.index]
-            const axisRange = SLOT_OFFSET_RANGES[selectedSlot][axisOption.axis]
+          {showOffsetControls
+            ? OFFSET_AXIS_OPTIONS.map((axisOption) => {
+                const axisValue = activeSlotConfig.offset[axisOption.index]
+                const axisRange = SLOT_OFFSET_RANGES[selectedSlot][axisOption.axis]
 
-            return (
-              <label
-                key={`${selectedSlot}-offset-${axisOption.axis}`}
-                className="ship-builder-controls__field"
-              >
-                <span className="ship-builder-controls__field-label">
-                  Offset {axisOption.axis.toUpperCase()} {axisValue.toFixed(2)}
-                </span>
-                <input
-                  className="ship-builder-controls__range"
-                  type="range"
-                  min={axisRange.min}
-                  max={axisRange.max}
-                  step={axisRange.step}
-                  value={axisValue}
-                  onChange={(event) => {
-                    handleOffsetAxisChange(
-                      selectedSlot,
-                      axisOption.index,
-                      Number(event.target.value)
-                    )
-                  }}
-                  onPointerUp={(event) => {
-                    handleOffsetAxisChange(
-                      selectedSlot,
-                      axisOption.index,
-                      Number(event.currentTarget.value),
-                      { commitHistory: true }
-                    )
-                  }}
-                  onBlur={(event) => {
-                    handleOffsetAxisChange(
-                      selectedSlot,
-                      axisOption.index,
-                      Number(event.currentTarget.value),
-                      { commitHistory: true }
-                    )
-                  }}
-                />
-              </label>
-            )
-          })}
+                return (
+                  <label
+                    key={`${selectedSlot}-offset-${axisOption.axis}`}
+                    className="ship-builder-controls__field"
+                  >
+                    <span className="ship-builder-controls__field-label">
+                      Offset {axisOption.axis.toUpperCase()} {axisValue.toFixed(2)}
+                    </span>
+                    <input
+                      className="ship-builder-controls__range"
+                      type="range"
+                      min={axisRange.min}
+                      max={axisRange.max}
+                      step={axisRange.step}
+                      value={axisValue}
+                      onChange={(event) => {
+                        handleOffsetAxisChange(
+                          selectedSlot,
+                          axisOption.index,
+                          Number(event.target.value)
+                        )
+                      }}
+                      onPointerUp={(event) => {
+                        handleOffsetAxisChange(
+                          selectedSlot,
+                          axisOption.index,
+                          Number(event.currentTarget.value),
+                          { commitHistory: true }
+                        )
+                      }}
+                      onBlur={(event) => {
+                        handleOffsetAxisChange(
+                          selectedSlot,
+                          axisOption.index,
+                          Number(event.currentTarget.value),
+                          { commitHistory: true }
+                        )
+                      }}
+                    />
+                  </label>
+                )
+              })
+            : null}
 
-          {OFFSET_AXIS_OPTIONS.map((axisOption) => {
-            const axisValue = activeSlotConfig.rotation[axisOption.index]
-            const axisRange = SLOT_ROTATION_RANGES[selectedSlot][axisOption.axis]
+          {showRotationControls
+            ? OFFSET_AXIS_OPTIONS.map((axisOption) => {
+                const axisValue = activeSlotConfig.rotation[axisOption.index]
+                const axisRange = SLOT_ROTATION_RANGES[selectedSlot][axisOption.axis]
 
-            return (
-              <label
-                key={`${selectedSlot}-rotation-${axisOption.axis}`}
-                className="ship-builder-controls__field"
-              >
-                <span className="ship-builder-controls__field-label">
-                  Rotation {axisOption.axis.toUpperCase()} {axisValue.toFixed(2)}
-                </span>
-                <input
-                  className="ship-builder-controls__range"
-                  type="range"
-                  min={axisRange.min}
-                  max={axisRange.max}
-                  step={axisRange.step}
-                  value={axisValue}
-                  onChange={(event) => {
-                    handleRotationAxisChange(
-                      selectedSlot,
-                      axisOption.index,
-                      Number(event.target.value)
-                    )
-                  }}
-                  onPointerUp={(event) => {
-                    handleRotationAxisChange(
-                      selectedSlot,
-                      axisOption.index,
-                      Number(event.currentTarget.value),
-                      { commitHistory: true }
-                    )
-                  }}
-                  onBlur={(event) => {
-                    handleRotationAxisChange(
-                      selectedSlot,
-                      axisOption.index,
-                      Number(event.currentTarget.value),
-                      { commitHistory: true }
-                    )
-                  }}
-                />
-              </label>
-            )
-          })}
+                return (
+                  <label
+                    key={`${selectedSlot}-rotation-${axisOption.axis}`}
+                    className="ship-builder-controls__field"
+                  >
+                    <span className="ship-builder-controls__field-label">
+                      Rotation {axisOption.axis.toUpperCase()} {axisValue.toFixed(2)}
+                    </span>
+                    <input
+                      className="ship-builder-controls__range"
+                      type="range"
+                      min={axisRange.min}
+                      max={axisRange.max}
+                      step={axisRange.step}
+                      value={axisValue}
+                      onChange={(event) => {
+                        handleRotationAxisChange(
+                          selectedSlot,
+                          axisOption.index,
+                          Number(event.target.value)
+                        )
+                      }}
+                      onPointerUp={(event) => {
+                        handleRotationAxisChange(
+                          selectedSlot,
+                          axisOption.index,
+                          Number(event.currentTarget.value),
+                          { commitHistory: true }
+                        )
+                      }}
+                      onBlur={(event) => {
+                        handleRotationAxisChange(
+                          selectedSlot,
+                          axisOption.index,
+                          Number(event.currentTarget.value),
+                          { commitHistory: true }
+                        )
+                      }}
+                    />
+                  </label>
+                )
+              })
+            : null}
 
-          {hasSymmetricControls && symmetricSlot ? (
+          {showPairSpreadControl && hasSymmetricControls && symmetricSlot ? (
             <label key={`${selectedSlot}-pair-spread`} className="ship-builder-controls__field">
               <span className="ship-builder-controls__field-label">
                 Pair Spread {shipConfig[symmetricSlot].pairSpread.toFixed(2)}
@@ -466,7 +477,7 @@ const ShipBuilderControls = () => {
             </label>
           ) : null}
 
-          {hasSymmetricControls && symmetricSlot
+          {showAimRotationControls && hasSymmetricControls && symmetricSlot
             ? OFFSET_AXIS_OPTIONS.map((axisOption) => {
                 const axisValue = shipConfig[symmetricSlot].aimRotation[axisOption.index]
                 const axisRange = SYMMETRIC_AIM_ROTATION_RANGES[symmetricSlot][axisOption.axis]
