@@ -71,9 +71,9 @@ export class ShipBuilderSceneManager {
   private lightHelpers: DirectionalLightHelper[] = []
   private shadowHelpers: CameraHelper[] = []
   private debugHelpersVisibility: DebugHelpersVisibility = {
-    axes: true,
-    light: true,
-    shadow: true,
+    axes: false,
+    light: false,
+    shadow: false,
   }
   private transformControls: TransformControls | null = null
   private transformControlHelper: Object3D | null = null
