@@ -1,6 +1,7 @@
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
+import Stats from 'three/addons/libs/stats.module.js'
 import {
   BloomEffect,
   EffectComposer,
@@ -73,6 +74,7 @@ export class ShipBuilderSceneManager {
   private camera: PerspectiveCamera | null = null
   private controls: OrbitControls | null = null
   private debugGui: GUI | null = null
+  private stats: Stats | null = null
   private composer: EffectComposer | null = null
   private axesHelper: AxesHelper | null = null
   private directionalLights: DirectionalLight[] = []
@@ -260,6 +262,7 @@ export class ShipBuilderSceneManager {
     this.clock = null
     this.controls = null
     this.debugGui = null
+    this.disposeStats()
     this.composer = null
     this.directionalLights = []
     this.lightHelpers = []
@@ -318,6 +321,7 @@ export class ShipBuilderSceneManager {
     this.initializeShipGroup()
     this.initializeTransformControls()
     this.initializePostProcessing()
+    this.initializeStats()
     this.initializeDebugGui()
   }
 
@@ -355,6 +359,29 @@ export class ShipBuilderSceneManager {
   private disposeDebugGui() {
     this.debugGui?.destroy()
     this.debugGui = null
+  }
+
+  private initializeStats() {
+    if (!this.isDevEnvironment) {
+      return
+    }
+
+    this.disposeStats()
+
+    this.stats = new Stats()
+    this.stats.showPanel(1) // 0: fps, 1: ms, 2: mb, 3+: custom
+    this.stats.dom.style.position = 'fixed'
+    this.stats.dom.style.left = '0'
+    this.stats.dom.style.top = '0'
+    this.stats.dom.style.zIndex = '12'
+    document.body.appendChild(this.stats.dom)
+  }
+
+  private disposeStats() {
+    if (this.stats?.dom?.parentNode) {
+      this.stats.dom.parentNode.removeChild(this.stats.dom)
+    }
+    this.stats = null
   }
 
   private initializePostProcessing() {
@@ -876,6 +903,8 @@ export class ShipBuilderSceneManager {
       return
     }
 
+    this.stats?.begin()
+
     const delta = this.clock?.getDelta() ?? 0
     this.controls?.update(delta)
     if (this.isDevEnvironment) {
@@ -887,6 +916,8 @@ export class ShipBuilderSceneManager {
     } else {
       this.renderer.render(this.scene, this.camera)
     }
+
+    this.stats?.end()
 
     this.animationFrameId = window.requestAnimationFrame(this.animate)
   }
