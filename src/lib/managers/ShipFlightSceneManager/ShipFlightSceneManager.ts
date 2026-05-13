@@ -387,7 +387,7 @@ export class ShipFlightSceneManager {
     this.shipGroup.position.x = this.yaw * FLIGHT_SCENE_BANK.strafeStrength
     this.shipGroup.rotation.z = this.roll - this.yaw * FLIGHT_SCENE_BANK.rollFactor
     this.shipGroup.rotation.y = this.yaw * FLIGHT_SCENE_BANK.yawFactor
-    this.shipGroup.rotation.x = 0
+    this.shipGroup.rotation.x = this.yaw * FLIGHT_SCENE_BANK.pitchFactor
   }
 
   private updateSpaceMotion(delta: number) {

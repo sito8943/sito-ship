@@ -32,6 +32,7 @@ export const FLIGHT_SCENE_BANK = {
   strafeStrength: 6.0,
   rollFactor: 0.85,
   yawFactor: 0.22,
+  pitchFactor: 0.14,
 } as const
 
 export const FLIGHT_SCENE_SPACE = {
