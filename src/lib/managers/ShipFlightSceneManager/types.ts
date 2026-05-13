@@ -3,8 +3,6 @@ import type { Mesh, Points } from 'three'
 export type FlightSceneInputState = {
   yawLeft: boolean
   yawRight: boolean
-  rollLeft: boolean
-  rollRight: boolean
 }
 
 export type FlightSceneSize = {

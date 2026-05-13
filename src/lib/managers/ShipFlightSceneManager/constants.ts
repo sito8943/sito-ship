@@ -21,9 +21,7 @@ export const FLIGHT_SCENE_RENDERER = {
 
 export const FLIGHT_SCENE_ROTATION = {
   yawSpeed: 1.1,
-  rollSpeed: 1.4,
   yawLimit: Math.PI * 0.1,
-  rollLimit: Math.PI * 0.3,
   settleSpeed: 2.4,
   smoothing: 8.2,
 } as const

@@ -43,8 +43,6 @@ const createDefaultInputState = (): FlightSceneInputState => {
   return {
     yawLeft: false,
     yawRight: false,
-    rollLeft: false,
-    rollRight: false,
   }
 }
 
@@ -69,9 +67,7 @@ export class ShipFlightSceneManager {
   private animationFrameId = 0
   private isMounted = false
   private yaw = 0
-  private roll = 0
   private targetYaw = 0
-  private targetRoll = 0
   private readonly inputState: FlightSceneInputState = createDefaultInputState()
   private readonly lookTarget = new Vector3(
     FLIGHT_SCENE_CAMERA.lookAt.x,
@@ -135,9 +131,7 @@ export class ShipFlightSceneManager {
     this.pendingShipConfig = null
     this.canvas = null
     this.yaw = 0
-    this.roll = 0
     this.targetYaw = 0
-    this.targetRoll = 0
     this.starFields.length = 0
     this.planets.length = 0
   }
@@ -359,33 +353,23 @@ export class ShipFlightSceneManager {
 
   private updateRotationState(delta: number) {
     const yawInput = this.getAxisInput(this.inputState.yawLeft, this.inputState.yawRight)
-    const rollInput = this.getAxisInput(this.inputState.rollLeft, this.inputState.rollRight)
 
     const rawTargetYaw = this.targetYaw + yawInput * FLIGHT_SCENE_ROTATION.yawSpeed * delta
-    const rawTargetRoll = this.targetRoll + rollInput * FLIGHT_SCENE_ROTATION.rollSpeed * delta
 
     this.targetYaw = MathUtils.clamp(
       yawInput === 0 ? MathUtils.damp(this.targetYaw, 0, FLIGHT_SCENE_ROTATION.settleSpeed, delta) : rawTargetYaw,
       -FLIGHT_SCENE_ROTATION.yawLimit,
       FLIGHT_SCENE_ROTATION.yawLimit
     )
-    this.targetRoll = MathUtils.clamp(
-      rollInput === 0
-        ? MathUtils.damp(this.targetRoll, 0, FLIGHT_SCENE_ROTATION.settleSpeed, delta)
-        : rawTargetRoll,
-      -FLIGHT_SCENE_ROTATION.rollLimit,
-      FLIGHT_SCENE_ROTATION.rollLimit
-    )
 
     this.yaw = MathUtils.damp(this.yaw, this.targetYaw, FLIGHT_SCENE_ROTATION.smoothing, delta)
-    this.roll = MathUtils.damp(this.roll, this.targetRoll, FLIGHT_SCENE_ROTATION.smoothing, delta)
 
     if (!this.shipGroup) {
       return
     }
 
     this.shipGroup.position.x = this.yaw * FLIGHT_SCENE_BANK.strafeStrength
-    this.shipGroup.rotation.z = this.roll - this.yaw * FLIGHT_SCENE_BANK.rollFactor
+    this.shipGroup.rotation.z = -this.yaw * FLIGHT_SCENE_BANK.rollFactor
     this.shipGroup.rotation.y = this.yaw * FLIGHT_SCENE_BANK.yawFactor
     this.shipGroup.rotation.x = this.yaw * FLIGHT_SCENE_BANK.pitchFactor
   }
@@ -450,8 +434,6 @@ export class ShipFlightSceneManager {
   private resetInputState() {
     this.inputState.yawLeft = false
     this.inputState.yawRight = false
-    this.inputState.rollLeft = false
-    this.inputState.rollRight = false
   }
 
   private setInputFromCode(code: string, isPressed: boolean): boolean {
@@ -461,14 +443,6 @@ export class ShipFlightSceneManager {
     }
     if (code === 'KeyD') {
       this.inputState.yawLeft = isPressed
-      return true
-    }
-    if (code === 'KeyQ') {
-      this.inputState.rollLeft = isPressed
-      return true
-    }
-    if (code === 'KeyE') {
-      this.inputState.rollRight = isPressed
       return true
     }
 
