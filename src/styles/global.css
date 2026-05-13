@@ -126,7 +126,8 @@ body {
   padding: 0;
 }
 
-.ship-builder-controls {
+.ship-builder-controls,
+.ship-builder-controls-import-export {
   position: absolute;
   top: 16px;
   right: 16px;
@@ -140,6 +141,10 @@ body {
   background: rgba(4, 11, 23, 0.88);
   backdrop-filter: blur(8px);
   color: #e2e8f0;
+}
+
+.ship-builder-controls-import-export {
+  left: 16px;
 }
 
 .ship-builder-controls__header {
