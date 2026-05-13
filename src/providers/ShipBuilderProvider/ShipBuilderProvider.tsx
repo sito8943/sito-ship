@@ -348,8 +348,8 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       kind: 'info',
       text:
         experienceMode === 'flight'
-          ? 'Flight test mode enabled: W/S throttle, A/D yaw, Q/E roll, ArrowUp/ArrowDown pitch.'
-          : 'Builder mode enabled: transform gizmos and slot selection restored.',
+          ? 'Flight view enabled: ship loaded from local storage. Controls: A/D yaw, Q/E roll.'
+          : 'Builder view enabled: transform gizmos and slot selection restored.',
     })
   }, [experienceMode])
 

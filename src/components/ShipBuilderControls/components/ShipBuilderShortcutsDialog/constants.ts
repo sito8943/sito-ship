@@ -44,13 +44,11 @@ export const SHIP_BUILDER_SHORTCUTS_SECTIONS: ShortcutSection[] = [
     ],
   },
   {
-    title: 'Flight Test',
+    title: 'Flight View',
     shortcuts: [
-      { key: 'W / S', description: 'Throttle forward / reverse' },
-      { key: 'A / D', description: 'Yaw left / right' },
-      { key: 'Q / E', description: 'Roll left / right' },
-      { key: 'ArrowUp / ArrowDown', description: 'Pitch nose up / down' },
-      { key: 'Shift', description: 'Engage boost while accelerating' },
+      { key: 'A / D', description: 'Yaw (turn left / right)' },
+      { key: 'Q / E', description: 'Roll (bank left / right)' },
+      { key: 'T / Esc', description: 'Return to builder view' },
     ],
   },
   {

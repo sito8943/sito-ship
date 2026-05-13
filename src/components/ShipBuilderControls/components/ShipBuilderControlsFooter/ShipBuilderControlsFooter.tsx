@@ -25,8 +25,8 @@ const ShipBuilderControlsFooter = ({
           isFlightMode ? 'ship-builder-controls-footer__toggle--flight-active' : ''
         }`}
         icon={faRocket}
-        label={isFlightMode ? 'Back to Builder' : 'Flight Test'}
-        title={isFlightMode ? 'Return to builder mode (T)' : 'Enable flight test mode (T)'}
+        label={isFlightMode ? 'Back to Builder' : 'Open Flight View'}
+        title={isFlightMode ? 'Return to builder mode (T)' : 'Open flight view (T)'}
         onClick={onToggleExperienceMode}
         variant={isFlightMode ? 'ghost' : 'solid'}
       />

@@ -49,6 +49,64 @@ body {
   height: 100%;
 }
 
+.flight-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.flight-scene-shell {
+  width: 100%;
+  height: 100%;
+}
+
+.flight-scene-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.flight-view__hud {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 6;
+  width: min(460px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  background: rgba(2, 8, 23, 0.68);
+  backdrop-filter: blur(10px);
+  color: #dbeafe;
+  display: grid;
+  gap: 10px;
+}
+
+.flight-view__hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.flight-view__title {
+  margin: 0;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.flight-view__help-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 0.76rem;
+  line-height: 1.42;
+  color: #bfdbfe;
+}
+
 .ui-button {
   display: inline-flex;
   align-items: center;
@@ -662,6 +720,13 @@ body {
 }
 
 @media (max-width: 900px) {
+  .flight-view__hud {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+
   .ship-builder-controls {
     left: 12px;
     right: 12px;
