@@ -1,15 +1,83 @@
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Button from '@/components/ui/Button'
-import { DIALOG_CLOSE_BUTTON_LABEL } from '@/components/ui/Dialog/constants'
+import {
+  DIALOG_CLOSE_BUTTON_LABEL,
+  DIALOG_TRANSITION_DURATION_MS,
+} from '@/components/ui/Dialog/constants'
 import type { DialogProps } from '@/components/ui/Dialog/types'
-import { isBackdropClick, isEscapeKeyboardEvent, joinClassNames } from '@/components/ui/Dialog/utils'
+import {
+  getBackdropVisibilityClassName,
+  getDialogVisibilityClassName,
+  isBackdropClick,
+  isEscapeKeyboardEvent,
+  joinClassNames,
+} from '@/components/ui/Dialog/utils'
 
 const Dialog = ({ isOpen, title, onClose, children, footer, className }: DialogProps) => {
   const titleId = useId()
+  const closeTimeoutIdRef = useRef<number | null>(null)
+  const enterAnimationFrameIdRef = useRef<number | null>(null)
+  const enterAnimationFrameCommitIdRef = useRef<number | null>(null)
+  const [isMounted, setIsMounted] = useState(isOpen)
+  const [isVisible, setIsVisible] = useState(isOpen)
 
   useEffect(() => {
-    if (!isOpen) {
+    return () => {
+      if (closeTimeoutIdRef.current !== null) {
+        window.clearTimeout(closeTimeoutIdRef.current)
+      }
+
+      if (enterAnimationFrameIdRef.current !== null) {
+        window.cancelAnimationFrame(enterAnimationFrameIdRef.current)
+      }
+
+      if (enterAnimationFrameCommitIdRef.current !== null) {
+        window.cancelAnimationFrame(enterAnimationFrameCommitIdRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (closeTimeoutIdRef.current !== null) {
+      window.clearTimeout(closeTimeoutIdRef.current)
+      closeTimeoutIdRef.current = null
+    }
+
+    if (enterAnimationFrameIdRef.current !== null) {
+      window.cancelAnimationFrame(enterAnimationFrameIdRef.current)
+      enterAnimationFrameIdRef.current = null
+    }
+
+    if (enterAnimationFrameCommitIdRef.current !== null) {
+      window.cancelAnimationFrame(enterAnimationFrameCommitIdRef.current)
+      enterAnimationFrameCommitIdRef.current = null
+    }
+
+    if (isOpen) {
+      setIsMounted(true)
+      setIsVisible(false)
+
+      enterAnimationFrameIdRef.current = window.requestAnimationFrame(() => {
+        enterAnimationFrameIdRef.current = null
+        enterAnimationFrameCommitIdRef.current = window.requestAnimationFrame(() => {
+          setIsVisible(true)
+          enterAnimationFrameCommitIdRef.current = null
+        })
+      })
+
+      return
+    }
+
+    setIsVisible(false)
+    closeTimeoutIdRef.current = window.setTimeout(() => {
+      setIsMounted(false)
+      closeTimeoutIdRef.current = null
+    }, DIALOG_TRANSITION_DURATION_MS)
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isMounted) {
       return
     }
 
@@ -30,22 +98,27 @@ const Dialog = ({ isOpen, title, onClose, children, footer, className }: DialogP
       document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = previousBodyOverflow
     }
-  }, [isOpen, onClose])
+  }, [isMounted, onClose])
 
-  if (!isOpen) {
+  if (!isMounted) {
     return null
   }
 
   return createPortal(
     <div
-      className="ui-dialog-backdrop"
+      className={joinClassNames('ui-dialog-backdrop', getBackdropVisibilityClassName(isVisible))}
       onClick={(event) => {
         if (isBackdropClick(event)) {
           onClose()
         }
       }}
     >
-      <section className={joinClassNames('ui-dialog', className)} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <section
+        className={joinClassNames('ui-dialog', getDialogVisibilityClassName(isVisible), className)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
         <header className="ui-dialog__header">
           <h2 id={titleId} className="ui-dialog__title">
             {title}
@@ -70,4 +143,3 @@ const Dialog = ({ isOpen, title, onClose, children, footer, className }: DialogP
 }
 
 export default Dialog
-

@@ -213,6 +213,15 @@ body {
   padding: 14px;
   background: rgba(2, 6, 23, 0.62);
   backdrop-filter: blur(5px);
+  transition: opacity 0.30s ease;
+}
+
+.ui-dialog-backdrop--visible {
+  opacity: 1;
+}
+
+.ui-dialog-backdrop--invisible {
+  opacity: 0;
 }
 
 .ui-dialog {
@@ -225,6 +234,20 @@ body {
   overflow: hidden;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  transition:
+    opacity 0.30s ease,
+    transform 0.30s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.ui-dialog--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.ui-dialog--invisible {
+  opacity: 0;
+  transform: translateY(16px) scale(0.985);
 }
 
 .ui-dialog__header {
@@ -658,6 +681,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .ui-icon-button-tooltip::before,
   .ui-icon-button-tooltip::after,
+  .ui-dialog-backdrop,
+  .ui-dialog,
   .ship-builder-controls-panel,
   .ship-builder-controls-footer__toggle,
   .ship-builder-controls-footer__toggle .ui-button__label {
