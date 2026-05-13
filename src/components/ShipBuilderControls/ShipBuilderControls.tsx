@@ -6,6 +6,7 @@ import {
   faFileExport,
   faFileImport,
   faRotateLeft,
+  faSliders,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { ShipSlot, ShipSlotConfigMap, ShipSlotPatch } from '@/lib/models/ShipConfig'
@@ -53,6 +54,8 @@ const ShipBuilderControls = () => {
     exportShipConfigToJson,
     importShipConfigFromJson,
   } = useShipBuilder()
+
+  const [hideUI, setHideUI] = useState(false)
 
   const [jsonInput, setJsonInput] = useState('')
   const [importWarnings, setImportWarnings] = useState<string[]>([])
@@ -585,6 +588,15 @@ const ShipBuilderControls = () => {
           ) : null}
         </section>
       </aside>
+      <footer className="ship-builder-controls-footer">
+        <IconButton
+          className="ship-builder-controls__action-button"
+          icon={faSliders}
+          label="Hide UI"
+          onClick={() => setHideUI(!hideUI)}
+          variant={hideUI ? 'ghost' : 'solid'}
+        />
+      </footer>
     </>
   )
 }

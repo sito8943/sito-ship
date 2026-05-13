@@ -122,25 +122,36 @@ body {
   height: 28px;
 }
 
+.ship-builder-controls-footer,
+.ship-builder-controls,
+.ship-builder-controls-import-export {
+  position: absolute;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 14px;
+  background: rgba(4, 11, 23, 0.88);
+  backdrop-filter: blur(8px);
+  color: #e2e8f0;
+  z-index: 5;
+  display: flex;
+}
+
+.ship-builder-controls-footer {
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .ship-builder-controls__action-button.ui-icon-button {
   padding: 0;
 }
 
 .ship-builder-controls,
 .ship-builder-controls-import-export {
-  position: absolute;
   top: 16px;
   right: 16px;
-  z-index: 5;
-  display: flex;
   flex-direction: column;
   width: min(360px, calc(100vw - 32px));
   max-height: calc(100vh - 32px);
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 14px;
-  background: rgba(4, 11, 23, 0.88);
-  backdrop-filter: blur(8px);
-  color: #e2e8f0;
 }
 
 .ship-builder-controls-import-export {
