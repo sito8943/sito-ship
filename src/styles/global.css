@@ -203,6 +203,117 @@ body {
   }
 }
 
+.ui-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(2, 6, 23, 0.62);
+  backdrop-filter: blur(5px);
+}
+
+.ui-dialog {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 28px);
+  border: 1px solid rgba(148, 163, 184, 0.36);
+  border-radius: 14px;
+  background: rgba(4, 11, 23, 0.95);
+  color: #e2e8f0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.ui-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.ui-dialog__title {
+  margin: 0;
+  font-size: 0.86rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ui-dialog__close-button.ui-button {
+  min-width: 64px;
+}
+
+.ui-dialog__content {
+  overflow: auto;
+  padding: 12px 14px 14px;
+}
+
+.ui-dialog__footer {
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 10px 14px;
+}
+
+.ship-builder-shortcuts-dialog {
+  display: grid;
+  gap: 10px;
+}
+
+.ship-builder-shortcuts-dialog__section {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.ship-builder-shortcuts-dialog__section-title {
+  margin: 0;
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  font-size: 0.7rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #93c5fd;
+}
+
+.ship-builder-shortcuts-dialog__list {
+  margin: 0;
+  padding: 8px 10px 10px;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+
+.ship-builder-shortcuts-dialog__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 0.76rem;
+  color: #cbd5e1;
+}
+
+.ship-builder-shortcuts-dialog__keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ship-builder-shortcuts-dialog__keys kbd {
+  min-width: 24px;
+  padding: 4px 6px;
+  border: 1px solid rgba(148, 163, 184, 0.42);
+  border-radius: 6px;
+  background: rgba(2, 6, 23, 0.9);
+  color: #e2e8f0;
+  font-size: 0.68rem;
+  line-height: 1;
+  font-family: 'SFMono-Regular', ui-monospace, Menlo, Monaco, Consolas, monospace;
+  text-align: center;
+}
+
 .ship-builder-controls-footer,
 .ship-builder-controls,
 .ship-builder-controls-import-export {
@@ -535,6 +646,12 @@ body {
   .ship-builder-controls--hidden,
   .ship-builder-controls-import-export--hidden {
     transform: translateY(calc(100% + 20px));
+  }
+
+  .ship-builder-shortcuts-dialog__item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
   }
 }
 

@@ -1,0 +1,122 @@
+{
+  "general": {
+    "openKeyboardShortcuts": {
+      "key": "F1",
+      "description": "Open keyboard shortcuts/help"
+    },
+    "exportJson": {
+      "key": "Ctrl+E",
+      "description": "Export ship as JSON"
+    },
+    "importJson": {
+      "key": "Ctrl+I",
+      "description": "Import ship JSON"
+    },
+    "saveShip": {
+      "key": "Ctrl+S",
+      "description": "Save current ship"
+    },
+    "undo": {
+      "key": "Ctrl+Z",
+      "description": "Undo last action"
+    },
+    "redo": {
+      "key": "Ctrl+Shift+Z",
+      "description": "Redo last action"
+    },
+    "toggleControlsPanel": {
+      "key": "Tab",
+      "description": "Hide/show controls panel"
+    },
+    "togglePanoramicView": {
+      "key": "Shift+Tab",
+      "description": "Toggle panoramic view"
+    }
+  },
+  "categories": {
+    "body": {
+      "key": "1",
+      "description": "Select body parts category"
+    },
+    "cockpit": {
+      "key": "2",
+      "description": "Select cockpit category"
+    },
+    "wings": {
+      "key": "3",
+      "description": "Select wings category"
+    },
+    "engines": {
+      "key": "4",
+      "description": "Select engines category"
+    },
+    "weapons": {
+      "key": "5",
+      "description": "Select weapons category"
+    }
+  },
+  "transformTools": {
+    "move": {
+      "key": "G",
+      "description": "Move selected part"
+    },
+    "rotate": {
+      "key": "R",
+      "description": "Rotate selected part"
+    },
+    "scale": {
+      "key": "S",
+      "description": "Scale selected part"
+    }
+  },
+  "advancedEditing": {
+    "pairSpread": {
+      "key": "P",
+      "description": "Toggle pair spread editing"
+    },
+    "aimRotate": {
+      "key": "A",
+      "description": "Rotate part toward target direction"
+    },
+    "mirrorToggle": {
+      "key": "M",
+      "description": "Toggle mirror mode"
+    },
+    "duplicatePart": {
+      "key": "D",
+      "description": "Duplicate selected part"
+    },
+    "deletePart": {
+      "key": "Delete",
+      "description": "Delete selected part"
+    }
+  },
+  "resetActions": {
+    "resetSlot": {
+      "key": "Backspace",
+      "description": "Reset selected slot"
+    },
+    "resetShip": {
+      "key": "Ctrl+Backspace",
+      "description": "Reset entire ship"
+    }
+  },
+  "camera": {
+    "focusSelected": {
+      "key": "F",
+      "description": "Focus selected part"
+    },
+    "toggleFreeCamera": {
+      "key": "C",
+      "description": "Toggle free camera"
+    },
+    "zoomToShip": {
+      "key": "Home",
+      "description": "Zoom to fit entire ship"
+    },
+    "toggleCinematicView": {
+      "key": "V",
+      "description": "Toggle cinematic view"
+    }
+  }
+}

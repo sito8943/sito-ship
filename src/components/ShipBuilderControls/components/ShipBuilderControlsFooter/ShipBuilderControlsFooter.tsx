@@ -2,17 +2,19 @@ import { faKeyboard, faSliders } from '@fortawesome/free-solid-svg-icons'
 import { IconButton } from '@/components/ui'
 import type { ShipBuilderControlsFooterProps } from '@/components/ShipBuilderControls/components/ShipBuilderControlsFooter/types'
 
-const ShipBuilderControlsFooter = ({ hideUI, onToggleHideUI }: ShipBuilderControlsFooterProps) => {
+const ShipBuilderControlsFooter = ({
+  hideUI,
+  onToggleHideUI,
+  onOpenKeyboardShortcuts,
+}: ShipBuilderControlsFooterProps) => {
   return (
     <footer className="ship-builder-controls-footer">
       <IconButton
-        className={`ship-builder-controls__action-button ship-builder-controls-footer__toggle ${
-          hideUI ? 'ship-builder-controls-footer__toggle--collapsed' : ''
-        }`}
+        className="ship-builder-controls__action-button ship-builder-controls-footer__toggle"
         icon={faKeyboard}
         label="Keyboard Shortcuts"
         title="Open keyboard shortcuts"
-        onClick={onToggleHideUI}
+        onClick={onOpenKeyboardShortcuts}
       />
       <IconButton
         className={`ship-builder-controls__action-button ship-builder-controls-footer__toggle ${

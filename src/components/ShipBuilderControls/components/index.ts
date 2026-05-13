@@ -6,3 +6,6 @@ export type { ShipBuilderControlsImportExportAsideProps } from '@/components/Shi
 
 export { default as ShipBuilderControlsFooter } from '@/components/ShipBuilderControls/components/ShipBuilderControlsFooter'
 export type { ShipBuilderControlsFooterProps } from '@/components/ShipBuilderControls/components/ShipBuilderControlsFooter'
+
+export { default as ShipBuilderShortcutsDialog } from '@/components/ShipBuilderControls/components/ShipBuilderShortcutsDialog'
+export type { ShipBuilderShortcutsDialogProps } from '@/components/ShipBuilderControls/components/ShipBuilderShortcutsDialog'
