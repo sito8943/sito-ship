@@ -184,6 +184,7 @@ const ShipBuilderControlsMainAside = ({
             className="ship-builder-controls__action-button"
             icon={faArrowRotateLeft}
             label="Undo"
+            title="Undo last change"
             onClick={undo}
             disabled={!canUndo}
           />
@@ -191,6 +192,7 @@ const ShipBuilderControlsMainAside = ({
             className="ship-builder-controls__action-button"
             icon={faArrowRotateRight}
             label="Redo"
+            title="Redo last change"
             onClick={redo}
             disabled={!canRedo}
           />

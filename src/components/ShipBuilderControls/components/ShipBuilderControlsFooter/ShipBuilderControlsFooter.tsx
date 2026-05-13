@@ -11,6 +11,7 @@ const ShipBuilderControlsFooter = ({ hideUI, onToggleHideUI }: ShipBuilderContro
         }`}
         icon={faKeyboard}
         label="Keyboard Shortcuts"
+        title="Open keyboard shortcuts"
         onClick={onToggleHideUI}
       />
       <IconButton
@@ -19,6 +20,7 @@ const ShipBuilderControlsFooter = ({ hideUI, onToggleHideUI }: ShipBuilderContro
         }`}
         icon={faSliders}
         label={hideUI ? 'Show UI' : 'Hide UI'}
+        title={hideUI ? 'Show controls panels' : 'Hide controls panels'}
         onClick={onToggleHideUI}
         variant={hideUI ? 'ghost' : 'solid'}
       />

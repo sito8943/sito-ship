@@ -12,15 +12,18 @@ const joinClassNames = (...classes: Array<string | undefined | null | false>) =>
 }
 
 const IconButton = ({ icon, label, className, title, ...restProps }: IconButtonProps) => {
+  const tooltipText = title ?? label
+
   return (
-    <Button
-      {...restProps}
-      className={joinClassNames('ui-icon-button', className)}
-      aria-label={label}
-      title={title ?? label}
-    >
-      <FontAwesomeIcon icon={icon} fixedWidth />
-    </Button>
+    <span className="ui-icon-button-tooltip" data-tooltip={tooltipText} title={tooltipText}>
+      <Button
+        {...restProps}
+        className={joinClassNames('ui-icon-button', className)}
+        aria-label={label}
+      >
+        <FontAwesomeIcon icon={icon} fixedWidth />
+      </Button>
+    </span>
   )
 }
 
