@@ -348,7 +348,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       kind: 'info',
       text:
         experienceMode === 'flight'
-          ? 'Flight view enabled: ship loaded from local storage. Controls: A/D yaw, Q/E roll.'
+          ? 'Flight view enabled: ship loaded from local storage. Controls: A/D bank turn, Q/E roll.'
           : 'Builder view enabled: transform gizmos and slot selection restored.',
     })
   }, [experienceMode])

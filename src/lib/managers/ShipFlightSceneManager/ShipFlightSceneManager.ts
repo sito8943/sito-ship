@@ -23,6 +23,7 @@ import {
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
 import {
+  FLIGHT_SCENE_BANK,
   FLIGHT_SCENE_CAMERA,
   FLIGHT_SCENE_PLANET_POOL_SIZE,
   FLIGHT_SCENE_PLANET_TEMPLATES,
@@ -383,8 +384,9 @@ export class ShipFlightSceneManager {
       return
     }
 
-    this.shipGroup.rotation.y = this.yaw * 0.88
-    this.shipGroup.rotation.z = this.roll - this.yaw * 0.28
+    this.shipGroup.position.x = this.yaw * FLIGHT_SCENE_BANK.strafeStrength
+    this.shipGroup.rotation.z = this.roll - this.yaw * FLIGHT_SCENE_BANK.rollFactor
+    this.shipGroup.rotation.y = this.yaw * FLIGHT_SCENE_BANK.yawFactor
     this.shipGroup.rotation.x = 0
   }
 
@@ -454,11 +456,11 @@ export class ShipFlightSceneManager {
 
   private setInputFromCode(code: string, isPressed: boolean): boolean {
     if (code === 'KeyA') {
-      this.inputState.yawLeft = isPressed
+      this.inputState.yawRight = isPressed
       return true
     }
     if (code === 'KeyD') {
-      this.inputState.yawRight = isPressed
+      this.inputState.yawLeft = isPressed
       return true
     }
     if (code === 'KeyQ') {

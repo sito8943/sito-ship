@@ -46,7 +46,7 @@ export const SHIP_BUILDER_SHORTCUTS_SECTIONS: ShortcutSection[] = [
   {
     title: 'Flight View',
     shortcuts: [
-      { key: 'A / D', description: 'Yaw (turn left / right)' },
+      { key: 'A / D', description: 'Bank turn (strafe + roll + slight yaw)' },
       { key: 'Q / E', description: 'Roll (bank left / right)' },
       { key: 'T / Esc', description: 'Return to builder view' },
     ],

@@ -28,6 +28,12 @@ export const FLIGHT_SCENE_ROTATION = {
   smoothing: 8.2,
 } as const
 
+export const FLIGHT_SCENE_BANK = {
+  strafeStrength: 6.0,
+  rollFactor: 0.85,
+  yawFactor: 0.22,
+} as const
+
 export const FLIGHT_SCENE_SPACE = {
   travelSpeed: 22.0,
   yawDrift: 0.45,
