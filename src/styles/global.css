@@ -138,6 +138,8 @@ body {
 .ship-builder-controls-footer {
   bottom: 16px;
   left: 50%;
+  gap: 12px;
+  padding: 8xpx;
   transform: translateX(-50%);
 }
 
