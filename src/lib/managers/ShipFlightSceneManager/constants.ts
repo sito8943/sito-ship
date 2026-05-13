@@ -23,7 +23,6 @@ export const FLIGHT_SCENE_STRAFE = {
   speed: 0.4,
   range: Math.PI * 0.1,
   edgeMargin: 0.88,
-  settleSpeed: 2.4,
   smoothing: 8.2,
 } as const
 

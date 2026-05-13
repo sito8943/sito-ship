@@ -43,6 +43,8 @@ const createDefaultInputState = (): FlightSceneInputState => {
   return {
     strafeLeft: false,
     strafeRight: false,
+    pitchUp: false,
+    pitchDown: false,
   }
 }
 
@@ -69,6 +71,9 @@ export class ShipFlightSceneManager {
   private strafe = 0
   private targetStrafe = 0
   private strafeBound = 0
+  private pitch = 0
+  private targetPitch = 0
+  private pitchBound = 0
   private readonly inputState: FlightSceneInputState = createDefaultInputState()
   private readonly lookTarget = new Vector3(
     FLIGHT_SCENE_CAMERA.lookAt.x,
@@ -134,6 +139,9 @@ export class ShipFlightSceneManager {
     this.strafe = 0
     this.targetStrafe = 0
     this.strafeBound = 0
+    this.pitch = 0
+    this.targetPitch = 0
+    this.pitchBound = 0
     this.starFields.length = 0
     this.planets.length = 0
   }
@@ -357,32 +365,42 @@ export class ShipFlightSceneManager {
     const visibleHeight = 2 * distance * Math.tan((this.camera.fov * Math.PI) / 360)
     const visibleWidth = visibleHeight * this.camera.aspect
     this.strafeBound = (visibleWidth / 2) * FLIGHT_SCENE_STRAFE.edgeMargin
+    this.pitchBound = (visibleHeight / 2) * FLIGHT_SCENE_STRAFE.edgeMargin
+  }
+
+  private advanceAxis(currentTarget: number, input: number, delta: number): number {
+    const step = FLIGHT_SCENE_STRAFE.speed * delta
+    if (input === 0) {
+      return Math.abs(currentTarget) <= step ? 0 : currentTarget - Math.sign(currentTarget) * step
+    }
+    return MathUtils.clamp(
+      currentTarget + input * FLIGHT_SCENE_STRAFE.speed * delta,
+      -FLIGHT_SCENE_STRAFE.range,
+      FLIGHT_SCENE_STRAFE.range
+    )
   }
 
   private updateStrafeState(delta: number) {
     const strafeInput = this.getAxisInput(this.inputState.strafeRight, this.inputState.strafeLeft)
+    const pitchInput = this.getAxisInput(this.inputState.pitchUp, this.inputState.pitchDown)
 
-    const rawTarget = this.targetStrafe + strafeInput * FLIGHT_SCENE_STRAFE.speed * delta
-
-    this.targetStrafe = MathUtils.clamp(
-      strafeInput === 0
-        ? MathUtils.damp(this.targetStrafe, 0, FLIGHT_SCENE_STRAFE.settleSpeed, delta)
-        : rawTarget,
-      -FLIGHT_SCENE_STRAFE.range,
-      FLIGHT_SCENE_STRAFE.range
-    )
+    this.targetStrafe = this.advanceAxis(this.targetStrafe, strafeInput, delta)
+    this.targetPitch = this.advanceAxis(this.targetPitch, pitchInput, delta)
 
     this.strafe = MathUtils.damp(this.strafe, this.targetStrafe, FLIGHT_SCENE_STRAFE.smoothing, delta)
+    this.pitch = MathUtils.damp(this.pitch, this.targetPitch, FLIGHT_SCENE_STRAFE.smoothing, delta)
 
     if (!this.shipGroup) {
       return
     }
 
-    const normalized = this.strafe / FLIGHT_SCENE_STRAFE.range
-    this.shipGroup.position.x = normalized * this.strafeBound
+    const normalizedStrafe = this.strafe / FLIGHT_SCENE_STRAFE.range
+    const normalizedPitch = this.pitch / FLIGHT_SCENE_STRAFE.range
+    this.shipGroup.position.x = normalizedStrafe * this.strafeBound
+    this.shipGroup.position.y = normalizedPitch * this.pitchBound
     this.shipGroup.rotation.z = -this.strafe * FLIGHT_SCENE_BANK.rollFactor
     this.shipGroup.rotation.y = this.strafe * FLIGHT_SCENE_BANK.yawFactor
-    this.shipGroup.rotation.x = this.strafe * FLIGHT_SCENE_BANK.pitchFactor
+    this.shipGroup.rotation.x = (this.strafe + this.pitch) * FLIGHT_SCENE_BANK.pitchFactor
   }
 
   private updateSpaceMotion(delta: number) {
@@ -445,6 +463,8 @@ export class ShipFlightSceneManager {
   private resetInputState() {
     this.inputState.strafeLeft = false
     this.inputState.strafeRight = false
+    this.inputState.pitchUp = false
+    this.inputState.pitchDown = false
   }
 
   private setInputFromCode(code: string, isPressed: boolean): boolean {
@@ -454,6 +474,14 @@ export class ShipFlightSceneManager {
     }
     if (code === 'KeyD') {
       this.inputState.strafeRight = isPressed
+      return true
+    }
+    if (code === 'KeyW') {
+      this.inputState.pitchUp = isPressed
+      return true
+    }
+    if (code === 'KeyS') {
+      this.inputState.pitchDown = isPressed
       return true
     }
 

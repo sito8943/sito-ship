@@ -3,6 +3,8 @@ import type { Mesh, Points } from 'three'
 export type FlightSceneInputState = {
   strafeLeft: boolean
   strafeRight: boolean
+  pitchUp: boolean
+  pitchDown: boolean
 }
 
 export type FlightSceneSize = {
