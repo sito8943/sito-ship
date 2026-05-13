@@ -28,9 +28,9 @@ import {
   FLIGHT_SCENE_PLANET_POOL_SIZE,
   FLIGHT_SCENE_PLANET_TEMPLATES,
   FLIGHT_SCENE_RENDERER,
-  FLIGHT_SCENE_ROTATION,
   FLIGHT_SCENE_SPACE,
   FLIGHT_SCENE_STAR_LAYERS,
+  FLIGHT_SCENE_STRAFE,
 } from '@/lib/managers/ShipFlightSceneManager/constants'
 import type {
   FlightScenePlanetEntry,
@@ -41,8 +41,8 @@ import type {
 
 const createDefaultInputState = (): FlightSceneInputState => {
   return {
-    yawLeft: false,
-    yawRight: false,
+    strafeLeft: false,
+    strafeRight: false,
   }
 }
 
@@ -66,8 +66,9 @@ export class ShipFlightSceneManager {
   private pendingShipConfig: ShipConfig | null = null
   private animationFrameId = 0
   private isMounted = false
-  private yaw = 0
-  private targetYaw = 0
+  private strafe = 0
+  private targetStrafe = 0
+  private strafeBound = 0
   private readonly inputState: FlightSceneInputState = createDefaultInputState()
   private readonly lookTarget = new Vector3(
     FLIGHT_SCENE_CAMERA.lookAt.x,
@@ -130,8 +131,9 @@ export class ShipFlightSceneManager {
     this.shipModelManager = null
     this.pendingShipConfig = null
     this.canvas = null
-    this.yaw = 0
-    this.targetYaw = 0
+    this.strafe = 0
+    this.targetStrafe = 0
+    this.strafeBound = 0
     this.starFields.length = 0
     this.planets.length = 0
   }
@@ -349,35 +351,44 @@ export class ShipFlightSceneManager {
 
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
+
+    const shipZ = this.shipGroup?.position.z ?? 0
+    const distance = Math.abs(this.camera.position.z - shipZ)
+    const visibleHeight = 2 * distance * Math.tan((this.camera.fov * Math.PI) / 360)
+    const visibleWidth = visibleHeight * this.camera.aspect
+    this.strafeBound = (visibleWidth / 2) * FLIGHT_SCENE_STRAFE.edgeMargin
   }
 
-  private updateRotationState(delta: number) {
-    const yawInput = this.getAxisInput(this.inputState.yawLeft, this.inputState.yawRight)
+  private updateStrafeState(delta: number) {
+    const strafeInput = this.getAxisInput(this.inputState.strafeRight, this.inputState.strafeLeft)
 
-    const rawTargetYaw = this.targetYaw + yawInput * FLIGHT_SCENE_ROTATION.yawSpeed * delta
+    const rawTarget = this.targetStrafe + strafeInput * FLIGHT_SCENE_STRAFE.speed * delta
 
-    this.targetYaw = MathUtils.clamp(
-      yawInput === 0 ? MathUtils.damp(this.targetYaw, 0, FLIGHT_SCENE_ROTATION.settleSpeed, delta) : rawTargetYaw,
-      -FLIGHT_SCENE_ROTATION.yawLimit,
-      FLIGHT_SCENE_ROTATION.yawLimit
+    this.targetStrafe = MathUtils.clamp(
+      strafeInput === 0
+        ? MathUtils.damp(this.targetStrafe, 0, FLIGHT_SCENE_STRAFE.settleSpeed, delta)
+        : rawTarget,
+      -FLIGHT_SCENE_STRAFE.range,
+      FLIGHT_SCENE_STRAFE.range
     )
 
-    this.yaw = MathUtils.damp(this.yaw, this.targetYaw, FLIGHT_SCENE_ROTATION.smoothing, delta)
+    this.strafe = MathUtils.damp(this.strafe, this.targetStrafe, FLIGHT_SCENE_STRAFE.smoothing, delta)
 
     if (!this.shipGroup) {
       return
     }
 
-    this.shipGroup.position.x = this.yaw * FLIGHT_SCENE_BANK.strafeStrength
-    this.shipGroup.rotation.z = -this.yaw * FLIGHT_SCENE_BANK.rollFactor
-    this.shipGroup.rotation.y = this.yaw * FLIGHT_SCENE_BANK.yawFactor
-    this.shipGroup.rotation.x = this.yaw * FLIGHT_SCENE_BANK.pitchFactor
+    const normalized = this.strafe / FLIGHT_SCENE_STRAFE.range
+    this.shipGroup.position.x = normalized * this.strafeBound
+    this.shipGroup.rotation.z = -this.strafe * FLIGHT_SCENE_BANK.rollFactor
+    this.shipGroup.rotation.y = this.strafe * FLIGHT_SCENE_BANK.yawFactor
+    this.shipGroup.rotation.x = this.strafe * FLIGHT_SCENE_BANK.pitchFactor
   }
 
   private updateSpaceMotion(delta: number) {
     const cameraZ = this.camera?.position.z ?? FLIGHT_SCENE_CAMERA.position.z
     const despawnZ = cameraZ + FLIGHT_SCENE_SPACE.zDespawnBehind
-    const yawDriftSpeed = -Math.sin(this.yaw) * FLIGHT_SCENE_SPACE.yawDrift
+    const yawDriftSpeed = -this.strafe * FLIGHT_SCENE_SPACE.yawDrift
 
     this.starFields.forEach((field) => {
       const forwardSpeed = FLIGHT_SCENE_SPACE.travelSpeed * field.speedMultiplier * delta
@@ -423,7 +434,7 @@ export class ShipFlightSceneManager {
     }
 
     const delta = this.clock?.getDelta() ?? 0
-    this.updateRotationState(delta)
+    this.updateStrafeState(delta)
     this.updateSpaceMotion(delta)
     this.camera.lookAt(this.lookTarget)
     this.renderer.render(this.scene, this.camera)
@@ -432,17 +443,17 @@ export class ShipFlightSceneManager {
   }
 
   private resetInputState() {
-    this.inputState.yawLeft = false
-    this.inputState.yawRight = false
+    this.inputState.strafeLeft = false
+    this.inputState.strafeRight = false
   }
 
   private setInputFromCode(code: string, isPressed: boolean): boolean {
     if (code === 'KeyA') {
-      this.inputState.yawRight = isPressed
+      this.inputState.strafeLeft = isPressed
       return true
     }
     if (code === 'KeyD') {
-      this.inputState.yawLeft = isPressed
+      this.inputState.strafeRight = isPressed
       return true
     }
 

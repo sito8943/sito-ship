@@ -19,15 +19,15 @@ export const FLIGHT_SCENE_RENDERER = {
   clearColor: '#03070f',
 } as const
 
-export const FLIGHT_SCENE_ROTATION = {
-  yawSpeed: 1.1,
-  yawLimit: Math.PI * 0.1,
+export const FLIGHT_SCENE_STRAFE = {
+  speed: 0.4,
+  range: Math.PI * 0.1,
+  edgeMargin: 0.88,
   settleSpeed: 2.4,
   smoothing: 8.2,
 } as const
 
 export const FLIGHT_SCENE_BANK = {
-  strafeStrength: 6.0,
   rollFactor: 0.85,
   yawFactor: 0.22,
   pitchFactor: 0.14,
