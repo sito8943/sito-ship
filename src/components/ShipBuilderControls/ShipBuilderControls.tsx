@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { useDialog } from '@/hooks/useDialog'
+import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { useShipBuilderKeyboardShortcuts } from '@/hooks/useShipBuilderKeyboardShortcuts'
 import { DIALOG_IDS } from '@/providers/DialogProvider'
 import {
@@ -11,6 +12,7 @@ import {
 
 const ShipBuilderControls = () => {
   const [hideUI, setHideUI] = useState(false)
+  const { experienceMode, toggleExperienceMode } = useShipBuilder()
   const shortcutsDialog = useDialog(DIALOG_IDS.KEYBOARD_SHORTCUTS)
   const handleToggleHideUI = useCallback(() => {
     setHideUI((previousValue) => !previousValue)
@@ -34,7 +36,9 @@ const ShipBuilderControls = () => {
       />
       <ShipBuilderControlsFooter
         hideUI={hideUI}
+        experienceMode={experienceMode}
         onToggleHideUI={handleToggleHideUI}
+        onToggleExperienceMode={toggleExperienceMode}
         onOpenKeyboardShortcuts={shortcutsDialog.open}
       />
       <ShipBuilderShortcutsDialog isOpen={shortcutsDialog.isOpen} onClose={shortcutsDialog.close} />

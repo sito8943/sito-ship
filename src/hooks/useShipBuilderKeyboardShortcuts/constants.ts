@@ -12,6 +12,7 @@ export const SHORTCUT_KEYS = {
   F: 'f',
   C: 'c',
   V: 'v',
+  T: 't',
 } as const
 
 export const SHORTCUT_EXPORT_PROMPT_MESSAGE = 'Ship JSON (copy manually):'
@@ -32,4 +33,3 @@ export const SHORTCUT_TRANSFORM_MODE_BY_KEY: ShortcutTransformModeMap = {
   p: 'pairSpread',
   a: 'aimRotate',
 }
-

@@ -6,6 +6,7 @@ export type SceneSize = {
 }
 
 export type TransformMode = 'translate' | 'rotate' | 'scale' | 'pairSpread' | 'aimRotate'
+export type ExperienceMode = 'builder' | 'flight'
 
 export type SceneSlotTransformPatch = {
   offset?: Vector3Tuple

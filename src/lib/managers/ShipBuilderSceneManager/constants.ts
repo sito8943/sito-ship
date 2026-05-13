@@ -68,3 +68,18 @@ export const OVERLAP_SLOT_PAIRS: readonly [ShipSlot, ShipSlot][] = [
 export const BODY_CONTACT_SLOTS: readonly ShipSlot[] = ['cockpit', 'wings', 'engines', 'weapons']
 
 export const BODY_CONTACT_TOLERANCE = 0.04
+
+export const FLIGHT_SETTINGS = {
+  acceleration: 9.2,
+  brakeAcceleration: 10.8,
+  drag: 1.5,
+  maxForwardSpeed: 19,
+  maxReverseSpeed: 5,
+  yawRate: 1.4,
+  pitchRate: 1.2,
+  rollRate: 1.8,
+  cameraFollowDistance: 9,
+  cameraFollowHeight: 2.2,
+  cameraLookAhead: 6.5,
+  cameraSmoothing: 5.8,
+} as const

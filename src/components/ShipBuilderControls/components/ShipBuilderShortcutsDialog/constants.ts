@@ -12,6 +12,7 @@ export const SHIP_BUILDER_SHORTCUTS_SECTIONS: ShortcutSection[] = [
       { key: 'Ctrl+S', description: 'Save current ship' },
       { key: 'Ctrl+Z', description: 'Undo last action' },
       { key: 'Ctrl+Shift+Z', description: 'Redo last action' },
+      { key: 'T', description: 'Toggle flight test mode' },
       { key: 'Tab', description: 'Hide/show controls panel' },
       { key: 'Shift+Tab', description: 'Toggle panoramic view' },
     ],
@@ -40,6 +41,16 @@ export const SHIP_BUILDER_SHORTCUTS_SECTIONS: ShortcutSection[] = [
       { key: 'P', description: 'Toggle pair spread editing' },
       { key: 'A', description: 'Rotate part toward target direction' },
       { key: 'Delete', description: 'Delete selected part' },
+    ],
+  },
+  {
+    title: 'Flight Test',
+    shortcuts: [
+      { key: 'W / S', description: 'Throttle forward / reverse' },
+      { key: 'A / D', description: 'Yaw left / right' },
+      { key: 'Q / E', description: 'Roll left / right' },
+      { key: 'ArrowUp / ArrowDown', description: 'Pitch nose up / down' },
+      { key: 'Shift', description: 'Engage boost while accelerating' },
     ],
   },
   {

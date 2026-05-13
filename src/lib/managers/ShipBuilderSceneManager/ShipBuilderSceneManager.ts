@@ -45,6 +45,7 @@ import {
   CAMERA_SETTINGS,
   CINEMATIC_ROTATION_SPEED,
   DEFAULT_ORBIT_CONSTRAINTS,
+  FLIGHT_SETTINGS,
   FREE_CAMERA_ORBIT_CONSTRAINTS,
   MAX_DEVICE_PIXEL_RATIO,
   OVERLAP_SLOT_PAIRS,
@@ -54,6 +55,7 @@ import {
   SCENE_COLORS,
 } from '@/lib/managers/ShipBuilderSceneManager/constants'
 import type {
+  ExperienceMode,
   SceneSize,
   SceneBodyContactHandler,
   SceneSlotSelectionHandler,
@@ -75,6 +77,18 @@ type OrbitConstraintSet = {
   maxDistance: number
   minPolarAngle: number
   maxPolarAngle: number
+}
+
+type FlightInputState = {
+  throttleForward: boolean
+  throttleReverse: boolean
+  yawLeft: boolean
+  yawRight: boolean
+  pitchUp: boolean
+  pitchDown: boolean
+  rollLeft: boolean
+  rollRight: boolean
+  boost: boolean
 }
 
 export class ShipBuilderSceneManager {
@@ -107,6 +121,7 @@ export class ShipBuilderSceneManager {
   private isPanoramicViewEnabled = false
   private isFreeCameraEnabled = false
   private isCinematicViewEnabled = false
+  private experienceMode: ExperienceMode = 'builder'
   private selectedSlot: ShipSlot | null = 'body'
   private transformMode: TransformMode = 'translate'
   private readonly raycaster = new Raycaster()
@@ -120,6 +135,23 @@ export class ShipBuilderSceneManager {
   private readonly cameraTarget = new Vector3()
   private readonly cameraDirection = new Vector3()
   private readonly cameraSize = new Vector3()
+  private readonly defaultOrbitTarget = new Vector3(0, 0.35, 0.45)
+  private readonly flightForward = new Vector3()
+  private readonly flightUp = new Vector3()
+  private readonly flightDesiredCameraPosition = new Vector3()
+  private readonly flightDesiredLookTarget = new Vector3()
+  private readonly flightInputState: FlightInputState = {
+    throttleForward: false,
+    throttleReverse: false,
+    yawLeft: false,
+    yawRight: false,
+    pitchUp: false,
+    pitchDown: false,
+    rollLeft: false,
+    rollRight: false,
+    boost: false,
+  }
+  private flightSpeed = 0
   private slotSelectionHandler: SceneSlotSelectionHandler | null = null
   private slotTransformHandler: SceneSlotTransformHandler | null = null
   private slotValidationHandler: SceneValidationHandler | null = null
@@ -136,6 +168,8 @@ export class ShipBuilderSceneManager {
     this.isMounted = true
 
     window.addEventListener('resize', this.handleResize)
+    window.addEventListener('keydown', this.handleWindowKeyDown)
+    window.addEventListener('keyup', this.handleWindowKeyUp)
     this.canvas.addEventListener('pointerdown', this.handleCanvasPointerDown)
     this.resize()
     this.animate()
@@ -172,17 +206,43 @@ export class ShipBuilderSceneManager {
     this.refreshTransformControlAttachment()
   }
 
+  setExperienceMode(mode: ExperienceMode) {
+    if (this.experienceMode === mode) {
+      return
+    }
+
+    this.experienceMode = mode
+    if (mode === 'flight') {
+      this.enableFlightMode()
+      return
+    }
+
+    this.disableFlightMode()
+  }
+
   togglePanoramicView() {
+    if (this.experienceMode === 'flight') {
+      return
+    }
+
     this.isPanoramicViewEnabled = !this.isPanoramicViewEnabled
     this.applyCameraViewConstraints()
   }
 
   toggleFreeCamera() {
+    if (this.experienceMode === 'flight') {
+      return
+    }
+
     this.isFreeCameraEnabled = !this.isFreeCameraEnabled
     this.applyCameraViewConstraints()
   }
 
   toggleCinematicView() {
+    if (this.experienceMode === 'flight') {
+      return
+    }
+
     this.isCinematicViewEnabled = !this.isCinematicViewEnabled
 
     if (!this.controls) {
@@ -194,6 +254,10 @@ export class ShipBuilderSceneManager {
   }
 
   focusSelectedSlot() {
+    if (this.experienceMode === 'flight') {
+      return
+    }
+
     if (!this.camera || !this.controls || !this.shipModelManager) {
       return
     }
@@ -218,6 +282,10 @@ export class ShipBuilderSceneManager {
   }
 
   zoomToShip() {
+    if (this.experienceMode === 'flight') {
+      return
+    }
+
     if (!this.camera || !this.controls || !this.shipGroup) {
       return
     }
@@ -302,7 +370,10 @@ export class ShipBuilderSceneManager {
     }
 
     window.removeEventListener('resize', this.handleResize)
+    window.removeEventListener('keydown', this.handleWindowKeyDown)
+    window.removeEventListener('keyup', this.handleWindowKeyUp)
     this.canvas?.removeEventListener('pointerdown', this.handleCanvasPointerDown)
+    this.resetFlightInputState()
 
     if (this.transformControls) {
       this.transformControls.removeEventListener(
@@ -402,7 +473,7 @@ export class ShipBuilderSceneManager {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.enableDamping = true
     this.applyOrbitConstraints(DEFAULT_ORBIT_CONSTRAINTS)
-    this.controls.target.set(0, 0.35, 0.45)
+    this.controls.target.copy(this.defaultOrbitTarget)
     this.controls.autoRotate = this.isCinematicViewEnabled
     this.controls.autoRotateSpeed = CINEMATIC_ROTATION_SPEED
     this.applyCameraViewConstraints()
@@ -416,6 +487,13 @@ export class ShipBuilderSceneManager {
     this.initializePostProcessing()
     this.initializeStats()
     this.initializeDebugGui()
+
+    if (this.experienceMode === 'flight') {
+      this.enableFlightMode()
+      return
+    }
+
+    this.disableFlightMode()
   }
 
   private initializeDebugGui() {
@@ -627,6 +705,11 @@ export class ShipBuilderSceneManager {
   }
 
   private refreshTransformControlAttachment() {
+    if (this.experienceMode !== 'builder') {
+      this.transformControls?.detach()
+      return
+    }
+
     if (!this.transformControls || !this.shipModelManager || !this.selectedSlot) {
       this.transformControls?.detach()
       return
@@ -710,6 +793,13 @@ export class ShipBuilderSceneManager {
   }
 
   private applyCameraViewConstraints() {
+    if (this.experienceMode === 'flight') {
+      if (this.controls) {
+        this.controls.enabled = false
+      }
+      return
+    }
+
     const constraints = this.isFreeCameraEnabled
       ? FREE_CAMERA_ORBIT_CONSTRAINTS
       : this.isPanoramicViewEnabled
@@ -717,6 +807,9 @@ export class ShipBuilderSceneManager {
         : DEFAULT_ORBIT_CONSTRAINTS
 
     this.applyOrbitConstraints(constraints)
+    if (this.controls) {
+      this.controls.enabled = true
+    }
     this.controls?.update()
   }
 
@@ -745,6 +838,10 @@ export class ShipBuilderSceneManager {
   }
 
   private handleCanvasPointerDown = (event: PointerEvent) => {
+    if (this.experienceMode !== 'builder') {
+      return
+    }
+
     if (!this.camera || !this.shipGroup || !this.canvas) {
       return
     }
@@ -822,6 +919,10 @@ export class ShipBuilderSceneManager {
   }
 
   private emitTransformPatch(commitHistory: boolean) {
+    if (this.experienceMode !== 'builder') {
+      return
+    }
+
     if (!this.selectedSlot || !this.shipModelManager) {
       return
     }
@@ -919,6 +1020,231 @@ export class ShipBuilderSceneManager {
 
   private clampNumber(value: number, min: number, max: number) {
     return Math.max(min, Math.min(max, value))
+  }
+
+  private enableFlightMode() {
+    this.isCinematicViewEnabled = false
+    this.resetFlightInputState()
+    this.flightSpeed = 0
+
+    if (this.controls) {
+      this.controls.autoRotate = false
+      this.controls.enabled = false
+    }
+
+    this.transformControls?.detach()
+    this.refreshValidationState()
+  }
+
+  private disableFlightMode() {
+    this.resetFlightInputState()
+    this.flightSpeed = 0
+    this.resetShipTransform()
+
+    if (this.camera && this.controls) {
+      this.camera.position.set(
+        CAMERA_SETTINGS.position.x,
+        CAMERA_SETTINGS.position.y,
+        CAMERA_SETTINGS.position.z
+      )
+      this.controls.target.copy(this.defaultOrbitTarget)
+    }
+
+    this.applyCameraViewConstraints()
+    this.controls?.update()
+    this.refreshTransformControlAttachment()
+    this.refreshValidationState()
+  }
+
+  private resetShipTransform() {
+    if (!this.shipGroup) {
+      return
+    }
+
+    this.shipGroup.position.set(0, 0, 0)
+    this.shipGroup.rotation.set(0, 0, 0)
+  }
+
+  private resetFlightInputState() {
+    this.flightInputState.throttleForward = false
+    this.flightInputState.throttleReverse = false
+    this.flightInputState.yawLeft = false
+    this.flightInputState.yawRight = false
+    this.flightInputState.pitchUp = false
+    this.flightInputState.pitchDown = false
+    this.flightInputState.rollLeft = false
+    this.flightInputState.rollRight = false
+    this.flightInputState.boost = false
+  }
+
+  private getFlightAxisValue(positive: boolean, negative: boolean) {
+    const positiveValue = positive ? 1 : 0
+    const negativeValue = negative ? 1 : 0
+    return positiveValue - negativeValue
+  }
+
+  private updateFlightSimulation(delta: number) {
+    if (!this.shipGroup || !this.camera) {
+      return
+    }
+
+    if (this.isDialogOpen()) {
+      this.resetFlightInputState()
+    }
+
+    const throttleInput = this.getFlightAxisValue(
+      this.flightInputState.throttleForward,
+      this.flightInputState.throttleReverse
+    )
+    const yawInput = this.getFlightAxisValue(this.flightInputState.yawLeft, this.flightInputState.yawRight)
+    const pitchInput = this.getFlightAxisValue(this.flightInputState.pitchUp, this.flightInputState.pitchDown)
+    const rollInput = this.getFlightAxisValue(this.flightInputState.rollRight, this.flightInputState.rollLeft)
+
+    const forwardBoostMultiplier = this.flightInputState.boost && throttleInput > 0 ? 1.45 : 1
+    const targetSpeed =
+      throttleInput >= 0
+        ? throttleInput * FLIGHT_SETTINGS.maxForwardSpeed * forwardBoostMultiplier
+        : throttleInput * FLIGHT_SETTINGS.maxReverseSpeed
+    const accelerationPerSecond =
+      Math.abs(targetSpeed) > Math.abs(this.flightSpeed)
+        ? FLIGHT_SETTINGS.acceleration
+        : FLIGHT_SETTINGS.brakeAcceleration
+    const maxSpeedDelta = accelerationPerSecond * delta
+    const speedDelta = targetSpeed - this.flightSpeed
+
+    if (Math.abs(speedDelta) <= maxSpeedDelta) {
+      this.flightSpeed = targetSpeed
+    } else {
+      this.flightSpeed += Math.sign(speedDelta) * maxSpeedDelta
+    }
+
+    if (throttleInput === 0) {
+      const dragFactor = Math.max(0, 1 - FLIGHT_SETTINGS.drag * delta)
+      this.flightSpeed *= dragFactor
+      if (Math.abs(this.flightSpeed) < 0.02) {
+        this.flightSpeed = 0
+      }
+    }
+
+    if (pitchInput !== 0) {
+      this.shipGroup.rotateX(pitchInput * FLIGHT_SETTINGS.pitchRate * delta)
+    }
+    if (yawInput !== 0) {
+      this.shipGroup.rotateY(yawInput * FLIGHT_SETTINGS.yawRate * delta)
+    }
+    if (rollInput !== 0) {
+      this.shipGroup.rotateZ(rollInput * FLIGHT_SETTINGS.rollRate * delta)
+    }
+
+    this.flightForward.set(0, 0, 1).applyQuaternion(this.shipGroup.quaternion).normalize()
+    this.shipGroup.position.addScaledVector(this.flightForward, this.flightSpeed * delta)
+    this.updateFlightCamera(delta)
+  }
+
+  private updateFlightCamera(delta: number) {
+    if (!this.shipGroup || !this.camera) {
+      return
+    }
+
+    this.flightForward.set(0, 0, 1).applyQuaternion(this.shipGroup.quaternion).normalize()
+    this.flightUp.set(0, 1, 0).applyQuaternion(this.shipGroup.quaternion).normalize()
+
+    this.flightDesiredCameraPosition
+      .copy(this.shipGroup.position)
+      .addScaledVector(this.flightUp, FLIGHT_SETTINGS.cameraFollowHeight)
+      .addScaledVector(this.flightForward, -FLIGHT_SETTINGS.cameraFollowDistance)
+
+    const smoothing = Math.min(1, FLIGHT_SETTINGS.cameraSmoothing * delta)
+    this.camera.position.lerp(this.flightDesiredCameraPosition, smoothing)
+
+    this.flightDesiredLookTarget
+      .copy(this.shipGroup.position)
+      .addScaledVector(this.flightForward, FLIGHT_SETTINGS.cameraLookAhead)
+
+    this.camera.lookAt(this.flightDesiredLookTarget)
+    this.controls?.target.copy(this.flightDesiredLookTarget)
+  }
+
+  private handleWindowKeyDown = (event: KeyboardEvent) => {
+    if (
+      this.experienceMode !== 'flight' ||
+      this.isEditableKeyboardTarget(event.target) ||
+      this.isDialogOpen()
+    ) {
+      return
+    }
+
+    this.setFlightInputStateFromCode(event.code, true, event)
+  }
+
+  private handleWindowKeyUp = (event: KeyboardEvent) => {
+    if (
+      this.experienceMode !== 'flight' ||
+      this.isEditableKeyboardTarget(event.target) ||
+      this.isDialogOpen()
+    ) {
+      return
+    }
+
+    this.setFlightInputStateFromCode(event.code, false, event)
+  }
+
+  private setFlightInputStateFromCode(code: string, isPressed: boolean, event: KeyboardEvent) {
+    switch (code) {
+      case 'KeyW':
+        this.flightInputState.throttleForward = isPressed
+        break
+      case 'KeyS':
+        this.flightInputState.throttleReverse = isPressed
+        break
+      case 'KeyA':
+        this.flightInputState.yawLeft = isPressed
+        break
+      case 'KeyD':
+        this.flightInputState.yawRight = isPressed
+        break
+      case 'ArrowUp':
+        this.flightInputState.pitchUp = isPressed
+        break
+      case 'ArrowDown':
+        this.flightInputState.pitchDown = isPressed
+        break
+      case 'KeyQ':
+        this.flightInputState.rollLeft = isPressed
+        break
+      case 'KeyE':
+        this.flightInputState.rollRight = isPressed
+        break
+      case 'ShiftLeft':
+      case 'ShiftRight':
+        this.flightInputState.boost = isPressed
+        break
+      default:
+        return
+    }
+
+    event.preventDefault()
+  }
+
+  private isEditableKeyboardTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) {
+      return false
+    }
+
+    const tagName = target.tagName.toLowerCase()
+    if (tagName === 'input' || tagName === 'textarea' || target.isContentEditable) {
+      return true
+    }
+
+    return false
+  }
+
+  private isDialogOpen(): boolean {
+    if (typeof document === 'undefined') {
+      return false
+    }
+
+    return document.querySelector('.ui-dialog-backdrop') !== null
   }
 
   private detectSevereOverlaps(): ShipSlot[] {
@@ -1021,7 +1347,11 @@ export class ShipBuilderSceneManager {
     this.stats?.begin()
 
     const delta = this.clock?.getDelta() ?? 0
-    this.controls?.update(delta)
+    if (this.experienceMode === 'flight') {
+      this.updateFlightSimulation(delta)
+    } else {
+      this.controls?.update(delta)
+    }
     if (this.isDevEnvironment) {
       this.lightHelpers.forEach((helper) => helper.update())
       this.shadowHelpers.forEach((helper) => helper.update())

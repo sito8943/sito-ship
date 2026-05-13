@@ -421,6 +421,11 @@ body {
   transform: rotate(180deg);
 }
 
+.ship-builder-controls-footer__toggle--flight-active {
+  border-color: rgba(251, 146, 60, 0.82);
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.24);
+}
+
 .ship-builder-controls__header {
   display: flex;
   align-items: center;

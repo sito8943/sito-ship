@@ -25,7 +25,9 @@ export const useShipBuilderKeyboardShortcuts = ({
     sceneManager,
     shipConfig,
     selectedSlot,
+    experienceMode,
     setSelectedSlot,
+    toggleExperienceMode,
     setTransformMode,
     undo,
     redo,
@@ -52,6 +54,12 @@ export const useShipBuilderKeyboardShortcuts = ({
       }
 
       if (shortcutsDialog.isOpen) {
+        return
+      }
+
+      if (normalizedKey === SHORTCUT_KEYS.T) {
+        event.preventDefault()
+        toggleExperienceMode()
         return
       }
 
@@ -108,6 +116,10 @@ export const useShipBuilderKeyboardShortcuts = ({
         }
 
         onToggleHideUI()
+        return
+      }
+
+      if (experienceMode === 'flight') {
         return
       }
 
@@ -168,6 +180,7 @@ export const useShipBuilderKeyboardShortcuts = ({
     }
   }, [
     exportShipConfigToJson,
+    experienceMode,
     importShipConfigFromJson,
     onToggleHideUI,
     redo,
@@ -179,7 +192,7 @@ export const useShipBuilderKeyboardShortcuts = ({
     setTransformMode,
     shipConfig.weapons.variant,
     shortcutsDialog,
+    toggleExperienceMode,
     undo,
   ])
 }
-

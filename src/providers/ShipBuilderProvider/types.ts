@@ -2,7 +2,7 @@ import type { PropsWithChildren } from 'react'
 import type { ShipConfig, ShipSlot, ShipSlotPatch } from '@/lib/models/ShipConfig'
 import type { ImportShipConfigResult } from '@/lib/managers/ShipConfigIOManager'
 import type { ShipBuilderSceneManager } from '@/lib/managers/ShipBuilderSceneManager'
-import type { TransformMode } from '@/lib/managers/ShipBuilderSceneManager/types'
+import type { ExperienceMode, TransformMode } from '@/lib/managers/ShipBuilderSceneManager/types'
 
 export type ShipBuilderProviderProps = PropsWithChildren
 
@@ -25,6 +25,7 @@ export type ShipBuilderContextValue = {
   sceneManager: ShipBuilderSceneManager
   shipConfig: ShipConfig
   selectedSlot: ShipSlot
+  experienceMode: ExperienceMode
   transformMode: TransformMode
   canUndo: boolean
   canRedo: boolean
@@ -33,6 +34,8 @@ export type ShipBuilderContextValue = {
   message: ShipBuilderMessage | null
   updateSlot: UpdateSlot
   setSelectedSlot: (slot: ShipSlot) => void
+  setExperienceMode: (mode: ExperienceMode) => void
+  toggleExperienceMode: () => void
   setTransformMode: (mode: TransformMode) => void
   undo: () => void
   redo: () => void

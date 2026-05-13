@@ -8,9 +8,11 @@ import {
   type ImportShipConfigResult,
 } from '@/lib/managers/ShipConfigIOManager'
 import { ShipBuilderSceneManager } from '@/lib/managers/ShipBuilderSceneManager'
+import type { ExperienceMode } from '@/lib/managers/ShipBuilderSceneManager/types'
 import type { ShipConfig, ShipSlot, ShipSlotPatch } from '@/lib/models/ShipConfig'
 import { ShipBuilderContext } from '@/providers/ShipBuilderProvider/context'
 import {
+  DEFAULT_EXPERIENCE_MODE,
   DEFAULT_SELECTED_SLOT,
   DEFAULT_TRANSFORM_MODE,
   SHIP_BUILDER_HISTORY_LIMIT,
@@ -45,12 +47,14 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   })
   const builderStateRef = useRef(builderState)
   const [selectedSlot, setSelectedSlot] = useState<ShipSlot>(DEFAULT_SELECTED_SLOT)
+  const [experienceMode, setExperienceModeState] = useState(DEFAULT_EXPERIENCE_MODE)
   const [transformMode, setTransformMode] = useState(DEFAULT_TRANSFORM_MODE)
   const [overlappingSlots, setOverlappingSlots] = useState<ShipSlot[]>([])
   const [detachedSlots, setDetachedSlots] = useState<ShipSlot[]>([])
   const [message, setMessage] = useState<ShipBuilderMessage | null>(null)
   const [hasHydratedStorage, setHasHydratedStorage] = useState(false)
   const hasRestoredStorageRef = useRef(false)
+  const hasInitializedExperienceModeRef = useRef(false)
 
   const setBuilderStateAndRef = useCallback((nextState: ShipBuilderState) => {
     builderStateRef.current = nextState
@@ -314,6 +318,17 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     [applyNextConfig, shipConfigIOManager, shipConfigManager]
   )
 
+  const setExperienceMode = useCallback(
+    (mode: ExperienceMode) => {
+      setExperienceModeState(mode)
+    },
+    []
+  )
+
+  const toggleExperienceMode = useCallback(() => {
+    setExperienceModeState((previousMode) => (previousMode === 'builder' ? 'flight' : 'builder'))
+  }, [])
+
   useEffect(() => {
     if (typeof window === 'undefined' || !hasHydratedStorage) {
       return
@@ -322,6 +337,21 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     const serialized = shipConfigIOManager.exportToJson(builderState.shipConfig)
     window.localStorage.setItem(SHIP_BUILDER_STORAGE_KEY, serialized)
   }, [builderState.shipConfig, hasHydratedStorage, shipConfigIOManager])
+
+  useEffect(() => {
+    if (!hasInitializedExperienceModeRef.current) {
+      hasInitializedExperienceModeRef.current = true
+      return
+    }
+
+    setMessage({
+      kind: 'info',
+      text:
+        experienceMode === 'flight'
+          ? 'Flight test mode enabled: W/S throttle, A/D yaw, Q/E roll, ArrowUp/ArrowDown pitch.'
+          : 'Builder mode enabled: transform gizmos and slot selection restored.',
+    })
+  }, [experienceMode])
 
   useEffect(() => {
     sceneManager.setSlotSelectionHandler((slot) => {
@@ -376,6 +406,10 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   }, [sceneManager, selectedSlot])
 
   useEffect(() => {
+    sceneManager.setExperienceMode(experienceMode)
+  }, [sceneManager, experienceMode])
+
+  useEffect(() => {
     const supportsSymmetricGizmos =
       selectedSlot === 'wings' ||
       selectedSlot === 'engines' ||
@@ -401,6 +435,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       sceneManager,
       shipConfig: builderState.shipConfig,
       selectedSlot,
+      experienceMode,
       transformMode,
       canUndo,
       canRedo,
@@ -409,6 +444,8 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
       message,
       updateSlot,
       setSelectedSlot,
+      setExperienceMode,
+      toggleExperienceMode,
       setTransformMode,
       undo,
       redo,
@@ -422,6 +459,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     sceneManager,
     builderState.shipConfig,
     selectedSlot,
+    experienceMode,
     transformMode,
     canUndo,
     canRedo,
@@ -429,6 +467,8 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     detachedSlots,
     message,
     updateSlot,
+    setExperienceMode,
+    toggleExperienceMode,
     undo,
     redo,
     resetSlot,
