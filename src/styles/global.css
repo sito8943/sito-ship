@@ -158,6 +158,52 @@ body {
   left: 16px;
 }
 
+.ship-builder-controls-panel {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  will-change: transform, opacity;
+  transform: translateX(0px);
+  transition:
+    opacity 0.28s ease,
+    transform 0.64s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+.ship-builder-controls-panel--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ship-builder-controls--hidden {
+  transform: translateX(calc(100% + 24px));
+}
+
+.ship-builder-controls-import-export--hidden {
+  transform: translateX(calc(-100% - 24px));
+}
+
+.ship-builder-controls-footer__toggle {
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ship-builder-controls-footer__toggle .ui-button__label {
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ship-builder-controls-footer__toggle--collapsed {
+  transform: translateY(-1px);
+  border-color: rgba(125, 211, 252, 0.8);
+  box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.2);
+}
+
+.ship-builder-controls-footer__toggle--collapsed .ui-button__label {
+  transform: rotate(180deg);
+}
+
 .ship-builder-controls__header {
   display: flex;
   align-items: center;
@@ -400,5 +446,18 @@ body {
     bottom: 12px;
     width: auto;
     max-height: 45vh;
+  }
+
+  .ship-builder-controls--hidden,
+  .ship-builder-controls-import-export--hidden {
+    transform: translateY(calc(100% + 20px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ship-builder-controls-panel,
+  .ship-builder-controls-footer__toggle,
+  .ship-builder-controls-footer__toggle .ui-button__label {
+    transition-duration: 0.01ms;
   }
 }

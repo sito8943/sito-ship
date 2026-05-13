@@ -192,10 +192,17 @@ const ShipBuilderControls = () => {
   const showRotationControls = transformMode === 'rotate'
   const showPairSpreadControl = transformMode === 'pairSpread'
   const showAimRotationControls = transformMode === 'aimRotate'
+  const controlsPanelVisibilityClass = hideUI ? 'ship-builder-controls-panel--hidden' : ''
 
   return (
     <>
-      <aside className="ship-builder-controls" aria-label="Ship Builder Controls">
+      <aside
+        className={`ship-builder-controls ship-builder-controls-panel ${controlsPanelVisibilityClass} ${
+          hideUI ? 'ship-builder-controls--hidden' : ''
+        }`}
+        aria-label="Ship Builder Controls"
+        aria-hidden={hideUI}
+      >
         <header className="ship-builder-controls__header">
           <h2 className="ship-builder-controls__title">Ship Builder</h2>
           <div className="ship-builder-controls__header-actions">
@@ -528,7 +535,13 @@ const ShipBuilderControls = () => {
           </article>
         </div>
       </aside>
-      <aside className="ship-builder-controls-import-export" aria-label="Import Export Controls">
+      <aside
+        className={`ship-builder-controls-import-export ship-builder-controls-panel ${controlsPanelVisibilityClass} ${
+          hideUI ? 'ship-builder-controls-import-export--hidden' : ''
+        }`}
+        aria-label="Import Export Controls"
+        aria-hidden={hideUI}
+      >
         <section className="ship-builder-controls__io">
           <div className="ship-builder-controls__io-actions ship-builder-controls__io-actions--spaced">
             <Button
@@ -590,9 +603,11 @@ const ShipBuilderControls = () => {
       </aside>
       <footer className="ship-builder-controls-footer">
         <IconButton
-          className="ship-builder-controls__action-button"
+          className={`ship-builder-controls__action-button ship-builder-controls-footer__toggle ${
+            hideUI ? 'ship-builder-controls-footer__toggle--collapsed' : ''
+          }`}
           icon={faSliders}
-          label="Hide UI"
+          label={hideUI ? 'Show UI' : 'Hide UI'}
           onClick={() => setHideUI(!hideUI)}
           variant={hideUI ? 'ghost' : 'solid'}
         />
