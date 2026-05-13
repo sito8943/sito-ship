@@ -25,6 +25,30 @@ export const CAMERA_SETTINGS = {
   },
 } as const
 
+export const DEFAULT_ORBIT_CONSTRAINTS = {
+  minDistance: 5.5,
+  maxDistance: 20,
+  minPolarAngle: Math.PI * 0.2,
+  maxPolarAngle: Math.PI * 0.48,
+} as const
+
+export const FREE_CAMERA_ORBIT_CONSTRAINTS = {
+  minDistance: 1.2,
+  maxDistance: 60,
+  minPolarAngle: 0.02,
+  maxPolarAngle: Math.PI - 0.02,
+} as const
+
+export const PANORAMIC_ORBIT_CONSTRAINTS = {
+  minDistance: 8.5,
+  maxDistance: 30,
+  minPolarAngle: Math.PI * 0.42,
+  maxPolarAngle: Math.PI * 0.58,
+} as const
+
+export const CINEMATIC_ROTATION_SPEED = 0.8
+export const CAMERA_FOCUS_PADDING = 1.35
+
 export const SCENE_COLORS = {
   background: '#040913',
   grid: '#16263f',

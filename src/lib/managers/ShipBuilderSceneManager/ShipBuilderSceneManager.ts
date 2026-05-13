@@ -41,10 +41,15 @@ import {
 import {
   BODY_CONTACT_SLOTS,
   BODY_CONTACT_TOLERANCE,
+  CAMERA_FOCUS_PADDING,
   CAMERA_SETTINGS,
+  CINEMATIC_ROTATION_SPEED,
+  DEFAULT_ORBIT_CONSTRAINTS,
+  FREE_CAMERA_ORBIT_CONSTRAINTS,
   MAX_DEVICE_PIXEL_RATIO,
   OVERLAP_SLOT_PAIRS,
   OVERLAP_VOLUME_RATIO_THRESHOLD,
+  PANORAMIC_ORBIT_CONSTRAINTS,
   POST_PROCESSING_SETTINGS,
   SCENE_COLORS,
 } from '@/lib/managers/ShipBuilderSceneManager/constants'
@@ -65,6 +70,12 @@ type DebugHelpersVisibility = {
 
 type SymmetricSlot = Extract<ShipSlot, 'wings' | 'engines' | 'weapons'>
 type TransformControlMode = 'translate' | 'rotate' | 'scale'
+type OrbitConstraintSet = {
+  minDistance: number
+  maxDistance: number
+  minPolarAngle: number
+  maxPolarAngle: number
+}
 
 export class ShipBuilderSceneManager {
   private readonly isDevEnvironment = import.meta.env.DEV
@@ -93,6 +104,9 @@ export class ShipBuilderSceneManager {
   private pendingShipConfig: ShipConfig | null = null
   private animationFrameId = 0
   private isMounted = false
+  private isPanoramicViewEnabled = false
+  private isFreeCameraEnabled = false
+  private isCinematicViewEnabled = false
   private selectedSlot: ShipSlot | null = 'body'
   private transformMode: TransformMode = 'translate'
   private readonly raycaster = new Raycaster()
@@ -103,6 +117,9 @@ export class ShipBuilderSceneManager {
   private readonly sizeA = new Vector3()
   private readonly sizeB = new Vector3()
   private readonly intersectionSize = new Vector3()
+  private readonly cameraTarget = new Vector3()
+  private readonly cameraDirection = new Vector3()
+  private readonly cameraSize = new Vector3()
   private slotSelectionHandler: SceneSlotSelectionHandler | null = null
   private slotTransformHandler: SceneSlotTransformHandler | null = null
   private slotValidationHandler: SceneValidationHandler | null = null
@@ -153,6 +170,79 @@ export class ShipBuilderSceneManager {
   setTransformMode(mode: TransformMode) {
     this.transformMode = mode
     this.refreshTransformControlAttachment()
+  }
+
+  togglePanoramicView() {
+    this.isPanoramicViewEnabled = !this.isPanoramicViewEnabled
+    this.applyCameraViewConstraints()
+  }
+
+  toggleFreeCamera() {
+    this.isFreeCameraEnabled = !this.isFreeCameraEnabled
+    this.applyCameraViewConstraints()
+  }
+
+  toggleCinematicView() {
+    this.isCinematicViewEnabled = !this.isCinematicViewEnabled
+
+    if (!this.controls) {
+      return
+    }
+
+    this.controls.autoRotate = this.isCinematicViewEnabled
+    this.controls.autoRotateSpeed = CINEMATIC_ROTATION_SPEED
+  }
+
+  focusSelectedSlot() {
+    if (!this.camera || !this.controls || !this.shipModelManager) {
+      return
+    }
+
+    const targetSlot = this.selectedSlot ?? 'body'
+    const slotGroup = this.shipModelManager.getSlotGroup(targetSlot)
+    this.boxA.setFromObject(slotGroup)
+    if (this.boxA.isEmpty()) {
+      return
+    }
+
+    this.boxA.getCenter(this.cameraTarget)
+    const distance = this.camera.position.distanceTo(this.controls.target)
+    this.cameraDirection.subVectors(this.camera.position, this.controls.target)
+    if (this.cameraDirection.lengthSq() <= 0.000001) {
+      this.cameraDirection.set(1, 0.35, 1)
+    }
+    this.cameraDirection.normalize()
+    this.camera.position.copy(this.cameraTarget).add(this.cameraDirection.multiplyScalar(distance))
+    this.controls.target.copy(this.cameraTarget)
+    this.controls.update()
+  }
+
+  zoomToShip() {
+    if (!this.camera || !this.controls || !this.shipGroup) {
+      return
+    }
+
+    this.boxA.setFromObject(this.shipGroup)
+    if (this.boxA.isEmpty()) {
+      return
+    }
+
+    this.boxA.getCenter(this.cameraTarget)
+    this.boxA.getSize(this.cameraSize)
+
+    const maxSize = Math.max(this.cameraSize.x, this.cameraSize.y, this.cameraSize.z)
+    const fovRadians = (this.camera.fov * Math.PI) / 180
+    const fitDistance = maxSize / Math.tan(fovRadians * 0.5)
+    const distance = Math.max(3, fitDistance * CAMERA_FOCUS_PADDING)
+
+    this.cameraDirection.subVectors(this.camera.position, this.controls.target)
+    if (this.cameraDirection.lengthSq() <= 0.000001) {
+      this.cameraDirection.set(1, 0.35, 1)
+    }
+    this.cameraDirection.normalize()
+    this.controls.target.copy(this.cameraTarget)
+    this.camera.position.copy(this.cameraTarget).add(this.cameraDirection.multiplyScalar(distance))
+    this.controls.update()
   }
 
   getDebugHelpersVisibility(): DebugHelpersVisibility {
@@ -276,6 +366,9 @@ export class ShipBuilderSceneManager {
     this.scene = null
     this.renderer = null
     this.canvas = null
+    this.isPanoramicViewEnabled = false
+    this.isFreeCameraEnabled = false
+    this.isCinematicViewEnabled = false
   }
 
   private initialize() {
@@ -308,11 +401,11 @@ export class ShipBuilderSceneManager {
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
     this.controls.enableDamping = true
-    this.controls.minDistance = 5.5
-    this.controls.maxDistance = 20
-    this.controls.minPolarAngle = Math.PI * 0.2
-    this.controls.maxPolarAngle = Math.PI * 0.48
+    this.applyOrbitConstraints(DEFAULT_ORBIT_CONSTRAINTS)
     this.controls.target.set(0, 0.35, 0.45)
+    this.controls.autoRotate = this.isCinematicViewEnabled
+    this.controls.autoRotateSpeed = CINEMATIC_ROTATION_SPEED
+    this.applyCameraViewConstraints()
 
     this.clock = new Clock()
 
@@ -603,6 +696,28 @@ export class ShipBuilderSceneManager {
     }
 
     return mode
+  }
+
+  private applyOrbitConstraints(constraints: OrbitConstraintSet) {
+    if (!this.controls) {
+      return
+    }
+
+    this.controls.minDistance = constraints.minDistance
+    this.controls.maxDistance = constraints.maxDistance
+    this.controls.minPolarAngle = constraints.minPolarAngle
+    this.controls.maxPolarAngle = constraints.maxPolarAngle
+  }
+
+  private applyCameraViewConstraints() {
+    const constraints = this.isFreeCameraEnabled
+      ? FREE_CAMERA_ORBIT_CONSTRAINTS
+      : this.isPanoramicViewEnabled
+        ? PANORAMIC_ORBIT_CONSTRAINTS
+        : DEFAULT_ORBIT_CONSTRAINTS
+
+    this.applyOrbitConstraints(constraints)
+    this.controls?.update()
   }
 
   private getSceneSize(): SceneSize {

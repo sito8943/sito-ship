@@ -78,14 +78,6 @@
       "key": "A",
       "description": "Rotate part toward target direction"
     },
-    "mirrorToggle": {
-      "key": "M",
-      "description": "Toggle mirror mode"
-    },
-    "duplicatePart": {
-      "key": "D",
-      "description": "Duplicate selected part"
-    },
     "deletePart": {
       "key": "Delete",
       "description": "Delete selected part"

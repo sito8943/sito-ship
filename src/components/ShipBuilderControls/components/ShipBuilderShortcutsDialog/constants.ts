@@ -39,8 +39,6 @@ export const SHIP_BUILDER_SHORTCUTS_SECTIONS: ShortcutSection[] = [
     shortcuts: [
       { key: 'P', description: 'Toggle pair spread editing' },
       { key: 'A', description: 'Rotate part toward target direction' },
-      { key: 'M', description: 'Toggle mirror mode' },
-      { key: 'D', description: 'Duplicate selected part' },
       { key: 'Delete', description: 'Delete selected part' },
     ],
   },
@@ -61,4 +59,3 @@ export const SHIP_BUILDER_SHORTCUTS_SECTIONS: ShortcutSection[] = [
     ],
   },
 ]
-

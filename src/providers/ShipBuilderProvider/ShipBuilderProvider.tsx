@@ -22,10 +22,7 @@ import type {
   ShipBuilderProviderProps,
   UpdateSlot,
 } from '@/providers/ShipBuilderProvider/types'
-import {
-  isEditableKeyboardTarget,
-  pushHistorySnapshot,
-} from '@/providers/ShipBuilderProvider/utils'
+import { pushHistorySnapshot } from '@/providers/ShipBuilderProvider/utils'
 
 type ShipBuilderState = {
   shipConfig: ShipConfig
@@ -395,32 +392,6 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   useEffect(() => {
     sceneManager.setTransformMode(transformMode)
   }, [sceneManager, transformMode])
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (isEditableKeyboardTarget(event.target)) {
-        return
-      }
-
-      const isCommandPressed = event.metaKey || event.ctrlKey
-      if (!isCommandPressed || event.key.toLowerCase() !== 'z') {
-        return
-      }
-
-      event.preventDefault()
-      if (event.shiftKey) {
-        redo()
-        return
-      }
-
-      undo()
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [redo, undo])
 
   const canUndo = builderState.historyIndex > 0
   const canRedo = builderState.historyIndex < builderState.historyEntries.length - 1
