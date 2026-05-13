@@ -36,13 +36,22 @@ import {
   FLIGHT_SCENE_SPACE,
   FLIGHT_SCENE_STAR_LAYERS,
   FLIGHT_SCENE_STRAFE,
+  FLIGHT_SCENE_THRUSTERS,
 } from '@/lib/managers/ShipFlightSceneManager/constants'
 import type {
   FlightScenePlanetEntry,
   FlightSceneInputState,
   FlightSceneSize,
   FlightSceneStarField,
+  FlightSceneThrusterField,
 } from '@/lib/managers/ShipFlightSceneManager/types'
+
+const MAX_ENGINE_EXHAUSTS = 4
+
+const THRUSTER_CORE_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.coreColor)
+const THRUSTER_MID_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.midColor)
+const THRUSTER_TAIL_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.tailColor)
+const THRUSTER_TMP_COLOR = new Color()
 
 const createDefaultInputState = (): FlightSceneInputState => {
   return {
@@ -87,6 +96,8 @@ export class ShipFlightSceneManager {
   )
   private readonly starFields: FlightSceneStarField[] = []
   private readonly planets: FlightScenePlanetEntry[] = []
+  private thrusterField: FlightSceneThrusterField | null = null
+  private readonly shipBackwardWorld = new Vector3()
 
   mount(canvas: HTMLCanvasElement) {
     if (this.canvas === canvas && this.isMounted) {
@@ -128,6 +139,7 @@ export class ShipFlightSceneManager {
     this.shipModelManager?.dispose()
     this.disposeStarFields()
     this.disposeAllPlanets()
+    this.disposeThrusters()
     this.disposeSceneObjects()
     this.renderer?.dispose()
 
@@ -149,6 +161,7 @@ export class ShipFlightSceneManager {
     this.pitchBound = 0
     this.starFields.length = 0
     this.planets.length = 0
+    this.thrusterField = null
   }
 
   private initialize() {
@@ -246,6 +259,56 @@ export class ShipFlightSceneManager {
 
     for (let i = 0; i < FLIGHT_SCENE_PLANET_POOL_SIZE; i += 1) {
       this.spawnPlanet(false)
+    }
+
+    this.initializeThrusters()
+  }
+
+  private initializeThrusters() {
+    if (!this.scene) {
+      return
+    }
+
+    const capacity = MAX_ENGINE_EXHAUSTS * FLIGHT_SCENE_THRUSTERS.particlesPerEngine
+    const positions = new Float32Array(capacity * 3)
+    const colors = new Float32Array(capacity * 3)
+    const velocities = new Float32Array(capacity * 3)
+    const ages = new Float32Array(capacity)
+    const lifetimes = new Float32Array(capacity)
+
+    for (let i = 0; i < capacity; i += 1) {
+      ages[i] = Infinity
+      lifetimes[i] = 1
+    }
+
+    const geometry = new BufferGeometry()
+    geometry.setAttribute('position', new BufferAttribute(positions, 3))
+    geometry.setAttribute('color', new BufferAttribute(colors, 3))
+
+    const material = new PointsMaterial({
+      size: FLIGHT_SCENE_THRUSTERS.size,
+      vertexColors: true,
+      transparent: true,
+      depthWrite: false,
+      sizeAttenuation: true,
+      blending: AdditiveBlending,
+    })
+
+    const points = new Points(geometry, material)
+    points.name = 'flightThrusterParticles'
+    points.frustumCulled = false
+    this.scene.add(points)
+
+    this.thrusterField = {
+      points,
+      positions,
+      colors,
+      velocities,
+      ages,
+      lifetimes,
+      capacity,
+      exhaustWorldPositions: [],
+      exhaustCount: 0,
     }
   }
 
@@ -467,6 +530,111 @@ export class ShipFlightSceneManager {
     }
   }
 
+  private updateThrusters(delta: number) {
+    const field = this.thrusterField
+    if (!field || !this.shipGroup || !this.shipModelManager) {
+      return
+    }
+
+    field.exhaustCount = this.shipModelManager.getEngineExhaustWorldPositions(
+      field.exhaustWorldPositions
+    )
+
+    if (field.exhaustCount === 0) {
+      for (let i = 0; i < field.capacity; i += 1) {
+        const offset = i * 3
+        field.colors[offset] = 0
+        field.colors[offset + 1] = 0
+        field.colors[offset + 2] = 0
+      }
+      const colorAttribute = field.points.geometry.getAttribute('color') as BufferAttribute
+      colorAttribute.needsUpdate = true
+      return
+    }
+
+    this.shipBackwardWorld.set(0, 0, 1).applyQuaternion(this.shipGroup.quaternion)
+
+    const activeCapacity = Math.min(
+      field.capacity,
+      field.exhaustCount * FLIGHT_SCENE_THRUSTERS.particlesPerEngine
+    )
+    const speed = FLIGHT_SCENE_THRUSTERS.exhaustSpeed
+    const jitter = FLIGHT_SCENE_THRUSTERS.jitter
+    const spawnSpread = FLIGHT_SCENE_THRUSTERS.spawnSpread
+    const lifetimeMin = FLIGHT_SCENE_THRUSTERS.lifetimeMin
+    const lifetimeMax = FLIGHT_SCENE_THRUSTERS.lifetimeMax
+
+    for (let i = 0; i < field.capacity; i += 1) {
+      const offset = i * 3
+
+      if (i >= activeCapacity) {
+        field.colors[offset] = 0
+        field.colors[offset + 1] = 0
+        field.colors[offset + 2] = 0
+        field.ages[i] = Infinity
+        continue
+      }
+
+      field.ages[i] += delta
+
+      if (field.ages[i] >= field.lifetimes[i]) {
+        const exhaustIndex = i % field.exhaustCount
+        const origin = field.exhaustWorldPositions[exhaustIndex]
+
+        field.positions[offset] = origin.x + (Math.random() - 0.5) * spawnSpread
+        field.positions[offset + 1] = origin.y + (Math.random() - 0.5) * spawnSpread
+        field.positions[offset + 2] = origin.z + (Math.random() - 0.5) * spawnSpread
+
+        field.velocities[offset] =
+          this.shipBackwardWorld.x * speed + (Math.random() - 0.5) * jitter
+        field.velocities[offset + 1] =
+          this.shipBackwardWorld.y * speed + (Math.random() - 0.5) * jitter
+        field.velocities[offset + 2] =
+          this.shipBackwardWorld.z * speed + (Math.random() - 0.5) * jitter
+
+        field.ages[i] = 0
+        field.lifetimes[i] = lifetimeMin + Math.random() * (lifetimeMax - lifetimeMin)
+      } else {
+        field.positions[offset] += field.velocities[offset] * delta
+        field.positions[offset + 1] += field.velocities[offset + 1] * delta
+        field.positions[offset + 2] += field.velocities[offset + 2] * delta
+      }
+
+      const t = field.ages[i] / field.lifetimes[i]
+      if (t < 0.5) {
+        THRUSTER_TMP_COLOR.copy(THRUSTER_CORE_COLOR).lerp(THRUSTER_MID_COLOR, t * 2)
+      } else {
+        THRUSTER_TMP_COLOR.copy(THRUSTER_MID_COLOR).lerp(THRUSTER_TAIL_COLOR, (t - 0.5) * 2)
+      }
+      const intensity = 1 - t
+      field.colors[offset] = THRUSTER_TMP_COLOR.r * intensity
+      field.colors[offset + 1] = THRUSTER_TMP_COLOR.g * intensity
+      field.colors[offset + 2] = THRUSTER_TMP_COLOR.b * intensity
+    }
+
+    const positionAttribute = field.points.geometry.getAttribute('position') as BufferAttribute
+    positionAttribute.needsUpdate = true
+    const colorAttribute = field.points.geometry.getAttribute('color') as BufferAttribute
+    colorAttribute.needsUpdate = true
+  }
+
+  private disposeThrusters() {
+    const field = this.thrusterField
+    if (!field) {
+      return
+    }
+    this.scene?.remove(field.points)
+    field.points.geometry.dispose()
+    const material = field.points.material
+    if (Array.isArray(material)) {
+      material.forEach((entry) => entry.dispose())
+    } else {
+      ;(material as Material | null)?.dispose()
+    }
+    field.exhaustWorldPositions.length = 0
+    this.thrusterField = null
+  }
+
   private getAxisInput(positive: boolean, negative: boolean): number {
     return (positive ? 1 : 0) - (negative ? 1 : 0)
   }
@@ -479,6 +647,7 @@ export class ShipFlightSceneManager {
     const delta = this.clock?.getDelta() ?? 0
     this.updateStrafeState(delta)
     this.updateSpaceMotion(delta)
+    this.updateThrusters(delta)
     this.camera.lookAt(this.lookTarget)
     this.renderer.render(this.scene, this.camera)
 

@@ -6,6 +6,7 @@ import {
   Mesh,
   SphereGeometry,
   TorusGeometry,
+  Vector3,
   type BufferGeometry,
 } from 'three'
 import type {
@@ -130,6 +131,25 @@ export class ShipBuilderModelManager {
     }
 
     return this.findSymmetricMasterSideGroup(slot)
+  }
+
+  getEngineExhaustWorldPositions(out: Vector3[]): number {
+    const enginesGroup = this.slotGroups.engines
+    enginesGroup.updateMatrixWorld(true)
+    let count = 0
+    enginesGroup.traverse((obj) => {
+      if (obj.userData.isEngineExhaust !== true) {
+        return
+      }
+      let target = out[count]
+      if (!target) {
+        target = new Vector3()
+        out[count] = target
+      }
+      obj.getWorldPosition(target)
+      count += 1
+    })
+    return count
   }
 
   getSymmetricAimPivotGroup(slot: ShipSlot): Group | null {
@@ -378,6 +398,8 @@ export class ShipBuilderModelManager {
       nozzle.position.set(anchor.x - 1.05, anchor.y, anchor.z)
       aimContent.add(nozzle)
 
+      this.addEngineExhaustMarker(aimContent, anchor.x - 1.4, anchor.y, anchor.z)
+
       sideGroup.add(aimPivot)
       return sideGroup
     }
@@ -395,6 +417,8 @@ export class ShipBuilderModelManager {
       core.rotation.z = Math.PI / 2
       core.position.set(anchor.x - 0.6, anchor.y, anchor.z)
       aimContent.add(core)
+
+      this.addEngineExhaustMarker(aimContent, anchor.x - 1.07, anchor.y, anchor.z)
 
       sideGroup.add(aimPivot)
       return sideGroup
@@ -414,8 +438,19 @@ export class ShipBuilderModelManager {
     bridge.position.set(anchor.x + 0.2, anchor.y, anchor.z)
     aimContent.add(bridge)
 
+    this.addEngineExhaustMarker(aimContent, anchor.x - 0.75, anchor.y + 0.2, anchor.z)
+    this.addEngineExhaustMarker(aimContent, anchor.x - 0.75, anchor.y - 0.2, anchor.z)
+
     sideGroup.add(aimPivot)
     return sideGroup
+  }
+
+  private addEngineExhaustMarker(parent: Group, x: number, y: number, z: number) {
+    const marker = new Group()
+    marker.name = 'engineExhaustMarker'
+    marker.position.set(x, y, z)
+    marker.userData.isEngineExhaust = true
+    parent.add(marker)
   }
 
   private buildWeaponsSlot = (slotConfig: WeaponsSlotConfig): Group => {

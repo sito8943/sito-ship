@@ -4,8 +4,8 @@ export const FLIGHT_SCENE_CAMERA = {
   far: 520,
   position: {
     x: 0,
-    y: 6.1,
-    z: 18.2,
+    y: 3.1,
+    z: 15.2,
   },
   lookAt: {
     x: 0,
@@ -29,7 +29,7 @@ export const FLIGHT_SCENE_STRAFE = {
 export const FLIGHT_SCENE_BANK = {
   rollFactor: 0.85,
   yawFactor: 0.22,
-  pitchFactor: 0.14,
+  pitchFactor: 0.70,
 } as const
 
 export const FLIGHT_SCENE_SPACE = {
@@ -59,6 +59,19 @@ export const FLIGHT_SCENE_STAR_LAYERS = [
     spread: 340,
   },
 ] as const
+
+export const FLIGHT_SCENE_THRUSTERS = {
+  particlesPerEngine: 80,
+  lifetimeMin: 0.35,
+  lifetimeMax: 0.7,
+  exhaustSpeed: 18.0,
+  jitter: 1.2,
+  spawnSpread: 0.08,
+  size: 0.55,
+  coreColor: '#dbeafe',
+  midColor: '#60a5fa',
+  tailColor: '#1e3a8a',
+} as const
 
 export const FLIGHT_SCENE_PLANET_POOL_SIZE = 5
 

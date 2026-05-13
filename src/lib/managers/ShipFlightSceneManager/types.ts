@@ -1,4 +1,4 @@
-import type { Mesh, Points } from 'three'
+import type { Mesh, Points, Vector3 } from 'three'
 
 export type FlightSceneInputState = {
   strafeLeft: boolean
@@ -25,4 +25,16 @@ export type FlightScenePlanetEntry = {
   speedMultiplier: number
   rotationAxisY: number
   rotationAxisX: number
+}
+
+export type FlightSceneThrusterField = {
+  points: Points
+  positions: Float32Array
+  colors: Float32Array
+  velocities: Float32Array
+  ages: Float32Array
+  lifetimes: Float32Array
+  capacity: number
+  exhaustWorldPositions: Vector3[]
+  exhaustCount: number
 }
