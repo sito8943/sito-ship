@@ -22,6 +22,11 @@ import {
 } from 'three'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
+import { PLANET_TEXTURE_URLS } from '@/assets/resources'
+import {
+  getCachedPlanetTexture,
+  loadPlanetTexture,
+} from '@/lib/utils/PlanetTextureCache'
 import {
   FLIGHT_SCENE_BANK,
   FLIGHT_SCENE_CAMERA,
@@ -282,12 +287,16 @@ export class ShipFlightSceneManager {
 
     const template = pickRandomTemplate()
     const radius = randomInRange(template.radiusRange[0], template.radiusRange[1])
+    const textureUrl =
+      PLANET_TEXTURE_URLS[Math.floor(Math.random() * PLANET_TEXTURE_URLS.length)]
+    const cachedTexture = getCachedPlanetTexture(textureUrl)
     const material = new MeshStandardMaterial({
-      color: template.color,
+      color: cachedTexture ? '#ffffff' : template.color,
       emissive: template.emissive,
       emissiveIntensity: 0.35,
       roughness: 0.92,
       metalness: 0.04,
+      map: cachedTexture ?? null,
     })
     const mesh = new Mesh(new SphereGeometry(radius, 32, 28), material)
 
@@ -302,12 +311,28 @@ export class ShipFlightSceneManager {
     mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0)
 
     this.planetsLayer.add(mesh)
-    this.planets.push({
+    const entry: FlightScenePlanetEntry = {
       mesh,
       speedMultiplier: template.speedMultiplier,
       rotationAxisY: randomInRange(0.4, 1.0),
       rotationAxisX: randomInRange(0.1, 0.4),
-    })
+    }
+    this.planets.push(entry)
+
+    if (!cachedTexture) {
+      loadPlanetTexture(textureUrl)
+        .then((texture) => {
+          if (!this.planets.includes(entry)) {
+            return
+          }
+          material.map = texture
+          material.color.set('#ffffff')
+          material.needsUpdate = true
+        })
+        .catch((error) => {
+          console.warn('Planet texture load failed', error)
+        })
+    }
   }
 
   private despawnPlanet(index: number) {
