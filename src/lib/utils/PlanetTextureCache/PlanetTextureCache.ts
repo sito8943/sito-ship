@@ -4,11 +4,11 @@ const loader = new TextureLoader()
 const cache = new Map<string, Texture>()
 const pending = new Map<string, Promise<Texture>>()
 
-export function getCachedPlanetTexture(url: string): Texture | undefined {
+export const getCachedPlanetTexture = (url: string): Texture | undefined => {
   return cache.get(url)
 }
 
-export function loadPlanetTexture(url: string): Promise<Texture> {
+export const loadPlanetTexture = (url: string): Promise<Texture> => {
   const cached = cache.get(url)
   if (cached) {
     return Promise.resolve(cached)

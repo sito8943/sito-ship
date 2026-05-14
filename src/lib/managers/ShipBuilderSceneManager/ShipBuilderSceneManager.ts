@@ -49,54 +49,20 @@ import {
   SCENE_COLORS,
 } from '@/lib/managers/ShipBuilderSceneManager/constants'
 import type {
+  DebugHelpersVisibility,
   ExperienceMode,
+  FlightInputState,
+  OrbitConstraintSet,
   SceneSize,
   SceneBodyContactHandler,
   SceneSlotSelectionHandler,
   SceneSlotTransformHandler,
   SceneValidationHandler,
+  SymmetricSlot,
+  TransformControlMode,
   TransformMode,
 } from '@/lib/managers/ShipBuilderSceneManager/types'
-
-type DebugHelpersVisibility = {
-  axes: boolean
-  light: boolean
-  shadow: boolean
-}
-
-type SymmetricSlot = Extract<ShipSlot, 'wings' | 'engines' | 'weapons'>
-type TransformControlMode = 'translate' | 'rotate' | 'scale'
-type OrbitConstraintSet = {
-  minDistance: number
-  maxDistance: number
-  minPolarAngle: number
-  maxPolarAngle: number
-}
-
-type FlightInputState = {
-  throttleForward: boolean
-  throttleReverse: boolean
-  yawLeft: boolean
-  yawRight: boolean
-  pitchUp: boolean
-  pitchDown: boolean
-  rollLeft: boolean
-  rollRight: boolean
-  boost: boolean
-}
-
-type DisposableResource = {
-  dispose: () => void
-}
-
-const isDisposableResource = (value: unknown): value is DisposableResource => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'dispose' in value &&
-    typeof value.dispose === 'function'
-  )
-}
+import { isDisposableResource } from '@/lib/managers/ShipBuilderSceneManager/utils'
 
 export class ShipBuilderSceneManager {
   private readonly isDevEnvironment = import.meta.env.DEV

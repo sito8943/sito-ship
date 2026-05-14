@@ -1,3 +1,7 @@
+import { Color, Matrix4, Quaternion, Vector3 } from 'three'
+
+export const MAX_ENGINE_EXHAUSTS = 4
+
 export const FLIGHT_SCENE_CAMERA = {
   fov: 52,
   near: 0.1,
@@ -159,3 +163,13 @@ export const FLIGHT_SCENE_PLANET_TEMPLATES = [
     speedMultiplier: 0.22,
   },
 ] as const
+
+export const THRUSTER_CORE_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.coreColor)
+export const THRUSTER_MID_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.midColor)
+export const THRUSTER_TAIL_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.tailColor)
+
+export const PROJECTILE_LOCAL_FORWARD = new Vector3(0, 0, -1)
+export const PROJECTILE_TMP_MATRIX = new Matrix4()
+export const PROJECTILE_TMP_POS = new Vector3()
+export const PROJECTILE_TMP_SCALE = new Vector3(1, 1, 1)
+export const PROJECTILE_TMP_QUAT = new Quaternion()

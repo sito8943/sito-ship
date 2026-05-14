@@ -3,12 +3,9 @@ import SceneCanvas from '@/components/SceneCanvas'
 import ShipBuilderControls from '@/components/ShipBuilderControls'
 import ViewTransitionOverlay from '@/components/ViewTransitionOverlay'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
+import { FADE_IN_MS, HOLD_MS, INITIAL_BUILDER_UI_REVEAL_DELAY_MS } from '@/views/HomeView/constants'
 
 const FlightView = lazy(() => import('@/views/FlightView'))
-
-const FADE_IN_MS = 350
-const HOLD_MS = 150
-const INITIAL_BUILDER_UI_REVEAL_DELAY_MS = 180
 
 const HomeView = () => {
   const { experienceMode } = useShipBuilder()

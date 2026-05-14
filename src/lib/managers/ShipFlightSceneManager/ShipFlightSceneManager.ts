@@ -20,7 +20,6 @@ import {
   PerspectiveCamera,
   Points,
   PointsMaterial,
-  Quaternion,
   Scene,
   ShaderMaterial,
   SphereGeometry,
@@ -45,7 +44,6 @@ import {
   MOBILE_FLIGHT_SCENE_CAMERA,
   FLIGHT_SCENE_MUZZLE_FLASH,
   FLIGHT_SCENE_PLANET_POOL_SIZE,
-  FLIGHT_SCENE_PLANET_TEMPLATES,
   FLIGHT_SCENE_POST_PROCESSING,
   FLIGHT_SCENE_PROJECTILES,
   FLIGHT_SCENE_RENDERER,
@@ -53,8 +51,19 @@ import {
   FLIGHT_SCENE_STAR_LAYERS,
   FLIGHT_SCENE_STRAFE,
   FLIGHT_SCENE_THRUSTERS,
+  MAX_ENGINE_EXHAUSTS,
+  PROJECTILE_LOCAL_FORWARD,
+  PROJECTILE_TMP_MATRIX,
+  PROJECTILE_TMP_POS,
+  PROJECTILE_TMP_QUAT,
+  PROJECTILE_TMP_SCALE,
+  THRUSTER_CORE_COLOR,
+  THRUSTER_MID_COLOR,
+  THRUSTER_TAIL_COLOR,
 } from '@/lib/managers/ShipFlightSceneManager/constants'
 import type {
+  FlightDebugHelpersVisibility,
+  FlightSceneCameraConfig,
   FlightScenePlanetEntry,
   FlightSceneInputState,
   FlightSceneMuzzleFlashField,
@@ -64,56 +73,12 @@ import type {
   FlightSceneThrusterField,
   FlightSceneTouchInput,
 } from '@/lib/managers/ShipFlightSceneManager/types'
-
-const MAX_ENGINE_EXHAUSTS = 4
-
-const THRUSTER_CORE_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.coreColor)
-const THRUSTER_MID_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.midColor)
-const THRUSTER_TAIL_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.tailColor)
-
-const createDefaultInputState = (): FlightSceneInputState => {
-  return {
-    strafeLeft: false,
-    strafeRight: false,
-    pitchUp: false,
-    pitchDown: false,
-    fire: false,
-  }
-}
-
-const PROJECTILE_LOCAL_FORWARD = new Vector3(0, 0, -1)
-const PROJECTILE_TMP_MATRIX = new Matrix4()
-const PROJECTILE_TMP_POS = new Vector3()
-const PROJECTILE_TMP_SCALE = new Vector3(1, 1, 1)
-const PROJECTILE_TMP_QUAT = new Quaternion()
-
-type DisposableResource = {
-  dispose: () => void
-}
-
-const isDisposableResource = (value: unknown): value is DisposableResource => {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'dispose' in value &&
-    typeof value.dispose === 'function'
-  )
-}
-
-const randomInRange = (min: number, max: number) => min + Math.random() * (max - min)
-
-const pickRandomTemplate = () => {
-  const index = Math.floor(Math.random() * FLIGHT_SCENE_PLANET_TEMPLATES.length)
-  return FLIGHT_SCENE_PLANET_TEMPLATES[index]
-}
-
-type FlightSceneCameraConfig = typeof FLIGHT_SCENE_CAMERA
-
-type FlightDebugHelpersVisibility = {
-  axes: boolean
-  grid: boolean
-  light: boolean
-}
+import {
+  createDefaultInputState,
+  isDisposableResource,
+  pickRandomTemplate,
+  randomInRange,
+} from '@/lib/managers/ShipFlightSceneManager/utils'
 
 export class ShipFlightSceneManager {
   private readonly isDevEnvironment = import.meta.env.DEV

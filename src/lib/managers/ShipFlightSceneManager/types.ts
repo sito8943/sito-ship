@@ -1,4 +1,17 @@
 import type { InstancedMesh, Mesh, Points, Vector3 } from 'three'
+import type { FLIGHT_SCENE_CAMERA } from '@/lib/managers/ShipFlightSceneManager/constants'
+
+export type FlightSceneCameraConfig = typeof FLIGHT_SCENE_CAMERA
+
+export type FlightDebugHelpersVisibility = {
+  axes: boolean
+  grid: boolean
+  light: boolean
+}
+
+export type DisposableResource = {
+  dispose: () => void
+}
 
 export type FlightSceneInputState = {
   strafeLeft: boolean
