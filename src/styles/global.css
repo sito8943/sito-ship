@@ -662,6 +662,10 @@ body {
   text-transform: uppercase;
 }
 
+.ship-builder-mobile-title {
+  display: none;
+}
+
 .ship-builder-controls__header-actions {
   display: flex;
   align-items: center;
@@ -948,16 +952,41 @@ body {
   }
 
   .ship-builder-controls__header {
-    position: relative;
     justify-content: flex-end;
   }
 
   .ship-builder-controls__title {
+    display: none;
+  }
+
+  .ship-builder-mobile-title {
     position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
     left: 50%;
     transform: translateX(-50%);
-    text-align: center;
-    width: max-content;
+    display: block;
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 999px;
+    background: rgba(4, 11, 23, 0.88);
+    backdrop-filter: blur(8px);
+    color: #e2e8f0;
+    z-index: 6;
+    font-size: 0.74rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 1;
+    transition:
+      opacity 0.28s ease,
+      transform 0.64s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .home-view--builder-ui-hidden .ship-builder-mobile-title {
+    opacity: 0;
+    transform: translate(-50%, -8px);
   }
 
   .ship-builder-controls__section--selected-slot {

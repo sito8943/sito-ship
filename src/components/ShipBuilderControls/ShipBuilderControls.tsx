@@ -31,6 +31,7 @@ const ShipBuilderControls = () => {
 
   return (
     <>
+      <h2 className="ship-builder-mobile-title">Ship Builder</h2>
       <ShipBuilderControlsMainAside
         isHidden={hideUI}
         panelVisibilityClassName={controlsPanelVisibilityClass}
