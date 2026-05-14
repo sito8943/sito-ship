@@ -1,14 +1,6 @@
 import { faKeyboard, faRocket, faSliders } from '@fortawesome/free-solid-svg-icons'
 import { IconButton } from '@/components/ui'
-import type { ExperienceMode } from '@/lib/managers/ShipBuilderSceneManager/types'
-
-export type DesktopFooterProps = {
-  hideUI: boolean
-  experienceMode: ExperienceMode
-  onToggleHideUI: () => void
-  onToggleExperienceMode: () => void
-  onOpenKeyboardShortcuts: () => void
-}
+import type { DesktopFooterProps } from '@/components/ShipBuilderControls/components/desktop/types'
 
 const DesktopFooter = ({
   hideUI,

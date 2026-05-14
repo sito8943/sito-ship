@@ -10,13 +10,22 @@ import {
 import {
   SHIP_LOCAL_SYMMETRY_PLANE_NORMAL,
   SHIP_LOCAL_SYMMETRY_PLANE_OFFSET,
+  SHIP_RIM_COLOR,
+  SHIP_RIM_INTENSITY,
+  SHIP_RIM_POWER,
 } from '@/lib/managers/ShipBuilderModelManager/constants'
+import type { DisposableResource } from '@/lib/managers/ShipBuilderModelManager/types'
 import type { QuaternionTuple } from '@/lib/models'
 import type { ShipSlot, ShipSlotConfigMap, Vector3Tuple } from '@/lib/models/ShipConfig'
 
-const SHIP_RIM_COLOR = '#d9e7f5'
-const SHIP_RIM_POWER = 2.2
-const SHIP_RIM_INTENSITY = 0.055
+const isDisposableResource = (value: unknown): value is DisposableResource => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'dispose' in value &&
+    typeof value.dispose === 'function'
+  )
+}
 
 export const createSlotMaterial = (color: string): MeshStandardMaterial => {
   const material = new MeshStandardMaterial({
@@ -204,19 +213,7 @@ export const setSlotHighlight = (
 }
 
 export const disposeGroupResources = (group: Group) => {
-  type DisposableResource = {
-    dispose: () => void
-  }
-
   const resources = new Set<DisposableResource>()
-  const isDisposableResource = (value: unknown): value is DisposableResource => {
-    return (
-      typeof value === 'object' &&
-      value !== null &&
-      'dispose' in value &&
-      typeof value.dispose === 'function'
-    )
-  }
 
   group.traverse((node) => {
     if (!(node instanceof Mesh)) {

@@ -3,6 +3,10 @@ import type { Vector3Tuple } from '@/lib/models/ShipConfig'
 
 export const BODY_BASE_DEPTH = 6
 
+export const SHIP_RIM_COLOR = '#d9e7f5'
+export const SHIP_RIM_POWER = 2.2
+export const SHIP_RIM_INTENSITY = 0.055
+
 // Symmetry conventions are defined in shipGroup local space.
 export const SHIP_LOCAL_SYMMETRY_PLANE_NORMAL: Vector3Tuple = [-1, 0, 0]
 export const SHIP_LOCAL_SYMMETRY_PLANE_OFFSET = 0

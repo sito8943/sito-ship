@@ -25,15 +25,13 @@ import {
   createVector3Tuple,
   formatVariantLabel,
   getSlotConfig,
+  getSymmetricSlot,
   getUniformScale,
+  hasSymmetricSlotControls,
   updateTupleAxis,
 } from '@/components/ShipBuilderControls/utils'
+import type { DesktopAsideProps } from '@/components/ShipBuilderControls/components/desktop/types'
 import type { SymmetricSlot } from '@/components/ShipBuilderControls/types'
-
-export type DesktopAsideProps = {
-  isHidden: boolean
-  panelVisibilityClassName: string
-}
 
 const DesktopAside = ({ isHidden, panelVisibilityClassName }: DesktopAsideProps) => {
   const {
@@ -126,12 +124,8 @@ const DesktopAside = ({ isHidden, panelVisibilityClassName }: DesktopAsideProps)
   }
 
   const uniformScale = getUniformScale(activeSlotConfig.scale)
-  const symmetricSlot: SymmetricSlot | null =
-    selectedSlot === 'wings' || selectedSlot === 'engines' || selectedSlot === 'weapons'
-      ? selectedSlot
-      : null
-  const hasSymmetricControls =
-    symmetricSlot !== null && (symmetricSlot !== 'weapons' || shipConfig.weapons.variant !== 'none')
+  const symmetricSlot: SymmetricSlot | null = getSymmetricSlot(selectedSlot)
+  const hasSymmetricControls = hasSymmetricSlotControls(shipConfig, symmetricSlot)
   const showScaleControls = transformMode === 'scale'
   const showOffsetControls = transformMode === 'translate'
   const showRotationControls = transformMode === 'rotate'

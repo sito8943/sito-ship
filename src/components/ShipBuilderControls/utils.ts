@@ -1,4 +1,5 @@
-import type { ShipSlot, ShipSlotConfigMap, Vector3Tuple } from '@/lib/models'
+import type { ShipConfig, ShipSlot, ShipSlotConfigMap, Vector3Tuple } from '@/lib/models'
+import type { SymmetricSlot } from '@/components/ShipBuilderControls/types'
 
 export const createVector3Tuple = (x: number, y: number, z: number): Vector3Tuple => {
   return [x, y, z]
@@ -29,4 +30,24 @@ export const getSlotConfig = <TSlot extends ShipSlot>(
   slot: TSlot
 ) => {
   return shipConfig[slot]
+}
+
+export const getSymmetricSlot = (selectedSlot: ShipSlot): SymmetricSlot | null => {
+  if (selectedSlot === 'wings' || selectedSlot === 'engines' || selectedSlot === 'weapons') {
+    return selectedSlot
+  }
+  return null
+}
+
+export const hasSymmetricSlotControls = (
+  shipConfig: ShipConfig,
+  symmetricSlot: SymmetricSlot | null
+): symmetricSlot is SymmetricSlot => {
+  if (symmetricSlot === null) {
+    return false
+  }
+  if (symmetricSlot === 'weapons' && shipConfig.weapons.variant === 'none') {
+    return false
+  }
+  return true
 }

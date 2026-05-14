@@ -1,22 +1,14 @@
-import {
-  faArrowRotateLeft,
-  faArrowRotateRight,
-  faArrowsToCircle,
-  faArrowsSpin,
-  faArrowsUpDownLeftRight,
-  faMaximize,
-  faUpRightAndDownLeftFromCenter,
-} from '@fortawesome/free-solid-svg-icons'
+import { faArrowRotateLeft, faArrowRotateRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { IconButton } from '@/components/ui'
-import { TRANSFORM_MODE_OPTIONS } from '@/components/ShipBuilderControls/constants'
+import {
+  TRANSFORM_MODE_ICONS,
+  TRANSFORM_MODE_OPTIONS,
+} from '@/components/ShipBuilderControls/constants'
+import { getSymmetricSlot, hasSymmetricSlotControls } from '@/components/ShipBuilderControls/utils'
 import type { SymmetricSlot } from '@/components/ShipBuilderControls/types'
-
-export type MobileAsideProps = {
-  isHidden: boolean
-  panelVisibilityClassName: string
-}
+import type { MobileAsideProps } from '@/components/ShipBuilderControls/components/mobile/types'
 
 const MobileAside = ({ isHidden, panelVisibilityClassName }: MobileAsideProps) => {
   const {
@@ -30,12 +22,8 @@ const MobileAside = ({ isHidden, panelVisibilityClassName }: MobileAsideProps) =
     redo,
   } = useShipBuilder()
 
-  const symmetricSlot: SymmetricSlot | null =
-    selectedSlot === 'wings' || selectedSlot === 'engines' || selectedSlot === 'weapons'
-      ? selectedSlot
-      : null
-  const hasSymmetricControls =
-    symmetricSlot !== null && (symmetricSlot !== 'weapons' || shipConfig.weapons.variant !== 'none')
+  const symmetricSlot: SymmetricSlot | null = getSymmetricSlot(selectedSlot)
+  const hasSymmetricControls = hasSymmetricSlotControls(shipConfig, symmetricSlot)
 
   return (
     <aside
@@ -67,18 +55,7 @@ const MobileAside = ({ isHidden, panelVisibilityClassName }: MobileAsideProps) =
       <div className="ship-builder-controls__mode-toggle">
         {TRANSFORM_MODE_OPTIONS.map((modeOption) => {
           const isDisabled = modeOption.symmetricOnly === true && !hasSymmetricControls
-          const modeIcon =
-            modeOption.value === 'translate'
-              ? faArrowsUpDownLeftRight
-              : modeOption.value === 'rotate'
-                ? faArrowsSpin
-                : modeOption.value === 'scale'
-                  ? faMaximize
-                  : modeOption.value === 'pairSpread'
-                    ? faUpRightAndDownLeftFromCenter
-                    : modeOption.value === 'aimRotate'
-                      ? faArrowsToCircle
-                      : null
+          const modeIcon = TRANSFORM_MODE_ICONS[modeOption.value] ?? null
 
           return (
             <button

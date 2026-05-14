@@ -1,4 +1,12 @@
 import {
+  faArrowsToCircle,
+  faArrowsSpin,
+  faArrowsUpDownLeftRight,
+  faMaximize,
+  faUpRightAndDownLeftFromCenter,
+} from '@fortawesome/free-solid-svg-icons'
+import type { IconDefinition } from '@fortawesome/fontawesome-svg-core'
+import {
   SHIP_SYMMETRIC_AIM_ROTATION_RANGES,
   SHIP_SYMMETRIC_PAIR_SPREAD_RANGES,
   SHIP_SLOT_OFFSET_RANGES,
@@ -8,6 +16,7 @@ import {
   SHIP_VARIANT_OPTIONS,
   type ShipSlot,
 } from '@/lib/models/ShipConfig'
+import type { TransformMode } from '@/lib/managers/ShipBuilderSceneManager/types'
 import type { OffsetAxisOption, TransformModeOption } from '@/components/ShipBuilderControls/types'
 
 export const SLOT_ORDER: readonly ShipSlot[] = SHIP_SLOT_KEYS
@@ -41,3 +50,11 @@ export const TRANSFORM_MODE_OPTIONS: readonly TransformModeOption[] = [
   { value: 'pairSpread', label: 'Pair Spread', symmetricOnly: true },
   { value: 'aimRotate', label: 'Aim Rotate', symmetricOnly: true },
 ]
+
+export const TRANSFORM_MODE_ICONS: Record<TransformMode, IconDefinition> = {
+  translate: faArrowsUpDownLeftRight,
+  rotate: faArrowsSpin,
+  scale: faMaximize,
+  pairSpread: faUpRightAndDownLeftFromCenter,
+  aimRotate: faArrowsToCircle,
+}

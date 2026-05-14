@@ -1,13 +1,6 @@
 import { faRocket, faSliders } from '@fortawesome/free-solid-svg-icons'
 import { IconButton } from '@/components/ui'
-import type { ExperienceMode } from '@/lib/managers/ShipBuilderSceneManager/types'
-
-export type MobileFooterProps = {
-  hideUI: boolean
-  experienceMode: ExperienceMode
-  onToggleHideUI: () => void
-  onToggleExperienceMode: () => void
-}
+import type { MobileFooterProps } from '@/components/ShipBuilderControls/components/mobile/types'
 
 const MobileFooter = ({
   hideUI,

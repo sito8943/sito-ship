@@ -4,10 +4,7 @@ import type { ShipSlot, ShipSlotConfigMap, ShipSlotPatch } from '@/lib/models/Sh
 import { IconButton } from '@/components/ui'
 import { SLOT_LABELS, SLOT_VARIANT_OPTIONS } from '@/components/ShipBuilderControls/constants'
 import { formatVariantLabel } from '@/components/ShipBuilderControls/utils'
-
-export type MobileVariantPickerProps = {
-  panelVisibilityClassName: string
-}
+import type { MobileVariantPickerProps } from '@/components/ShipBuilderControls/components/mobile/types'
 
 const MobileVariantPicker = ({ panelVisibilityClassName }: MobileVariantPickerProps) => {
   const { selectedSlot, shipConfig, updateSlot, resetSlot } = useShipBuilder()

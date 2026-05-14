@@ -1,6 +1,10 @@
 import type { ShipPart, ShipSlot, ShipSlotConfigMap } from '@/lib/models'
 import type { Group } from 'three'
 
+export type DisposableResource = {
+  dispose: () => void
+}
+
 export type ShipSlotKey = ShipSlot
 
 export type ShipSlotGroupMap = Record<ShipSlotKey, Group>

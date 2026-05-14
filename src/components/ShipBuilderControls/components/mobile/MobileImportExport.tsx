@@ -4,11 +4,7 @@ import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { IconButton } from '@/components/ui'
 import { SLOT_LABELS } from '@/components/ShipBuilderControls/constants'
 import { readShipConfigJsonFromFile, saveShipConfigJsonToFile } from '@/lib/utils/ShipConfigFileIO'
-
-export type MobileImportExportProps = {
-  isHidden: boolean
-  panelVisibilityClassName: string
-}
+import type { MobileImportExportProps } from '@/components/ShipBuilderControls/components/mobile/types'
 
 const MobileImportExport = ({ isHidden, panelVisibilityClassName }: MobileImportExportProps) => {
   const {
