@@ -2,8 +2,13 @@ import { useMemo } from 'react'
 import {
   faArrowRotateLeft,
   faArrowRotateRight,
+  faArrowsToCircle,
   faArrowsRotate,
+  faArrowsSpin,
+  faArrowsUpDownLeftRight,
+  faMaximize,
   faRotateLeft,
+  faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { ShipSlot, ShipSlotConfigMap, ShipSlotPatch } from '@/lib/models/ShipConfig'
@@ -214,7 +219,9 @@ const ShipBuilderControlsMainAside = ({
       </header>
 
       <section className="ship-builder-controls__section">
-        <span className="ship-builder-controls__section-title">Selected Slot</span>
+        <span className="ship-builder-controls__section-title ship-builder-controls__section-title--selected-slot">
+          Selected Slot
+        </span>
         <div className="ship-builder-controls__slot-tabs">
           {SLOT_ORDER.map((slot) => {
             return (
@@ -240,6 +247,18 @@ const ShipBuilderControlsMainAside = ({
         <div className="ship-builder-controls__mode-toggle">
           {TRANSFORM_MODE_OPTIONS.map((modeOption) => {
             const isDisabled = modeOption.symmetricOnly === true && !hasSymmetricControls
+            const mobileModeIcon =
+              modeOption.value === 'translate'
+                ? faArrowsUpDownLeftRight
+                : modeOption.value === 'rotate'
+                  ? faArrowsSpin
+                  : modeOption.value === 'scale'
+                    ? faMaximize
+                    : modeOption.value === 'pairSpread'
+                      ? faUpRightAndDownLeftFromCenter
+                      : modeOption.value === 'aimRotate'
+                        ? faArrowsToCircle
+                        : null
 
             return (
               <button
@@ -255,7 +274,18 @@ const ShipBuilderControlsMainAside = ({
                   setTransformMode(modeOption.value)
                 }}
               >
-                {modeOption.label}
+                {mobileModeIcon ? (
+                  <>
+                    <span className="ship-builder-controls__mode-button-label">
+                      {modeOption.label}
+                    </span>
+                    <span className="ship-builder-controls__mode-button-icon" aria-hidden="true">
+                      <FontAwesomeIcon icon={mobileModeIcon} fixedWidth />
+                    </span>
+                  </>
+                ) : (
+                  modeOption.label
+                )}
               </button>
             )
           })}

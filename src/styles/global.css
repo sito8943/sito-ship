@@ -741,6 +741,14 @@ body {
   cursor: pointer;
 }
 
+.ship-builder-controls__mode-button-label {
+  display: inline;
+}
+
+.ship-builder-controls__mode-button-icon {
+  display: none;
+}
+
 .ship-builder-controls__mode-button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -898,16 +906,14 @@ body {
   }
 
   .ship-builder-controls {
-    left: 12px;
     right: 12px;
-    top: auto;
-    bottom: 12px;
-    width: auto;
+    top: 12px;
+    width: fit-content;
     max-height: 45vh;
   }
 
   .ship-builder-controls-import-export {
-    top: calc(env(safe-area-inset-top, 0px) + 56px);
+    top: calc(env(safe-area-inset-top, 0px) + 12px);
     left: 12px;
     right: auto;
     width: auto;
@@ -936,6 +942,15 @@ body {
     gap: 6px;
   }
 
+  .ship-builder-controls__mode-button {
+    flex: 0 0 auto;
+    height: 27px;
+  }
+
+  .ship-builder-controls__section-title--selected-slot {
+    display: none;
+  }
+
   .ship-builder-controls__io-actions--spaced {
     justify-content: flex-start;
     gap: 8px;
@@ -960,6 +975,17 @@ body {
   .ship-builder-controls__io-message--info,
   .ship-builder-controls__io-message--success {
     display: none;
+  }
+
+  .ship-builder-controls__mode-button-label {
+    display: none;
+  }
+
+  .ship-builder-controls__mode-button-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
   }
 }
 
