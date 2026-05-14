@@ -20,6 +20,7 @@ import {
   WebGLRenderer,
   type Material,
 } from 'three'
+import Stats from 'three/addons/libs/stats.module.js'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
 import { PLANET_TEXTURE_URLS } from '@/assets/resources'
@@ -70,11 +71,13 @@ const pickRandomTemplate = () => {
 }
 
 export class ShipFlightSceneManager {
+  private readonly isDevEnvironment = import.meta.env.DEV
   private canvas: HTMLCanvasElement | null = null
   private renderer: WebGLRenderer | null = null
   private scene: Scene | null = null
   private camera: PerspectiveCamera | null = null
   private clock: Clock | null = null
+  private stats: Stats | null = null
   private shipGroup: Group | null = null
   private shipModelGroup: Group | null = null
   private planetsLayer: Group | null = null
@@ -141,6 +144,7 @@ export class ShipFlightSceneManager {
     this.disposeAllPlanets()
     this.disposeThrusters()
     this.disposeSceneObjects()
+    this.disposeStats()
     this.renderer?.dispose()
 
     this.renderer = null
@@ -199,6 +203,30 @@ export class ShipFlightSceneManager {
     this.initializeLights()
     this.initializeShip()
     this.initializeSpace()
+    this.initializeStats()
+  }
+
+  private initializeStats() {
+    if (!this.isDevEnvironment) {
+      return
+    }
+
+    this.disposeStats()
+
+    this.stats = new Stats()
+    this.stats.showPanel(1)
+    this.stats.dom.style.position = 'fixed'
+    this.stats.dom.style.left = '0'
+    this.stats.dom.style.top = '0'
+    this.stats.dom.style.zIndex = '12'
+    document.body.appendChild(this.stats.dom)
+  }
+
+  private disposeStats() {
+    if (this.stats?.dom?.parentNode) {
+      this.stats.dom.parentNode.removeChild(this.stats.dom)
+    }
+    this.stats = null
   }
 
   private initializeLights() {
@@ -488,7 +516,7 @@ export class ShipFlightSceneManager {
     this.shipGroup.position.y = normalizedPitch * this.pitchBound
     this.shipGroup.rotation.z = -this.strafe * FLIGHT_SCENE_BANK.rollFactor
     this.shipGroup.rotation.y = this.strafe * FLIGHT_SCENE_BANK.yawFactor
-    this.shipGroup.rotation.x = (this.strafe + this.pitch) * FLIGHT_SCENE_BANK.pitchFactor
+    this.shipGroup.rotation.x = (this.pitch - this.strafe) * FLIGHT_SCENE_BANK.pitchFactor
   }
 
   private updateSpaceMotion(delta: number) {
@@ -644,12 +672,16 @@ export class ShipFlightSceneManager {
       return
     }
 
+    this.stats?.begin()
+
     const delta = this.clock?.getDelta() ?? 0
     this.updateStrafeState(delta)
     this.updateSpaceMotion(delta)
     this.updateThrusters(delta)
     this.camera.lookAt(this.lookTarget)
     this.renderer.render(this.scene, this.camera)
+
+    this.stats?.end()
 
     this.animationFrameId = window.requestAnimationFrame(this.animate)
   }
