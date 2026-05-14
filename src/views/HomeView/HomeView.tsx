@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import SceneCanvas from '@/components/SceneCanvas'
 import ShipBuilderControls from '@/components/ShipBuilderControls'
 import ViewTransitionOverlay from '@/components/ViewTransitionOverlay'
@@ -8,11 +8,14 @@ const FlightView = lazy(() => import('@/views/FlightView'))
 
 const FADE_IN_MS = 350
 const HOLD_MS = 150
+const INITIAL_BUILDER_UI_REVEAL_DELAY_MS = 180
 
 const HomeView = () => {
   const { experienceMode } = useShipBuilder()
   const [displayedMode, setDisplayedMode] = useState(experienceMode)
   const [overlayVisible, setOverlayVisible] = useState(false)
+  const [isInitialBuilderLoading, setIsInitialBuilderLoading] = useState(true)
+  const [isBuilderUIVisible, setIsBuilderUIVisible] = useState(false)
 
   useEffect(() => {
     if (experienceMode === displayedMode) {
@@ -43,14 +46,34 @@ const HomeView = () => {
     }
   }, [overlayVisible, experienceMode, displayedMode])
 
+  const handleBuilderSceneReady = useCallback(() => {
+    setIsInitialBuilderLoading(false)
+  }, [])
+
+  useEffect(() => {
+    if (isInitialBuilderLoading) {
+      return
+    }
+
+    const showBuilderUITimer = window.setTimeout(() => {
+      setIsBuilderUIVisible(true)
+    }, INITIAL_BUILDER_UI_REVEAL_DELAY_MS)
+
+    return () => {
+      window.clearTimeout(showBuilderUITimer)
+    }
+  }, [isInitialBuilderLoading])
+
+  const homeViewClassName = `home-view ${isBuilderUIVisible ? 'home-view--builder-ui-visible' : 'home-view--builder-ui-hidden'}`
+
   const content =
     displayedMode === 'flight' ? (
       <Suspense fallback={<ViewTransitionOverlay visible />}>
         <FlightView />
       </Suspense>
     ) : (
-      <section className="home-view">
-        <SceneCanvas />
+      <section className={homeViewClassName}>
+        <SceneCanvas onReady={handleBuilderSceneReady} />
         <ShipBuilderControls />
       </section>
     )
@@ -58,7 +81,7 @@ const HomeView = () => {
   return (
     <>
       {content}
-      <ViewTransitionOverlay visible={overlayVisible} />
+      <ViewTransitionOverlay visible={overlayVisible || isInitialBuilderLoading} />
     </>
   )
 }

@@ -38,6 +38,37 @@ body {
   height: 100%;
 }
 
+.home-view .ship-builder-controls,
+.home-view .ship-builder-controls-import-export,
+.home-view .ship-builder-controls-footer {
+  will-change: transform, opacity;
+}
+
+.home-view .ship-builder-controls-footer {
+  transition:
+    opacity 0.28s ease,
+    transform 0.64s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.home-view--builder-ui-hidden .ship-builder-controls,
+.home-view--builder-ui-hidden .ship-builder-controls-import-export,
+.home-view--builder-ui-hidden .ship-builder-controls-footer {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.home-view--builder-ui-hidden .ship-builder-controls {
+  transform: translateX(calc(100% + 24px));
+}
+
+.home-view--builder-ui-hidden .ship-builder-controls-import-export {
+  transform: translateX(calc(-100% - 24px));
+}
+
+.home-view--builder-ui-hidden .ship-builder-controls-footer {
+  transform: translate(-50%, 14px);
+}
+
 .scene-shell {
   width: 100%;
   height: 100%;
@@ -54,6 +85,18 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+}
+
+.flight-view--portrait-locked {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vh;
+  height: 100vw;
+  width: 100dvh;
+  height: 100dvw;
+  transform-origin: top left;
+  transform: rotate(90deg) translateY(-100%);
 }
 
 .flight-scene-shell {
@@ -415,6 +458,46 @@ body {
 .ui-dialog__footer {
   border-top: 1px solid rgba(148, 163, 184, 0.2);
   padding: 10px 14px;
+}
+
+.flight-orientation-dialog__panel {
+  width: min(520px, 100%);
+}
+
+.flight-orientation-dialog {
+  display: grid;
+  gap: 12px;
+}
+
+.flight-orientation-dialog__icon-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.flight-orientation-dialog__icon {
+  font-size: 2.25rem;
+  color: #facc15;
+}
+
+.flight-orientation-dialog__message {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: #dbeafe;
+  text-align: center;
+}
+
+.flight-orientation-dialog__hint {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: #93c5fd;
+  text-align: center;
+}
+
+.flight-orientation-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .ship-builder-shortcuts-dialog {
@@ -820,6 +903,11 @@ body {
     transform: translateY(calc(100% + 20px));
   }
 
+  .home-view--builder-ui-hidden .ship-builder-controls,
+  .home-view--builder-ui-hidden .ship-builder-controls-import-export {
+    transform: translateY(calc(100% + 20px));
+  }
+
   .ship-builder-shortcuts-dialog__item {
     align-items: flex-start;
     flex-direction: column;
@@ -855,6 +943,7 @@ body {
   .ui-icon-button-tooltip::after,
   .ui-dialog-backdrop,
   .ui-dialog,
+  .ship-builder-controls-footer,
   .ship-builder-controls-panel,
   .ship-builder-controls-footer__toggle,
   .ship-builder-controls-footer__toggle .ui-button__label,

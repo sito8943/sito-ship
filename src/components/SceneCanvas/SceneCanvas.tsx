@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 
-const SceneCanvas = () => {
+type SceneCanvasProps = {
+  onReady?: () => void
+}
+
+const SceneCanvas = ({ onReady }: SceneCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const { sceneManager, shipConfig } = useShipBuilder()
 
@@ -16,11 +20,20 @@ const SceneCanvas = () => {
     }
 
     sceneManager.mount(canvas)
+    let frameId = 0
+    if (onReady) {
+      frameId = window.requestAnimationFrame(() => {
+        onReady()
+      })
+    }
 
     return () => {
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+      }
       sceneManager.destroy()
     }
-  }, [sceneManager])
+  }, [sceneManager, onReady])
 
   useEffect(() => {
     if (!sceneManager) {
