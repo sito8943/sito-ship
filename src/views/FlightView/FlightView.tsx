@@ -2,76 +2,42 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import FlightSceneCanvas from '@/components/FlightSceneCanvas'
 import MobileFlightControls from '@/components/MobileFlightControls'
 import { Button } from '@/components/ui'
-import { useDialog } from '@/hooks/useDialog'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { ShipFlightSceneManager } from '@/lib/managers/ShipFlightSceneManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
-import { DIALOG_IDS } from '@/providers/DialogProvider'
-import FlightOrientationDialog from '@/views/FlightView/components/FlightOrientationDialog'
 import {
   FLIGHT_VIEW_BACK_LABEL,
   FLIGHT_VIEW_HELP_LINES,
   FLIGHT_VIEW_TITLE,
 } from '@/views/FlightView/constants'
-import {
-  detectTouchDevice,
-  isPortraitViewportMode,
-  requestLandscapeOrientation,
-  resolveFlightShipConfig,
-} from '@/views/FlightView/utils'
+import { detectTouchDevice, resolveFlightShipConfig } from '@/views/FlightView/utils'
 
 const FlightView = () => {
   const { shipConfig, setExperienceMode } = useShipBuilder()
-  const orientationDialog = useDialog(DIALOG_IDS.MOBILE_LANDSCAPE)
   const [flightShipConfig] = useState<ShipConfig>(() => resolveFlightShipConfig(shipConfig))
   const [isHudHidden, setIsHudHidden] = useState(false)
-  const [isTouchDevice, setIsTouchDevice] = useState(false)
-  const [isPortraitViewport, setIsPortraitViewport] = useState(false)
-  const [isLandscapeOverrideEnabled, setIsLandscapeOverrideEnabled] = useState(false)
+  const [isTouchDevice, setIsTouchDevice] = useState(() => detectTouchDevice())
   const sceneManager = useMemo(() => new ShipFlightSceneManager(), [])
 
   useEffect(() => {
-    const syncMobileViewportState = () => {
+    const syncTouch = () => {
       setIsTouchDevice(detectTouchDevice())
-      setIsPortraitViewport(isPortraitViewportMode())
     }
 
-    syncMobileViewportState()
+    syncTouch()
 
-    window.addEventListener('resize', syncMobileViewportState)
-    window.addEventListener('orientationchange', syncMobileViewportState)
+    window.addEventListener('resize', syncTouch)
+    window.addEventListener('orientationchange', syncTouch)
 
     return () => {
-      window.removeEventListener('resize', syncMobileViewportState)
-      window.removeEventListener('orientationchange', syncMobileViewportState)
+      window.removeEventListener('resize', syncTouch)
+      window.removeEventListener('orientationchange', syncTouch)
     }
   }, [])
 
   const closeFlightView = useCallback(() => {
     setExperienceMode('builder')
   }, [setExperienceMode])
-
-  useEffect(() => {
-    if (!isPortraitViewport) {
-      setIsLandscapeOverrideEnabled(false)
-    }
-  }, [isPortraitViewport])
-
-  useEffect(() => {
-    const shouldOpenOrientationDialog =
-      isTouchDevice && isPortraitViewport && !isLandscapeOverrideEnabled
-
-    if (shouldOpenOrientationDialog) {
-      if (!orientationDialog.isOpen) {
-        orientationDialog.open()
-      }
-      return
-    }
-
-    if (orientationDialog.isOpen) {
-      orientationDialog.close()
-    }
-  }, [isLandscapeOverrideEnabled, isPortraitViewport, isTouchDevice, orientationDialog])
 
   const handleStrafe = useCallback(
     (value: number) => {
@@ -93,16 +59,6 @@ const FlightView = () => {
     },
     [sceneManager]
   )
-
-  const handleAcceptLandscape = useCallback(() => {
-    void (async () => {
-      const landscapeLockApplied = await requestLandscapeOrientation()
-      if (!landscapeLockApplied) {
-        setIsLandscapeOverrideEnabled(true)
-      }
-      orientationDialog.close()
-    })()
-  }, [orientationDialog])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -136,11 +92,8 @@ const FlightView = () => {
     }
   }, [closeFlightView])
 
-  const shouldForceLandscapeView = isTouchDevice && isPortraitViewport && isLandscapeOverrideEnabled
-  const flightViewClassName = `flight-view${shouldForceLandscapeView ? ' flight-view--portrait-locked' : ''}`
-
   return (
-    <section className={flightViewClassName} aria-label="Flight View">
+    <section className="flight-view" aria-label="Flight View">
       <FlightSceneCanvas shipConfig={flightShipConfig} sceneManager={sceneManager} />
 
       <aside
@@ -167,12 +120,6 @@ const FlightView = () => {
 
       {isTouchDevice ? (
         <MobileFlightControls onStrafe={handleStrafe} onPitch={handlePitch} onFire={handleFire} />
-      ) : null}
-      {orientationDialog.isOpen ? (
-        <FlightOrientationDialog
-          isOpen={orientationDialog.isOpen}
-          onConfirm={handleAcceptLandscape}
-        />
       ) : null}
     </section>
   )
