@@ -20,11 +20,13 @@ import {
   PointsMaterial,
   Quaternion,
   Scene,
+  ShaderMaterial,
   SphereGeometry,
   Vector3,
   WebGLRenderer,
   type Material,
 } from 'three'
+import { thrusterFragmentShader, thrusterVertexShader } from '@/lib/shaders/thruster'
 import { BloomEffect, EffectComposer, EffectPass, FXAAEffect, RenderPass } from 'postprocessing'
 import Stats from 'three/addons/libs/stats.module.js'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
@@ -60,7 +62,6 @@ const MAX_ENGINE_EXHAUSTS = 4
 const THRUSTER_CORE_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.coreColor)
 const THRUSTER_MID_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.midColor)
 const THRUSTER_TAIL_COLOR = new Color(FLIGHT_SCENE_THRUSTERS.tailColor)
-const THRUSTER_TMP_COLOR = new Color()
 
 const createDefaultInputState = (): FlightSceneInputState => {
   return {
@@ -585,7 +586,7 @@ export class ShipFlightSceneManager {
 
     const capacity = MAX_ENGINE_EXHAUSTS * FLIGHT_SCENE_THRUSTERS.particlesPerEngine
     const positions = new Float32Array(capacity * 3)
-    const colors = new Float32Array(capacity * 3)
+    const lives = new Float32Array(capacity)
     const velocities = new Float32Array(capacity * 3)
     const ages = new Float32Array(capacity)
     const lifetimes = new Float32Array(capacity)
@@ -593,18 +594,27 @@ export class ShipFlightSceneManager {
     for (let i = 0; i < capacity; i += 1) {
       ages[i] = Infinity
       lifetimes[i] = 1
+      lives[i] = 1
     }
 
     const geometry = new BufferGeometry()
     geometry.setAttribute('position', new BufferAttribute(positions, 3))
-    geometry.setAttribute('color', new BufferAttribute(colors, 3))
+    geometry.setAttribute('aLife', new BufferAttribute(lives, 1))
 
-    const material = new PointsMaterial({
-      size: FLIGHT_SCENE_THRUSTERS.size,
-      vertexColors: true,
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, FLIGHT_SCENE_RENDERER.maxPixelRatio)
+    const material = new ShaderMaterial({
+      vertexShader: thrusterVertexShader,
+      fragmentShader: thrusterFragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uSize: { value: FLIGHT_SCENE_THRUSTERS.size },
+        uPixelRatio: { value: pixelRatio },
+        uCoreColor: { value: THRUSTER_CORE_COLOR.clone() },
+        uMidColor: { value: THRUSTER_MID_COLOR.clone() },
+        uTailColor: { value: THRUSTER_TAIL_COLOR.clone() },
+      },
       transparent: true,
       depthWrite: false,
-      sizeAttenuation: true,
       blending: AdditiveBlending,
     })
 
@@ -616,13 +626,14 @@ export class ShipFlightSceneManager {
     this.thrusterField = {
       points,
       positions,
-      colors,
+      lives,
       velocities,
       ages,
       lifetimes,
       capacity,
       exhaustWorldPositions: [],
       exhaustCount: 0,
+      material,
     }
   }
 
@@ -768,6 +779,9 @@ export class ShipFlightSceneManager {
     if (this.composer) {
       this.composer.setSize(width, height, false)
     }
+    if (this.thrusterField) {
+      this.thrusterField.material.uniforms.uPixelRatio.value = pixelRatio
+    }
 
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
@@ -875,15 +889,13 @@ export class ShipFlightSceneManager {
       field.exhaustWorldPositions
     )
 
+    const lifeAttribute = field.points.geometry.getAttribute('aLife') as BufferAttribute
+
     if (field.exhaustCount === 0) {
       for (let i = 0; i < field.capacity; i += 1) {
-        const offset = i * 3
-        field.colors[offset] = 0
-        field.colors[offset + 1] = 0
-        field.colors[offset + 2] = 0
+        field.lives[i] = 1
       }
-      const colorAttribute = field.points.geometry.getAttribute('color') as BufferAttribute
-      colorAttribute.needsUpdate = true
+      lifeAttribute.needsUpdate = true
       return
     }
 
@@ -903,9 +915,7 @@ export class ShipFlightSceneManager {
       const offset = i * 3
 
       if (i >= activeCapacity) {
-        field.colors[offset] = 0
-        field.colors[offset + 1] = 0
-        field.colors[offset + 2] = 0
+        field.lives[i] = 1
         field.ages[i] = Infinity
         continue
       }
@@ -934,22 +944,12 @@ export class ShipFlightSceneManager {
         field.positions[offset + 2] += field.velocities[offset + 2] * delta
       }
 
-      const t = field.ages[i] / field.lifetimes[i]
-      if (t < 0.5) {
-        THRUSTER_TMP_COLOR.copy(THRUSTER_CORE_COLOR).lerp(THRUSTER_MID_COLOR, t * 2)
-      } else {
-        THRUSTER_TMP_COLOR.copy(THRUSTER_MID_COLOR).lerp(THRUSTER_TAIL_COLOR, (t - 0.5) * 2)
-      }
-      const intensity = 1 - t
-      field.colors[offset] = THRUSTER_TMP_COLOR.r * intensity
-      field.colors[offset + 1] = THRUSTER_TMP_COLOR.g * intensity
-      field.colors[offset + 2] = THRUSTER_TMP_COLOR.b * intensity
+      field.lives[i] = field.ages[i] / field.lifetimes[i]
     }
 
     const positionAttribute = field.points.geometry.getAttribute('position') as BufferAttribute
     positionAttribute.needsUpdate = true
-    const colorAttribute = field.points.geometry.getAttribute('color') as BufferAttribute
-    colorAttribute.needsUpdate = true
+    lifeAttribute.needsUpdate = true
   }
 
   private disposeThrusters() {
@@ -1010,10 +1010,14 @@ export class ShipFlightSceneManager {
     this.stats?.begin()
 
     const delta = this.clock?.getDelta() ?? 0
+    const elapsed = this.clock?.getElapsedTime() ?? 0
     this.updateStrafeState(delta)
     this.updateSpaceMotion(delta)
     this.updateThrusters(delta)
     this.updateProjectiles(delta)
+    if (this.thrusterField) {
+      this.thrusterField.material.uniforms.uTime.value = elapsed
+    }
     this.camera.lookAt(this.lookTarget)
     if (this.composer) {
       this.composer.render()
