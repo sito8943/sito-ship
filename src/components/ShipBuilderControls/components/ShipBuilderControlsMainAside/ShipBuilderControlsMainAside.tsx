@@ -218,7 +218,7 @@ const ShipBuilderControlsMainAside = ({
         </div>
       </header>
 
-      <section className="ship-builder-controls__section">
+      <section className="ship-builder-controls__section ship-builder-controls__section--selected-slot">
         <span className="ship-builder-controls__section-title ship-builder-controls__section-title--selected-slot">
           Selected Slot
         </span>
@@ -242,7 +242,7 @@ const ShipBuilderControlsMainAside = ({
         </div>
       </section>
 
-      <section className="ship-builder-controls__section">
+      <section className="ship-builder-controls__section ship-builder-controls__section--gizmo">
         <span className="ship-builder-controls__section-title">Gizmo Mode</span>
         <div className="ship-builder-controls__mode-toggle">
           {TRANSFORM_MODE_OPTIONS.map((modeOption) => {

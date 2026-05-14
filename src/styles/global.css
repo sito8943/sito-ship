@@ -909,7 +909,7 @@ body {
     right: 12px;
     top: 12px;
     width: fit-content;
-    max-height: 45vh;
+    max-height: none;
   }
 
   .ship-builder-controls-import-export {
@@ -945,6 +945,32 @@ body {
   .ship-builder-controls__mode-button {
     flex: 0 0 auto;
     height: 27px;
+  }
+
+  .ship-builder-controls__header {
+    position: relative;
+    justify-content: flex-end;
+  }
+
+  .ship-builder-controls__title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    width: max-content;
+  }
+
+  .ship-builder-controls__section--selected-slot {
+    display: none;
+  }
+
+  .ship-builder-controls__list {
+    display: none;
+  }
+
+  .ship-builder-controls__section--gizmo {
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   .ship-builder-controls__section-title--selected-slot {
