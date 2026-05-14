@@ -1067,6 +1067,10 @@ body {
     display: inline-flex;
   }
 
+  .ship-builder-controls-footer__shortcuts-toggle {
+    display: none;
+  }
+
   .ship-builder-controls__io-message--info,
   .ship-builder-controls__io-message--success {
     display: none;

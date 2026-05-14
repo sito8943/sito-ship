@@ -14,7 +14,7 @@ const ShipBuilderControlsFooter = ({
   return (
     <footer className="ship-builder-controls-footer">
       <IconButton
-        className="ship-builder-controls__action-button ship-builder-controls-footer__toggle"
+        className="ship-builder-controls__action-button ship-builder-controls-footer__toggle ship-builder-controls-footer__shortcuts-toggle"
         icon={faKeyboard}
         label="Keyboard Shortcuts"
         title="Open keyboard shortcuts"
