@@ -1,9 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
-
-type SceneCanvasProps = {
-  onReady?: () => void
-}
+import type { SceneCanvasProps } from '@/components/SceneCanvas/types'
 
 const SceneCanvas = ({ onReady }: SceneCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)

@@ -1,16 +1,8 @@
 import { useCallback, useRef, useState, type PointerEvent } from 'react'
 import { useDrag } from '@use-gesture/react'
-import { JOYSTICK_DEADZONE, JOYSTICK_RADIUS } from '@/components/MobileFlightControls/constants'
+import { JOYSTICK_RADIUS } from '@/components/MobileFlightControls/constants'
 import type { MobileFlightControlsProps } from '@/components/MobileFlightControls/types'
-
-const applyDeadzone = (value: number) => {
-  if (Math.abs(value) < JOYSTICK_DEADZONE) {
-    return 0
-  }
-  const sign = Math.sign(value)
-  const scaled = (Math.abs(value) - JOYSTICK_DEADZONE) / (1 - JOYSTICK_DEADZONE)
-  return sign * scaled
-}
+import { applyDeadzone } from '@/components/MobileFlightControls/utils'
 
 const MobileFlightControls = ({ onStrafe, onPitch, onFire }: MobileFlightControlsProps) => {
   const [knob, setKnob] = useState({ x: 0, y: 0 })
