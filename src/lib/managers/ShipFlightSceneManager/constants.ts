@@ -73,6 +73,15 @@ export const FLIGHT_SCENE_THRUSTERS = {
   tailColor: '#1e3a8a',
 } as const
 
+export const FLIGHT_SCENE_PROJECTILES = {
+  cooldown: 0.10,
+  speed: 80,
+  lifetime: 1.2,
+  size: 0.35,
+  color: '#7dd3fc',
+  poolSize: 128,
+} as const
+
 export const FLIGHT_SCENE_PLANET_POOL_SIZE = 5
 
 export const FLIGHT_SCENE_PLANET_TEMPLATES = [

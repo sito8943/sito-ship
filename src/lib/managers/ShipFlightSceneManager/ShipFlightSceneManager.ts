@@ -6,14 +6,19 @@ import {
   Clock,
   Color,
   DirectionalLight,
+  DoubleSide,
   FogExp2,
   Group,
+  InstancedMesh,
   MathUtils,
+  Matrix4,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
   Points,
   PointsMaterial,
+  Quaternion,
   Scene,
   SphereGeometry,
   Vector3,
@@ -33,6 +38,7 @@ import {
   FLIGHT_SCENE_CAMERA,
   FLIGHT_SCENE_PLANET_POOL_SIZE,
   FLIGHT_SCENE_PLANET_TEMPLATES,
+  FLIGHT_SCENE_PROJECTILES,
   FLIGHT_SCENE_RENDERER,
   FLIGHT_SCENE_SPACE,
   FLIGHT_SCENE_STAR_LAYERS,
@@ -42,6 +48,7 @@ import {
 import type {
   FlightScenePlanetEntry,
   FlightSceneInputState,
+  FlightSceneProjectileField,
   FlightSceneSize,
   FlightSceneStarField,
   FlightSceneThrusterField,
@@ -60,8 +67,15 @@ const createDefaultInputState = (): FlightSceneInputState => {
     strafeRight: false,
     pitchUp: false,
     pitchDown: false,
+    fire: false,
   }
 }
+
+const PROJECTILE_LOCAL_FORWARD = new Vector3(0, 0, -1)
+const PROJECTILE_TMP_MATRIX = new Matrix4()
+const PROJECTILE_TMP_POS = new Vector3()
+const PROJECTILE_TMP_SCALE = new Vector3(1, 1, 1)
+const PROJECTILE_TMP_QUAT = new Quaternion()
 
 const randomInRange = (min: number, max: number) => min + Math.random() * (max - min)
 
@@ -100,7 +114,10 @@ export class ShipFlightSceneManager {
   private readonly starFields: FlightSceneStarField[] = []
   private readonly planets: FlightScenePlanetEntry[] = []
   private thrusterField: FlightSceneThrusterField | null = null
+  private projectileField: FlightSceneProjectileField | null = null
+  private fireCooldown = 0
   private readonly shipBackwardWorld = new Vector3()
+  private readonly shipForwardWorld = new Vector3()
 
   mount(canvas: HTMLCanvasElement) {
     if (this.canvas === canvas && this.isMounted) {
@@ -143,6 +160,7 @@ export class ShipFlightSceneManager {
     this.disposeStarFields()
     this.disposeAllPlanets()
     this.disposeThrusters()
+    this.disposeProjectiles()
     this.disposeSceneObjects()
     this.disposeStats()
     this.renderer?.dispose()
@@ -166,6 +184,8 @@ export class ShipFlightSceneManager {
     this.starFields.length = 0
     this.planets.length = 0
     this.thrusterField = null
+    this.projectileField = null
+    this.fireCooldown = 0
   }
 
   private initialize() {
@@ -290,6 +310,194 @@ export class ShipFlightSceneManager {
     }
 
     this.initializeThrusters()
+    this.initializeProjectiles()
+  }
+
+  private initializeProjectiles() {
+    if (!this.scene) {
+      return
+    }
+
+    const capacity = FLIGHT_SCENE_PROJECTILES.poolSize
+    const positions = new Float32Array(capacity * 3)
+    const velocities = new Float32Array(capacity * 3)
+    const ages = new Float32Array(capacity)
+    const alive = new Uint8Array(capacity)
+    const quaternions = new Float32Array(capacity * 4)
+
+    const size = FLIGHT_SCENE_PROJECTILES.size
+    const geometry = new BufferGeometry()
+    const vertices = new Float32Array([
+      0, 0, -size,
+      -size * 0.45, 0, size * 0.55,
+      size * 0.45, 0, size * 0.55,
+    ])
+    geometry.setAttribute('position', new BufferAttribute(vertices, 3))
+    geometry.setIndex([0, 1, 2])
+    geometry.computeVertexNormals()
+
+    const material = new MeshBasicMaterial({
+      color: new Color(FLIGHT_SCENE_PROJECTILES.color),
+      transparent: true,
+      opacity: 0.95,
+      side: DoubleSide,
+      blending: AdditiveBlending,
+      depthWrite: false,
+    })
+
+    const mesh = new InstancedMesh(geometry, material, capacity)
+    mesh.name = 'flightProjectiles'
+    mesh.frustumCulled = false
+    mesh.count = capacity
+
+    const hiddenMatrix = new Matrix4().makeScale(0, 0, 0)
+    for (let i = 0; i < capacity; i += 1) {
+      mesh.setMatrixAt(i, hiddenMatrix)
+    }
+    mesh.instanceMatrix.needsUpdate = true
+
+    this.scene.add(mesh)
+
+    this.projectileField = {
+      mesh,
+      positions,
+      velocities,
+      ages,
+      alive,
+      quaternions,
+      capacity,
+      muzzleWorldPositions: [],
+      muzzleCount: 0,
+    }
+  }
+
+  private disposeProjectiles() {
+    const field = this.projectileField
+    if (!field) {
+      return
+    }
+    this.scene?.remove(field.mesh)
+    field.mesh.geometry.dispose()
+    const material = field.mesh.material
+    if (Array.isArray(material)) {
+      material.forEach((entry) => entry.dispose())
+    } else {
+      ;(material as Material | null)?.dispose()
+    }
+    field.mesh.dispose()
+    field.muzzleWorldPositions.length = 0
+    this.projectileField = null
+  }
+
+  private spawnProjectiles() {
+    const field = this.projectileField
+    if (!field || !this.shipGroup || !this.shipModelManager) {
+      return
+    }
+
+    field.muzzleCount = this.shipModelManager.getWeaponMuzzleWorldPositions(
+      field.muzzleWorldPositions
+    )
+    if (field.muzzleCount === 0) {
+      return
+    }
+
+    this.shipForwardWorld.set(0, 0, -1).applyQuaternion(this.shipGroup.quaternion).normalize()
+    PROJECTILE_TMP_QUAT.setFromUnitVectors(PROJECTILE_LOCAL_FORWARD, this.shipForwardWorld)
+
+    const speed = FLIGHT_SCENE_PROJECTILES.speed
+
+    for (let m = 0; m < field.muzzleCount; m += 1) {
+      const slot = this.findFreeProjectileSlot(field)
+      if (slot === -1) {
+        return
+      }
+
+      const origin = field.muzzleWorldPositions[m]
+      const offset = slot * 3
+      field.positions[offset] = origin.x
+      field.positions[offset + 1] = origin.y
+      field.positions[offset + 2] = origin.z
+
+      field.velocities[offset] = this.shipForwardWorld.x * speed
+      field.velocities[offset + 1] = this.shipForwardWorld.y * speed
+      field.velocities[offset + 2] = this.shipForwardWorld.z * speed
+
+      const qOffset = slot * 4
+      field.quaternions[qOffset] = PROJECTILE_TMP_QUAT.x
+      field.quaternions[qOffset + 1] = PROJECTILE_TMP_QUAT.y
+      field.quaternions[qOffset + 2] = PROJECTILE_TMP_QUAT.z
+      field.quaternions[qOffset + 3] = PROJECTILE_TMP_QUAT.w
+
+      field.ages[slot] = 0
+      field.alive[slot] = 1
+    }
+  }
+
+  private findFreeProjectileSlot(field: FlightSceneProjectileField): number {
+    for (let i = 0; i < field.capacity; i += 1) {
+      if (field.alive[i] === 0) {
+        return i
+      }
+    }
+    return -1
+  }
+
+  private updateProjectiles(delta: number) {
+    const field = this.projectileField
+    if (!field) {
+      return
+    }
+
+    this.fireCooldown = Math.max(0, this.fireCooldown - delta)
+    if (this.inputState.fire && this.fireCooldown === 0) {
+      this.spawnProjectiles()
+      this.fireCooldown = FLIGHT_SCENE_PROJECTILES.cooldown
+    }
+
+    const lifetime = FLIGHT_SCENE_PROJECTILES.lifetime
+    const hiddenScale = 0
+    let needsUpdate = false
+
+    for (let i = 0; i < field.capacity; i += 1) {
+      if (field.alive[i] === 0) {
+        continue
+      }
+
+      field.ages[i] += delta
+      if (field.ages[i] >= lifetime) {
+        field.alive[i] = 0
+        PROJECTILE_TMP_MATRIX.makeScale(hiddenScale, hiddenScale, hiddenScale)
+        field.mesh.setMatrixAt(i, PROJECTILE_TMP_MATRIX)
+        needsUpdate = true
+        continue
+      }
+
+      const offset = i * 3
+      field.positions[offset] += field.velocities[offset] * delta
+      field.positions[offset + 1] += field.velocities[offset + 1] * delta
+      field.positions[offset + 2] += field.velocities[offset + 2] * delta
+
+      PROJECTILE_TMP_POS.set(
+        field.positions[offset],
+        field.positions[offset + 1],
+        field.positions[offset + 2]
+      )
+      const qOffset = i * 4
+      PROJECTILE_TMP_QUAT.set(
+        field.quaternions[qOffset],
+        field.quaternions[qOffset + 1],
+        field.quaternions[qOffset + 2],
+        field.quaternions[qOffset + 3]
+      )
+      PROJECTILE_TMP_MATRIX.compose(PROJECTILE_TMP_POS, PROJECTILE_TMP_QUAT, PROJECTILE_TMP_SCALE)
+      field.mesh.setMatrixAt(i, PROJECTILE_TMP_MATRIX)
+      needsUpdate = true
+    }
+
+    if (needsUpdate) {
+      field.mesh.instanceMatrix.needsUpdate = true
+    }
   }
 
   private initializeThrusters() {
@@ -678,6 +886,7 @@ export class ShipFlightSceneManager {
     this.updateStrafeState(delta)
     this.updateSpaceMotion(delta)
     this.updateThrusters(delta)
+    this.updateProjectiles(delta)
     this.camera.lookAt(this.lookTarget)
     this.renderer.render(this.scene, this.camera)
 
@@ -691,6 +900,7 @@ export class ShipFlightSceneManager {
     this.inputState.strafeRight = false
     this.inputState.pitchUp = false
     this.inputState.pitchDown = false
+    this.inputState.fire = false
   }
 
   private setInputFromCode(code: string, isPressed: boolean): boolean {
@@ -708,6 +918,10 @@ export class ShipFlightSceneManager {
     }
     if (code === 'KeyS') {
       this.inputState.pitchDown = isPressed
+      return true
+    }
+    if (code === 'Space') {
+      this.inputState.fire = isPressed
       return true
     }
 

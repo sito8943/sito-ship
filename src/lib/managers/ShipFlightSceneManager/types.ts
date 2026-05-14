@@ -1,10 +1,23 @@
-import type { Mesh, Points, Vector3 } from 'three'
+import type { InstancedMesh, Mesh, Points, Vector3 } from 'three'
 
 export type FlightSceneInputState = {
   strafeLeft: boolean
   strafeRight: boolean
   pitchUp: boolean
   pitchDown: boolean
+  fire: boolean
+}
+
+export type FlightSceneProjectileField = {
+  mesh: InstancedMesh
+  positions: Float32Array
+  velocities: Float32Array
+  ages: Float32Array
+  alive: Uint8Array
+  quaternions: Float32Array
+  capacity: number
+  muzzleWorldPositions: Vector3[]
+  muzzleCount: number
 }
 
 export type FlightSceneSize = {

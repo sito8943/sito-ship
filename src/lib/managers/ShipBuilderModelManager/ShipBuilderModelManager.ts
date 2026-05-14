@@ -152,6 +152,25 @@ export class ShipBuilderModelManager {
     return count
   }
 
+  getWeaponMuzzleWorldPositions(out: Vector3[]): number {
+    const weaponsGroup = this.slotGroups.weapons
+    weaponsGroup.updateMatrixWorld(true)
+    let count = 0
+    weaponsGroup.traverse((obj) => {
+      if (obj.userData.isWeaponMuzzle !== true) {
+        return
+      }
+      let target = out[count]
+      if (!target) {
+        target = new Vector3()
+        out[count] = target
+      }
+      obj.getWorldPosition(target)
+      count += 1
+    })
+    return count
+  }
+
   getSymmetricAimPivotGroup(slot: ShipSlot): Group | null {
     const masterSide = this.getSymmetricMasterSideGroup(slot)
     if (!masterSide) {
@@ -497,6 +516,8 @@ export class ShipBuilderModelManager {
       tip.position.set(anchor.x - 0.82, anchor.y, anchor.z)
       aimContent.add(tip)
 
+      this.addWeaponMuzzleMarker(aimContent, anchor.x - 1.0, anchor.y, anchor.z)
+
       sideGroup.add(aimPivot)
       return sideGroup
     }
@@ -515,8 +536,19 @@ export class ShipBuilderModelManager {
     mount.position.set(anchor.x + 0.3, anchor.y, anchor.z)
     aimContent.add(mount)
 
+    this.addWeaponMuzzleMarker(aimContent, anchor.x - 0.6, anchor.y + 0.12, anchor.z)
+    this.addWeaponMuzzleMarker(aimContent, anchor.x - 0.6, anchor.y - 0.12, anchor.z)
+
     sideGroup.add(aimPivot)
     return sideGroup
+  }
+
+  private addWeaponMuzzleMarker(parent: Group, x: number, y: number, z: number) {
+    const marker = new Group()
+    marker.name = 'weaponMuzzleMarker'
+    marker.position.set(x, y, z)
+    marker.userData.isWeaponMuzzle = true
+    parent.add(marker)
   }
 
   private createSymmetricSlotPair<TSlot extends ShipSymmetricSlotKey>(
