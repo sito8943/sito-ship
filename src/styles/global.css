@@ -25,6 +25,8 @@ body {
     BlinkMacSystemFont,
     'Segoe UI',
     sans-serif;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .app-layout {

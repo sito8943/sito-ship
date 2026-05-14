@@ -599,18 +599,6 @@ export class ShipBuilderSceneManager {
     }, 3000)
   }
 
-  private rebuildPostProcessing() {
-    this.composer?.dispose()
-    this.composer = null
-    this.bloomEffect = null
-    this.outlineEffect = null
-    this.bloomPass = null
-    this.outlinePass = null
-    this.fxaaPass = null
-    this.initializePostProcessing()
-    this.resize()
-  }
-
   private disposeDebugGui() {
     this.debugGui?.destroy()
     this.debugGui = null
