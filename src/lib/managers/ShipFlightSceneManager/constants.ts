@@ -102,6 +102,15 @@ export const FLIGHT_SCENE_PROJECTILES = {
   poolSize: 128,
 } as const
 
+export const FLIGHT_SCENE_MUZZLE_FLASH = {
+  poolSize: 24,
+  size: 0.75,
+  lifetimeMin: 0.1,
+  lifetimeMax: 0.18,
+  coreColor: '#ffffff',
+  edgeColor: '#7dd3fc',
+} as const
+
 export const FLIGHT_SCENE_POST_PROCESSING = {
   bloom: {
     enabled: true,

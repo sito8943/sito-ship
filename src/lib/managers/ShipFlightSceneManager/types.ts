@@ -60,3 +60,14 @@ export type FlightSceneThrusterField = {
   exhaustCount: number
   material: import('three').ShaderMaterial
 }
+
+export type FlightSceneMuzzleFlashField = {
+  points: Points
+  positions: Float32Array
+  lives: Float32Array
+  ages: Float32Array
+  lifetimes: Float32Array
+  capacity: number
+  cursor: number
+  material: import('three').ShaderMaterial
+}

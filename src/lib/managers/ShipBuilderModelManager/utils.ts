@@ -1,4 +1,12 @@
-import { Matrix4, Mesh, MeshStandardMaterial, Quaternion, type Group, type Object3D } from 'three'
+import {
+  Color,
+  Matrix4,
+  Mesh,
+  MeshStandardMaterial,
+  Quaternion,
+  type Group,
+  type Object3D,
+} from 'three'
 import {
   SHIP_LOCAL_SYMMETRY_PLANE_NORMAL,
   SHIP_LOCAL_SYMMETRY_PLANE_OFFSET,
@@ -6,13 +14,47 @@ import {
 import type { QuaternionTuple } from '@/lib/models'
 import type { ShipSlot, ShipSlotConfigMap, Vector3Tuple } from '@/lib/models/ShipConfig'
 
+const SHIP_RIM_COLOR = '#9bd3ff'
+const SHIP_RIM_POWER = 2.4
+const SHIP_RIM_INTENSITY = 0.95
+
 export const createSlotMaterial = (color: string): MeshStandardMaterial => {
-  return new MeshStandardMaterial({
+  const material = new MeshStandardMaterial({
     color,
     roughness: 0.55,
     metalness: 0.2,
     flatShading: false,
   })
+
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uRimColor = { value: new Color(SHIP_RIM_COLOR) }
+    shader.uniforms.uRimPower = { value: SHIP_RIM_POWER }
+    shader.uniforms.uRimIntensity = { value: SHIP_RIM_INTENSITY }
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <common>',
+      `#include <common>
+uniform vec3 uRimColor;
+uniform float uRimPower;
+uniform float uRimIntensity;`
+    )
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <emissivemap_fragment>',
+      `#include <emissivemap_fragment>
+{
+  vec3 nrm = normalize(normal);
+  vec3 viewDir = normalize(vViewPosition);
+  float rim = 1.0 - max(0.0, dot(nrm, viewDir));
+  rim = pow(rim, uRimPower) * uRimIntensity;
+  totalEmissiveRadiance += uRimColor * rim;
+}`
+    )
+  }
+
+  material.customProgramCacheKey = () => 'ship-rim'
+
+  return material
 }
 
 export const applyShadowToObject = (object: Object3D) => {

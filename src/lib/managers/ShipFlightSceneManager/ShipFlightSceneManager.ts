@@ -27,6 +27,7 @@ import {
 } from 'three'
 import { thrusterFragmentShader, thrusterVertexShader } from '@/lib/shaders/thruster'
 import { projectileFragmentShader, projectileVertexShader } from '@/lib/shaders/projectile'
+import { muzzleFlashFragmentShader, muzzleFlashVertexShader } from '@/lib/shaders/muzzleFlash'
 import { BloomEffect, EffectComposer, EffectPass, FXAAEffect, RenderPass } from 'postprocessing'
 import Stats from 'three/addons/libs/stats.module.js'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
@@ -37,6 +38,7 @@ import {
   FLIGHT_SCENE_BANK,
   FLIGHT_SCENE_CAMERA,
   MOBILE_FLIGHT_SCENE_CAMERA,
+  FLIGHT_SCENE_MUZZLE_FLASH,
   FLIGHT_SCENE_PLANET_POOL_SIZE,
   FLIGHT_SCENE_PLANET_TEMPLATES,
   FLIGHT_SCENE_POST_PROCESSING,
@@ -50,6 +52,7 @@ import {
 import type {
   FlightScenePlanetEntry,
   FlightSceneInputState,
+  FlightSceneMuzzleFlashField,
   FlightSceneProjectileField,
   FlightSceneSize,
   FlightSceneStarField,
@@ -137,6 +140,7 @@ export class ShipFlightSceneManager {
   private readonly planets: FlightScenePlanetEntry[] = []
   private thrusterField: FlightSceneThrusterField | null = null
   private projectileField: FlightSceneProjectileField | null = null
+  private muzzleFlashField: FlightSceneMuzzleFlashField | null = null
   private fireCooldown = 0
   private readonly shipBackwardWorld = new Vector3()
   private readonly shipForwardWorld = new Vector3()
@@ -194,6 +198,7 @@ export class ShipFlightSceneManager {
     this.disposeStarFields()
     this.disposeAllPlanets()
     this.disposeThrusters()
+    this.disposeMuzzleFlash()
     this.disposeProjectiles()
     this.disposeSceneObjects()
     this.disposeStats()
@@ -221,6 +226,7 @@ export class ShipFlightSceneManager {
     this.planets.length = 0
     this.thrusterField = null
     this.projectileField = null
+    this.muzzleFlashField = null
     this.fireCooldown = 0
     this.touchStrafe = 0
     this.touchPitch = 0
@@ -380,6 +386,7 @@ export class ShipFlightSceneManager {
     }
 
     this.initializeThrusters()
+    this.initializeMuzzleFlash()
     this.initializeProjectiles()
   }
 
@@ -486,6 +493,8 @@ export class ShipFlightSceneManager {
     if (field.muzzleCount === 0) {
       return
     }
+
+    this.spawnMuzzleFlash(field.muzzleWorldPositions, field.muzzleCount)
 
     this.shipForwardWorld.set(0, 0, -1).applyQuaternion(this.shipGroup.quaternion).normalize()
     PROJECTILE_TMP_QUAT.setFromUnitVectors(PROJECTILE_LOCAL_FORWARD, this.shipForwardWorld)
@@ -789,6 +798,9 @@ export class ShipFlightSceneManager {
     if (this.thrusterField) {
       this.thrusterField.material.uniforms.uPixelRatio.value = pixelRatio
     }
+    if (this.muzzleFlashField) {
+      this.muzzleFlashField.material.uniforms.uPixelRatio.value = pixelRatio
+    }
 
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
@@ -959,6 +971,128 @@ export class ShipFlightSceneManager {
     lifeAttribute.needsUpdate = true
   }
 
+  private initializeMuzzleFlash() {
+    if (!this.scene) {
+      return
+    }
+
+    const capacity = FLIGHT_SCENE_MUZZLE_FLASH.poolSize
+    const positions = new Float32Array(capacity * 3)
+    const lives = new Float32Array(capacity)
+    const ages = new Float32Array(capacity)
+    const lifetimes = new Float32Array(capacity)
+
+    for (let i = 0; i < capacity; i += 1) {
+      ages[i] = Infinity
+      lifetimes[i] = 1
+      lives[i] = 1
+    }
+
+    const geometry = new BufferGeometry()
+    geometry.setAttribute('position', new BufferAttribute(positions, 3))
+    geometry.setAttribute('aLife', new BufferAttribute(lives, 1))
+
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, FLIGHT_SCENE_RENDERER.maxPixelRatio)
+    const material = new ShaderMaterial({
+      vertexShader: muzzleFlashVertexShader,
+      fragmentShader: muzzleFlashFragmentShader,
+      uniforms: {
+        uSize: { value: FLIGHT_SCENE_MUZZLE_FLASH.size },
+        uPixelRatio: { value: pixelRatio },
+        uCoreColor: { value: new Color(FLIGHT_SCENE_MUZZLE_FLASH.coreColor) },
+        uEdgeColor: { value: new Color(FLIGHT_SCENE_MUZZLE_FLASH.edgeColor) },
+      },
+      transparent: true,
+      depthWrite: false,
+      blending: AdditiveBlending,
+    })
+
+    const points = new Points(geometry, material)
+    points.name = 'flightMuzzleFlashParticles'
+    points.frustumCulled = false
+    this.scene.add(points)
+
+    this.muzzleFlashField = {
+      points,
+      positions,
+      lives,
+      ages,
+      lifetimes,
+      capacity,
+      cursor: 0,
+      material,
+    }
+  }
+
+  private disposeMuzzleFlash() {
+    const field = this.muzzleFlashField
+    if (!field) {
+      return
+    }
+    this.scene?.remove(field.points)
+    field.points.geometry.dispose()
+    const material = field.points.material
+    if (Array.isArray(material)) {
+      material.forEach((entry) => entry.dispose())
+    } else {
+      ;(material as Material | null)?.dispose()
+    }
+    this.muzzleFlashField = null
+  }
+
+  private spawnMuzzleFlash(origins: Vector3[], count: number) {
+    const field = this.muzzleFlashField
+    if (!field || count === 0) {
+      return
+    }
+
+    const lifetimeMin = FLIGHT_SCENE_MUZZLE_FLASH.lifetimeMin
+    const lifetimeMax = FLIGHT_SCENE_MUZZLE_FLASH.lifetimeMax
+
+    for (let m = 0; m < count; m += 1) {
+      const origin = origins[m]
+      const slot = field.cursor
+      field.cursor = (field.cursor + 1) % field.capacity
+
+      const offset = slot * 3
+      field.positions[offset] = origin.x
+      field.positions[offset + 1] = origin.y
+      field.positions[offset + 2] = origin.z
+      field.ages[slot] = 0
+      field.lifetimes[slot] = lifetimeMin + Math.random() * (lifetimeMax - lifetimeMin)
+      field.lives[slot] = 0
+    }
+
+    const positionAttribute = field.points.geometry.getAttribute('position') as BufferAttribute
+    positionAttribute.needsUpdate = true
+  }
+
+  private updateMuzzleFlash(delta: number) {
+    const field = this.muzzleFlashField
+    if (!field) {
+      return
+    }
+
+    let dirty = false
+    for (let i = 0; i < field.capacity; i += 1) {
+      if (field.ages[i] >= field.lifetimes[i]) {
+        if (field.lives[i] !== 1) {
+          field.lives[i] = 1
+          dirty = true
+        }
+        continue
+      }
+      field.ages[i] += delta
+      field.lives[i] = Math.min(field.ages[i] / field.lifetimes[i], 1)
+      dirty = true
+    }
+
+    if (dirty) {
+      const lifeAttribute = field.points.geometry.getAttribute('aLife') as BufferAttribute
+      lifeAttribute.needsUpdate = true
+    }
+  }
+
   private disposeThrusters() {
     const field = this.thrusterField
     if (!field) {
@@ -1022,6 +1156,7 @@ export class ShipFlightSceneManager {
     this.updateSpaceMotion(delta)
     this.updateThrusters(delta)
     this.updateProjectiles(delta)
+    this.updateMuzzleFlash(delta)
     if (this.thrusterField) {
       this.thrusterField.material.uniforms.uTime.value = elapsed
     }
