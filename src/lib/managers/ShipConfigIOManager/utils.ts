@@ -17,8 +17,12 @@ export const parseVector3Tuple = (value: unknown, fallback: Vector3Tuple): Vecto
   return [value[0], value[1], value[2]]
 }
 
+const isUnknownTuple3 = (value: unknown): value is [unknown, unknown, unknown] => {
+  return Array.isArray(value) && value.length === 3
+}
+
 export const isValidVector3Tuple = (value: unknown): value is Vector3Tuple => {
-  if (!Array.isArray(value) || value.length !== 3) {
+  if (!isUnknownTuple3(value)) {
     return false
   }
 
@@ -48,34 +52,54 @@ export const isAllowedVariant = <TSlot extends ShipSlot>(
   return allowedVariants.some((variant) => variant === value)
 }
 
+const cloneVector3Tuple = (value: Vector3Tuple): Vector3Tuple => {
+  return [value[0], value[1], value[2]]
+}
+
 export const cloneSlotState = <TSlot extends ShipSlot>(
   config: ShipSlotConfigMap,
   slot: TSlot
 ): ShipSlotConfigMap[TSlot] => {
-  const slotState = config[slot]
-  const clonedBaseSlotState = {
-    ...slotState,
-    scale: [slotState.scale[0], slotState.scale[1], slotState.scale[2]],
-    offset: [slotState.offset[0], slotState.offset[1], slotState.offset[2]],
-    rotation: [slotState.rotation[0], slotState.rotation[1], slotState.rotation[2]],
-    pivotLocal: [slotState.pivotLocal[0], slotState.pivotLocal[1], slotState.pivotLocal[2]],
-  }
+  const clonedConfig = {
+    body: {
+      ...config.body,
+      scale: cloneVector3Tuple(config.body.scale),
+      offset: cloneVector3Tuple(config.body.offset),
+      rotation: cloneVector3Tuple(config.body.rotation),
+      pivotLocal: cloneVector3Tuple(config.body.pivotLocal),
+    },
+    cockpit: {
+      ...config.cockpit,
+      scale: cloneVector3Tuple(config.cockpit.scale),
+      offset: cloneVector3Tuple(config.cockpit.offset),
+      rotation: cloneVector3Tuple(config.cockpit.rotation),
+      pivotLocal: cloneVector3Tuple(config.cockpit.pivotLocal),
+    },
+    wings: {
+      ...config.wings,
+      scale: cloneVector3Tuple(config.wings.scale),
+      offset: cloneVector3Tuple(config.wings.offset),
+      rotation: cloneVector3Tuple(config.wings.rotation),
+      pivotLocal: cloneVector3Tuple(config.wings.pivotLocal),
+      aimRotation: cloneVector3Tuple(config.wings.aimRotation),
+    },
+    engines: {
+      ...config.engines,
+      scale: cloneVector3Tuple(config.engines.scale),
+      offset: cloneVector3Tuple(config.engines.offset),
+      rotation: cloneVector3Tuple(config.engines.rotation),
+      pivotLocal: cloneVector3Tuple(config.engines.pivotLocal),
+      aimRotation: cloneVector3Tuple(config.engines.aimRotation),
+    },
+    weapons: {
+      ...config.weapons,
+      scale: cloneVector3Tuple(config.weapons.scale),
+      offset: cloneVector3Tuple(config.weapons.offset),
+      rotation: cloneVector3Tuple(config.weapons.rotation),
+      pivotLocal: cloneVector3Tuple(config.weapons.pivotLocal),
+      aimRotation: cloneVector3Tuple(config.weapons.aimRotation),
+    },
+  } satisfies ShipSlotConfigMap
 
-  if (slot === 'wings' || slot === 'engines' || slot === 'weapons') {
-    const symmetricSlotState = slotState as
-      | ShipSlotConfigMap['wings']
-      | ShipSlotConfigMap['engines']
-      | ShipSlotConfigMap['weapons']
-    return {
-      ...clonedBaseSlotState,
-      aimRotation: [
-        symmetricSlotState.aimRotation[0],
-        symmetricSlotState.aimRotation[1],
-        symmetricSlotState.aimRotation[2],
-      ],
-      pairSpread: symmetricSlotState.pairSpread,
-    } as ShipSlotConfigMap[TSlot]
-  }
-
-  return clonedBaseSlotState as ShipSlotConfigMap[TSlot]
+  return clonedConfig[slot]
 }

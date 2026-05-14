@@ -8,6 +8,7 @@ import {
   TorusGeometry,
   Vector3,
   type BufferGeometry,
+  type Object3D,
 } from 'three'
 import type {
   BodySlotConfig,
@@ -813,17 +814,20 @@ export class ShipBuilderModelManager {
     })
   }
 
-  private collectSymmetricAimPivots(root: Group): Group[] {
+  private collectSymmetricAimPivots(root: Object3D): Group[] {
     const aimPivots: Group[] = []
     root.traverse((node) => {
-      if (
-        node instanceof Group &&
-        node.name === ShipBuilderModelManager.SYMMETRIC_AIM_PIVOT_GROUP_NAME
-      ) {
+      if (this.isSymmetricAimPivotGroup(node)) {
         aimPivots.push(node)
       }
     })
     return aimPivots
+  }
+
+  private isSymmetricAimPivotGroup(node: Object3D): node is Group {
+    return (
+      node instanceof Group && node.name === ShipBuilderModelManager.SYMMETRIC_AIM_PIVOT_GROUP_NAME
+    )
   }
 
   private createNextSymmetryGroupId(slot: ShipSymmetricSlotKey): string {

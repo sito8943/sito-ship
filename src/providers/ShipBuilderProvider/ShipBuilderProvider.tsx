@@ -9,7 +9,7 @@ import {
 } from '@/lib/managers/ShipConfigIOManager'
 import type { ShipBuilderSceneManager } from '@/lib/managers/ShipBuilderSceneManager'
 import type { ExperienceMode } from '@/lib/managers/ShipBuilderSceneManager/types'
-import type { ShipConfig, ShipSlot, ShipSlotPatch } from '@/lib/models/ShipConfig'
+import type { ShipConfig, ShipSlot } from '@/lib/models/ShipConfig'
 import { ShipBuilderContext } from '@/providers/ShipBuilderProvider/context'
 import {
   DEFAULT_EXPERIENCE_MODE,
@@ -200,11 +200,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
 
   const updateSlot = useCallback<UpdateSlot>(
     (slot, patch, options) => {
-      const result = shipConfigManager.updateSlot(
-        builderStateRef.current.shipConfig,
-        slot,
-        patch as ShipSlotPatch<typeof slot>
-      )
+      const result = shipConfigManager.updateSlot(builderStateRef.current.shipConfig, slot, patch)
 
       applyNextConfig({
         result,
@@ -382,7 +378,7 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     })
 
     sceneManager.setSlotTransformHandler((slot, patch, options) => {
-      updateSlot(slot, patch as ShipSlotPatch<typeof slot>, {
+      updateSlot(slot, patch, {
         commitHistory: options.commitHistory,
       })
     })

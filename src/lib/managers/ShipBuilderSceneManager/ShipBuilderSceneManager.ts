@@ -85,6 +85,19 @@ type FlightInputState = {
   boost: boolean
 }
 
+type DisposableResource = {
+  dispose: () => void
+}
+
+const isDisposableResource = (value: unknown): value is DisposableResource => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'dispose' in value &&
+    typeof value.dispose === 'function'
+  )
+}
+
 export class ShipBuilderSceneManager {
   private readonly isDevEnvironment = import.meta.env.DEV
   private canvas: HTMLCanvasElement | null = null
@@ -401,11 +414,22 @@ export class ShipBuilderSceneManager {
           return
         }
 
-        object.geometry?.dispose()
-        if (Array.isArray(object.material)) {
-          object.material.forEach((material) => material.dispose())
+        const geometry: unknown = object.geometry
+        if (isDisposableResource(geometry)) {
+          geometry.dispose()
+        }
+
+        const material: unknown = object.material
+        if (Array.isArray(material)) {
+          material.forEach((entry) => {
+            if (isDisposableResource(entry)) {
+              entry.dispose()
+            }
+          })
         } else {
-          object.material?.dispose()
+          if (isDisposableResource(material)) {
+            material.dispose()
+          }
         }
       })
       this.scene.clear()
@@ -871,7 +895,7 @@ export class ShipBuilderSceneManager {
     let node: Object3D | null = object
 
     while (node) {
-      const slot = node.userData.shipSlot
+      const slot: unknown = node.userData.shipSlot
       if (slot && this.isShipSlot(slot)) {
         return slot
       }

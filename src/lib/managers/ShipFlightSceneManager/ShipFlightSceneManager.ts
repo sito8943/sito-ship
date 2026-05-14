@@ -77,6 +77,19 @@ const PROJECTILE_TMP_POS = new Vector3()
 const PROJECTILE_TMP_SCALE = new Vector3(1, 1, 1)
 const PROJECTILE_TMP_QUAT = new Quaternion()
 
+type DisposableResource = {
+  dispose: () => void
+}
+
+const isDisposableResource = (value: unknown): value is DisposableResource => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'dispose' in value &&
+    typeof value.dispose === 'function'
+  )
+}
+
 const randomInRange = (min: number, max: number) => min + Math.random() * (max - min)
 
 const pickRandomTemplate = () => {
@@ -1074,13 +1087,22 @@ export class ShipFlightSceneManager {
 
     this.scene.traverse((object) => {
       if (object instanceof Mesh || object instanceof Points) {
-        object.geometry?.dispose()
+        const geometry: unknown = object.geometry
+        if (isDisposableResource(geometry)) {
+          geometry.dispose()
+        }
 
-        const material = object.material
+        const material: unknown = object.material
         if (Array.isArray(material)) {
-          material.forEach((entry) => entry.dispose())
+          material.forEach((entry) => {
+            if (isDisposableResource(entry)) {
+              entry.dispose()
+            }
+          })
         } else {
-          ;(material as Material | null)?.dispose()
+          if (isDisposableResource(material)) {
+            material.dispose()
+          }
         }
       }
     })

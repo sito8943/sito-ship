@@ -31,7 +31,9 @@ export function loadPlanetTexture(url: string): Promise<Texture> {
       undefined,
       (error) => {
         pending.delete(url)
-        reject(error)
+        reject(
+          error instanceof Error ? error : new Error(`Failed to load planet texture from "${url}".`)
+        )
       }
     )
   })

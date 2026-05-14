@@ -1,13 +1,4 @@
-import {
-  Matrix4,
-  Mesh,
-  MeshStandardMaterial,
-  Quaternion,
-  type BufferGeometry,
-  type Group,
-  type Material,
-  type Object3D,
-} from 'three'
+import { Matrix4, Mesh, MeshStandardMaterial, Quaternion, type Group, type Object3D } from 'three'
 import {
   SHIP_LOCAL_SYMMETRY_PLANE_NORMAL,
   SHIP_LOCAL_SYMMETRY_PLANE_OFFSET,
@@ -171,22 +162,44 @@ export const setSlotHighlight = (
 }
 
 export const disposeGroupResources = (group: Group) => {
-  const geometries = new Set<BufferGeometry>()
-  const materials = new Set<Material>()
+  type DisposableResource = {
+    dispose: () => void
+  }
+
+  const resources = new Set<DisposableResource>()
+  const isDisposableResource = (value: unknown): value is DisposableResource => {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      'dispose' in value &&
+      typeof value.dispose === 'function'
+    )
+  }
 
   group.traverse((node) => {
     if (!(node instanceof Mesh)) {
       return
     }
 
-    geometries.add(node.geometry)
-    if (Array.isArray(node.material)) {
-      node.material.forEach((material) => materials.add(material))
+    const geometry: unknown = node.geometry
+    if (isDisposableResource(geometry)) {
+      resources.add(geometry)
+    }
+
+    const material: unknown = node.material
+    if (Array.isArray(material)) {
+      material.forEach((entry) => {
+        const materialEntry: unknown = entry
+        if (isDisposableResource(materialEntry)) {
+          resources.add(materialEntry)
+        }
+      })
     } else {
-      materials.add(node.material)
+      if (isDisposableResource(material)) {
+        resources.add(material)
+      }
     }
   })
 
-  geometries.forEach((geometry) => geometry.dispose())
-  materials.forEach((material) => material.dispose())
+  resources.forEach((resource) => resource.dispose())
 }

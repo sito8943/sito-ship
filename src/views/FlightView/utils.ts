@@ -6,7 +6,10 @@ import {
   FLIGHT_VIEW_LANDSCAPE_ORIENTATION_LOCK,
   FLIGHT_VIEW_PORTRAIT_MEDIA_QUERY,
 } from '@/views/FlightView/constants'
-import type { ScreenWithLegacyOrientationLock } from '@/views/FlightView/types'
+import type {
+  ScreenOrientationWithLock,
+  ScreenWithLegacyOrientationLock,
+} from '@/views/FlightView/types'
 
 export const detectTouchDevice = (): boolean => {
   if (typeof window === 'undefined') {
@@ -28,10 +31,25 @@ export const isPortraitViewportMode = (): boolean => {
   return window.matchMedia(FLIGHT_VIEW_PORTRAIT_MEDIA_QUERY).matches
 }
 
+type ScreenOrientationWithRequiredLock = ScreenOrientationWithLock & {
+  lock: NonNullable<ScreenOrientationWithLock['lock']>
+}
+
 const getLegacyOrientationLock = (
   screen: ScreenWithLegacyOrientationLock
 ): ScreenWithLegacyOrientationLock['lockOrientation'] => {
   return screen.lockOrientation ?? screen.msLockOrientation ?? screen.mozLockOrientation
+}
+
+const isScreenOrientationWithLock = (
+  value: unknown
+): value is ScreenOrientationWithRequiredLock => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'lock' in value &&
+    typeof value.lock === 'function'
+  )
 }
 
 export const requestLandscapeOrientation = async (): Promise<boolean> => {
@@ -40,17 +58,18 @@ export const requestLandscapeOrientation = async (): Promise<boolean> => {
   }
 
   const { screen } = window
+  const orientation: unknown = screen.orientation
 
-  if (screen.orientation?.lock) {
+  if (isScreenOrientationWithLock(orientation)) {
     try {
-      await screen.orientation.lock(FLIGHT_VIEW_LANDSCAPE_ORIENTATION_LOCK)
+      await orientation.lock(FLIGHT_VIEW_LANDSCAPE_ORIENTATION_LOCK)
       return true
     } catch (error) {
       void error
     }
   }
 
-  const legacyOrientationLock = getLegacyOrientationLock(screen as ScreenWithLegacyOrientationLock)
+  const legacyOrientationLock = getLegacyOrientationLock(screen)
   if (typeof legacyOrientationLock !== 'function') {
     return false
   }

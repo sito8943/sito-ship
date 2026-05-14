@@ -40,7 +40,7 @@ export class ShipConfigManager {
     patch: ShipSlotPatchInput<TSlot>
   ): ShipConfigNormalizationResult {
     const nextConfig = cloneShipConfig(config)
-    const clonedPatch = { ...patch } as ShipSlotPatchInput<TSlot>
+    const clonedPatch = { ...patch }
 
     if (patch.scale) {
       clonedPatch.scale = this.cloneTupleForSlot(patch.scale)
@@ -94,14 +94,8 @@ export class ShipConfigManager {
       pivotLocal: cloneVector3Tuple(defaultConfig[slot].pivotLocal),
     }
     if (this.isSymmetricSlot(slot)) {
-      const nextSymmetricSlot = nextConfig[slot] as
-        | ShipConfig['wings']
-        | ShipConfig['engines']
-        | ShipConfig['weapons']
-      const defaultSymmetricSlot = defaultConfig[slot] as
-        | ShipConfig['wings']
-        | ShipConfig['engines']
-        | ShipConfig['weapons']
+      const nextSymmetricSlot = nextConfig[slot]
+      const defaultSymmetricSlot = defaultConfig[slot]
       nextSymmetricSlot.aimRotation = cloneVector3Tuple(defaultSymmetricSlot.aimRotation)
     }
 

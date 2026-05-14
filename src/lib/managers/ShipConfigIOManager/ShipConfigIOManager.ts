@@ -112,7 +112,7 @@ export class ShipConfigIOManager {
     const variantValue = sourceSlot.variant
     const allowedVariants = SHIP_VARIANT_OPTIONS[slot]
     if (isAllowedVariant(variantValue, allowedVariants)) {
-      nextSlot.variant = variantValue as ShipSlotConfigMap[TSlot]['variant']
+      nextSlot.variant = variantValue
     } else {
       warnings.push(`Slot "${slot}" has an invalid variant. Using "${defaultSlot.variant}".`)
       nextSlot.variant = defaultSlot.variant
