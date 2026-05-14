@@ -855,6 +855,10 @@ body {
   display: none;
 }
 
+.ship-builder-controls__reset-action-button--mobile {
+  display: none;
+}
+
 .ship-builder-controls__io-message {
   margin: 0;
   font-size: 0.74rem;
@@ -903,11 +907,17 @@ body {
   }
 
   .ship-builder-controls-import-export {
-    width: fit-content;
+    top: calc(env(safe-area-inset-top, 0px) + 56px);
+    left: 12px;
+    right: auto;
+    width: auto;
+    max-height: none;
   }
 
   .ship-builder-controls__io {
+    gap: 6px;
     padding: 6px;
+    border-top: 0;
   }
 
   .ship-builder-controls--hidden,
@@ -927,7 +937,7 @@ body {
   }
 
   .ship-builder-controls__io-actions--spaced {
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 8px;
   }
 
@@ -937,6 +947,19 @@ body {
 
   .ship-builder-controls__io-action-button--mobile {
     display: inline-flex;
+  }
+
+  .ship-builder-controls__reset-action-button--desktop {
+    display: none;
+  }
+
+  .ship-builder-controls__reset-action-button--mobile {
+    display: inline-flex;
+  }
+
+  .ship-builder-controls__io-message--info,
+  .ship-builder-controls__io-message--success {
+    display: none;
   }
 }
 

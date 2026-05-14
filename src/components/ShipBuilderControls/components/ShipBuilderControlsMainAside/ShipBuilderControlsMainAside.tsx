@@ -197,12 +197,19 @@ const ShipBuilderControlsMainAside = ({
             disabled={!canRedo}
           />
           <Button
-            className="ship-builder-controls__action-button"
+            className="ship-builder-controls__action-button ship-builder-controls__reset-action-button ship-builder-controls__reset-action-button--desktop"
             onClick={resetShipConfig}
             leadingIcon={<FontAwesomeIcon icon={faArrowsRotate} fixedWidth />}
           >
             Reset Ship
           </Button>
+          <IconButton
+            className="ship-builder-controls__action-button ship-builder-controls__reset-action-button ship-builder-controls__reset-action-button--mobile"
+            icon={faArrowsRotate}
+            label="Reset Ship"
+            title="Reset Ship"
+            onClick={resetShipConfig}
+          />
         </div>
       </header>
 
@@ -261,7 +268,7 @@ const ShipBuilderControlsMainAside = ({
             <h3 className="ship-builder-controls__card-title">{SLOT_LABELS[selectedSlot]}</h3>
             <Button
               size="sm"
-              className="ship-builder-controls__action-button ship-builder-controls__action-button--small"
+              className="ship-builder-controls__action-button ship-builder-controls__action-button--small ship-builder-controls__reset-action-button ship-builder-controls__reset-action-button--desktop"
               onClick={() => {
                 resetSlot(selectedSlot)
               }}
@@ -269,6 +276,16 @@ const ShipBuilderControlsMainAside = ({
             >
               Reset Slot
             </Button>
+            <IconButton
+              size="sm"
+              className="ship-builder-controls__action-button ship-builder-controls__action-button--small ship-builder-controls__reset-action-button ship-builder-controls__reset-action-button--mobile"
+              icon={faRotateLeft}
+              label="Reset Slot"
+              title="Reset Slot"
+              onClick={() => {
+                resetSlot(selectedSlot)
+              }}
+            />
           </div>
 
           <label className="ship-builder-controls__field">
