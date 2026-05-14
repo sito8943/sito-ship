@@ -81,6 +81,13 @@ body {
   color: #dbeafe;
   display: grid;
   gap: 10px;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.flight-view__hud--hidden {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
 }
 
 .flight-view__hud-header {

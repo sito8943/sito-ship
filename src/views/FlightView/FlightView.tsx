@@ -13,6 +13,7 @@ import { resolveFlightShipConfig } from '@/views/FlightView/utils'
 const FlightView = () => {
   const { shipConfig, setExperienceMode } = useShipBuilder()
   const [flightShipConfig] = useState<ShipConfig>(() => resolveFlightShipConfig(shipConfig))
+  const [isHudHidden, setIsHudHidden] = useState(false)
 
   const closeFlightView = useCallback(() => {
     setExperienceMode('builder')
@@ -35,6 +36,12 @@ const FlightView = () => {
       if (normalizedKey === 't' || normalizedKey === 'escape') {
         event.preventDefault()
         closeFlightView()
+        return
+      }
+
+      if (normalizedKey === 'tab') {
+        event.preventDefault()
+        setIsHudHidden((previous) => !previous)
       }
     }
 
@@ -48,7 +55,12 @@ const FlightView = () => {
     <section className="flight-view" aria-label="Flight View">
       <FlightSceneCanvas shipConfig={flightShipConfig} />
 
-      <aside className="flight-view__hud" role="status" aria-live="polite">
+      <aside
+        className={`flight-view__hud${isHudHidden ? ' flight-view__hud--hidden' : ''}`}
+        role="status"
+        aria-live="polite"
+        aria-hidden={isHudHidden}
+      >
         <header className="flight-view__hud-header">
           <h2 className="flight-view__title">{FLIGHT_VIEW_TITLE}</h2>
           <Button size="sm" variant="ghost" onClick={closeFlightView}>
