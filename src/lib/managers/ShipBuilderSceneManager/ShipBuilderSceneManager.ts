@@ -2,7 +2,15 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import Stats from 'three/addons/libs/stats.module.js'
-import { BloomEffect, EffectComposer, EffectPass, FXAAEffect, RenderPass } from 'postprocessing'
+import {
+  BlendFunction,
+  BloomEffect,
+  EffectComposer,
+  EffectPass,
+  FXAAEffect,
+  OutlineEffect,
+  RenderPass,
+} from 'postprocessing'
 import {
   AmbientLight,
   AxesHelper,
@@ -74,6 +82,25 @@ export class ShipBuilderSceneManager {
   private debugGui: GUI | null = null
   private stats: Stats | null = null
   private composer: EffectComposer | null = null
+  private bloomEffect: BloomEffect | null = null
+  private outlineEffect: OutlineEffect | null = null
+  private bloomPass: EffectPass | null = null
+  private outlinePass: EffectPass | null = null
+  private fxaaPass: EffectPass | null = null
+  private postProcessingSettings = JSON.parse(JSON.stringify(POST_PROCESSING_SETTINGS)) as {
+    bloom: { enabled: boolean; intensity: number; radius: number; threshold: number }
+    fxaa: { enabled: boolean }
+    outline: {
+      enabled: boolean
+      edgeStrength: number
+      pulseSpeed: number
+      visibleEdgeColor: number
+      hiddenEdgeColor: number
+      blur: boolean
+      xRay: boolean
+    }
+  }
+  private hoveredSlot: ShipSlot | null = null
   private axesHelper: AxesHelper | null = null
   private directionalLights: DirectionalLight[] = []
   private lightHelpers: DirectionalLightHelper[] = []
@@ -143,6 +170,8 @@ export class ShipBuilderSceneManager {
     window.addEventListener('keydown', this.handleWindowKeyDown)
     window.addEventListener('keyup', this.handleWindowKeyUp)
     this.canvas.addEventListener('pointerdown', this.handleCanvasPointerDown)
+    this.canvas.addEventListener('pointermove', this.handleCanvasPointerMove)
+    this.canvas.addEventListener('pointerleave', this.handleCanvasPointerLeave)
     this.resize()
     this.animate()
   }
@@ -171,6 +200,7 @@ export class ShipBuilderSceneManager {
     this.selectedSlot = slot
     this.shipModelManager?.setSelectedSlot(slot)
     this.refreshTransformControlAttachment()
+    this.refreshOutlineSelection()
   }
 
   setTransformMode(mode: TransformMode) {
@@ -336,6 +366,8 @@ export class ShipBuilderSceneManager {
     window.removeEventListener('keydown', this.handleWindowKeyDown)
     window.removeEventListener('keyup', this.handleWindowKeyUp)
     this.canvas?.removeEventListener('pointerdown', this.handleCanvasPointerDown)
+    this.canvas?.removeEventListener('pointermove', this.handleCanvasPointerMove)
+    this.canvas?.removeEventListener('pointerleave', this.handleCanvasPointerLeave)
     this.resetFlightInputState()
 
     if (this.transformControls) {
@@ -399,6 +431,12 @@ export class ShipBuilderSceneManager {
     this.debugGui = null
     this.disposeStats()
     this.composer = null
+    this.bloomEffect = null
+    this.outlineEffect = null
+    this.bloomPass = null
+    this.outlinePass = null
+    this.fxaaPass = null
+    this.hoveredSlot = null
     this.directionalLights = []
     this.lightHelpers = []
     this.shadowHelpers = []
@@ -498,6 +536,79 @@ export class ShipBuilderSceneManager {
       .onChange((value: boolean) => {
         this.setDebugHelpersVisibility({ shadow: value })
       })
+
+    this.initializePostProcessingDebugGui()
+  }
+
+  private initializePostProcessingDebugGui() {
+    if (!this.debugGui) {
+      return
+    }
+
+    const settings = this.postProcessingSettings
+    const ppFolder = this.debugGui.addFolder('Post Processing')
+
+    const bloomFolder = ppFolder.addFolder('Bloom')
+    bloomFolder.add(settings.bloom, 'enabled').onChange((value: boolean) => {
+      if (this.bloomPass) this.bloomPass.enabled = value
+    })
+    bloomFolder.add(settings.bloom, 'intensity', 0, 5, 0.01).onChange((value: number) => {
+      if (this.bloomEffect) this.bloomEffect.intensity = value
+    })
+    bloomFolder.add(settings.bloom, 'threshold', 0, 1, 0.01).onChange((value: number) => {
+      if (this.bloomEffect) this.bloomEffect.luminanceMaterial.threshold = value
+    })
+
+    const outlineFolder = ppFolder.addFolder('Outline')
+    outlineFolder.add(settings.outline, 'enabled').onChange((value: boolean) => {
+      if (this.outlinePass) this.outlinePass.enabled = value
+    })
+    outlineFolder.add(settings.outline, 'edgeStrength', 0, 20, 0.1).onChange((value: number) => {
+      if (this.outlineEffect) this.outlineEffect.edgeStrength = value
+    })
+    outlineFolder.add(settings.outline, 'pulseSpeed', 0, 5, 0.01).onChange((value: number) => {
+      if (this.outlineEffect) this.outlineEffect.pulseSpeed = value
+    })
+    outlineFolder.addColor(settings.outline, 'visibleEdgeColor').onChange((value: number) => {
+      this.outlineEffect?.visibleEdgeColor.setHex(value)
+    })
+    outlineFolder.addColor(settings.outline, 'hiddenEdgeColor').onChange((value: number) => {
+      this.outlineEffect?.hiddenEdgeColor.setHex(value)
+    })
+    outlineFolder.add(settings.outline, 'xRay').onChange((value: boolean) => {
+      if (this.outlineEffect) this.outlineEffect.xRay = value
+    })
+    outlineFolder
+      .add({ forceHoverBody: () => this.debugForceHover('body') }, 'forceHoverBody')
+      .name('Test outline (body)')
+
+    const fxaaFolder = ppFolder.addFolder('FXAA')
+    fxaaFolder.add(settings.fxaa, 'enabled').onChange((value: boolean) => {
+      if (this.fxaaPass) this.fxaaPass.enabled = value
+    })
+  }
+
+  private debugForceHover(slot: ShipSlot) {
+    this.hoveredSlot = slot
+    this.refreshOutlineSelection()
+    window.setTimeout(() => {
+      if (this.hoveredSlot === slot) {
+        this.hoveredSlot = null
+        this.refreshOutlineSelection()
+      }
+    }, 3000)
+  }
+
+  private rebuildPostProcessing() {
+    this.composer?.dispose()
+    this.composer = null
+    this.bloomEffect = null
+    this.outlineEffect = null
+    this.bloomPass = null
+    this.outlinePass = null
+    this.fxaaPass = null
+    this.initializePostProcessing()
+    this.resize()
   }
 
   private disposeDebugGui() {
@@ -533,22 +644,56 @@ export class ShipBuilderSceneManager {
       return
     }
 
+    const settings = this.postProcessingSettings
+
     this.composer = new EffectComposer(this.renderer)
     this.composer.addPass(new RenderPass(this.scene, this.camera))
 
-    const bloomEffect = new BloomEffect({
-      intensity: POST_PROCESSING_SETTINGS.bloom.intensity,
-      radius: POST_PROCESSING_SETTINGS.bloom.radius,
-      luminanceThreshold: POST_PROCESSING_SETTINGS.bloom.threshold,
+    this.bloomEffect = new BloomEffect({
+      intensity: settings.bloom.intensity,
+      radius: settings.bloom.radius,
+      luminanceThreshold: settings.bloom.threshold,
       mipmapBlur: true,
     })
-    const bloomPass = new EffectPass(this.camera, bloomEffect)
-    bloomPass.enabled = POST_PROCESSING_SETTINGS.bloom.enabled
-    this.composer.addPass(bloomPass)
+    this.bloomPass = new EffectPass(this.camera, this.bloomEffect)
+    this.bloomPass.enabled = settings.bloom.enabled
+    this.composer.addPass(this.bloomPass)
 
-    const fxaaPass = new EffectPass(this.camera, new FXAAEffect())
-    fxaaPass.enabled = POST_PROCESSING_SETTINGS.fxaa.enabled
-    this.composer.addPass(fxaaPass)
+    this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
+      blendFunction: BlendFunction.SCREEN,
+      edgeStrength: settings.outline.edgeStrength,
+      pulseSpeed: settings.outline.pulseSpeed,
+      visibleEdgeColor: settings.outline.visibleEdgeColor,
+      hiddenEdgeColor: settings.outline.hiddenEdgeColor,
+      blur: settings.outline.blur,
+      xRay: settings.outline.xRay,
+    })
+    this.outlinePass = new EffectPass(this.camera, this.outlineEffect)
+    this.outlinePass.enabled = settings.outline.enabled
+    this.composer.addPass(this.outlinePass)
+
+    this.fxaaPass = new EffectPass(this.camera, new FXAAEffect())
+    this.fxaaPass.enabled = settings.fxaa.enabled
+    this.composer.addPass(this.fxaaPass)
+
+    this.refreshOutlineSelection()
+  }
+
+  private refreshOutlineSelection() {
+    if (!this.outlineEffect || !this.shipModelManager) {
+      return
+    }
+
+    const targets: Object3D[] = []
+    if (this.hoveredSlot && this.hoveredSlot !== this.selectedSlot) {
+      const slotGroup = this.shipModelManager.getSlotGroup(this.hoveredSlot)
+      slotGroup.traverse((object) => {
+        if (object instanceof Mesh) {
+          targets.push(object)
+        }
+      })
+    }
+    this.outlineEffect.selection.set(targets)
   }
 
   private initializeLights() {
@@ -849,6 +994,53 @@ export class ShipBuilderSceneManager {
 
     this.setSelectedSlot(selectedSlot)
     this.slotSelectionHandler?.(selectedSlot)
+  }
+
+  private handleCanvasPointerMove = (event: PointerEvent) => {
+    if (this.experienceMode !== 'builder') {
+      return
+    }
+
+    if (!this.camera || !this.shipGroup || !this.canvas) {
+      return
+    }
+
+    if (this.transformControls?.dragging) {
+      return
+    }
+
+    const rect = this.canvas.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) {
+      return
+    }
+
+    this.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
+    this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
+
+    this.raycaster.setFromCamera(this.pointer, this.camera)
+    const intersections = this.raycaster.intersectObject(this.shipGroup, true)
+
+    const hovered =
+      intersections
+        .map((intersection) => this.getSlotFromObject(intersection.object))
+        .find((slot): slot is ShipSlot => slot !== null) ?? null
+
+    if (hovered !== this.hoveredSlot) {
+      this.hoveredSlot = hovered
+      this.canvas.style.cursor = hovered ? 'pointer' : ''
+      this.refreshOutlineSelection()
+    }
+  }
+
+  private handleCanvasPointerLeave = () => {
+    if (this.hoveredSlot === null) {
+      return
+    }
+    this.hoveredSlot = null
+    if (this.canvas) {
+      this.canvas.style.cursor = ''
+    }
+    this.refreshOutlineSelection()
   }
 
   private getSlotFromObject(object: Object3D | null): ShipSlot | null {

@@ -12,6 +12,15 @@ export const POST_PROCESSING_SETTINGS = {
   fxaa: {
     enabled: true,
   },
+  outline: {
+    enabled: true,
+    edgeStrength: 3.2,
+    pulseSpeed: 2,
+    visibleEdgeColor: 0x88c0ff,
+    hiddenEdgeColor: 0x223a66,
+    blur: false,
+    xRay: true,
+  },
 } as const
 
 export const BUILDER_SHADOW_SETTINGS = {
