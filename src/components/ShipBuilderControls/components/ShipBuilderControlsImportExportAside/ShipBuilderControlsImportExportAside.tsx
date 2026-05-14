@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { faFileExport, faFileImport } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
-import { Button } from '@/components/ui'
+import { Button, IconButton } from '@/components/ui'
 import { SLOT_LABELS } from '@/components/ShipBuilderControls/constants'
 import type { ShipBuilderControlsImportExportAsideProps } from '@/components/ShipBuilderControls/components/ShipBuilderControlsImportExportAside/types'
+import { readShipConfigJsonFromFile, saveShipConfigJsonToFile } from '@/lib/utils/ShipConfigFileIO'
 
 const ShipBuilderControlsImportExportAside = ({
   isHidden,
@@ -17,23 +18,29 @@ const ShipBuilderControlsImportExportAside = ({
     exportShipConfigToJson,
     importShipConfigFromJson,
   } = useShipBuilder()
-  const [jsonInput, setJsonInput] = useState('')
   const [importWarnings, setImportWarnings] = useState<string[]>([])
 
   const handleExportJson = () => {
     const exportedJson = exportShipConfigToJson()
-    setJsonInput(exportedJson)
     setImportWarnings([])
+    void saveShipConfigJsonToFile(exportedJson)
   }
 
   const handleImportJson = () => {
-    const importResult = importShipConfigFromJson(jsonInput)
-    if (!importResult.ok) {
-      setImportWarnings([])
-      return
-    }
+    void (async () => {
+      const rawJson = await readShipConfigJsonFromFile()
+      if (!rawJson) {
+        return
+      }
 
-    setImportWarnings(importResult.warnings)
+      const importResult = importShipConfigFromJson(rawJson)
+      if (!importResult.ok) {
+        setImportWarnings([])
+        return
+      }
+
+      setImportWarnings(importResult.warnings)
+    })()
   }
 
   return (
@@ -47,32 +54,34 @@ const ShipBuilderControlsImportExportAside = ({
       <section className="ship-builder-controls__io">
         <div className="ship-builder-controls__io-actions ship-builder-controls__io-actions--spaced">
           <Button
-            className="ship-builder-controls__action-button"
+            className="ship-builder-controls__action-button ship-builder-controls__io-action-button ship-builder-controls__io-action-button--desktop"
             onClick={handleExportJson}
             leadingIcon={<FontAwesomeIcon icon={faFileExport} fixedWidth />}
           >
             Export JSON
           </Button>
+          <IconButton
+            className="ship-builder-controls__action-button ship-builder-controls__io-action-button ship-builder-controls__io-action-button--mobile"
+            icon={faFileExport}
+            label="Export JSON"
+            title="Export JSON"
+            onClick={handleExportJson}
+          />
           <Button
-            className="ship-builder-controls__action-button"
+            className="ship-builder-controls__action-button ship-builder-controls__io-action-button ship-builder-controls__io-action-button--desktop"
             onClick={handleImportJson}
             leadingIcon={<FontAwesomeIcon icon={faFileImport} fixedWidth />}
           >
             Import JSON
           </Button>
-        </div>
-
-        <label className="ship-builder-controls__field">
-          <span className="ship-builder-controls__field-label">Import / Export JSON</span>
-          <textarea
-            className="ship-builder-controls__textarea"
-            value={jsonInput}
-            placeholder='{"version":2,...}'
-            onChange={(event) => {
-              setJsonInput(event.target.value)
-            }}
+          <IconButton
+            className="ship-builder-controls__action-button ship-builder-controls__io-action-button ship-builder-controls__io-action-button--mobile"
+            icon={faFileImport}
+            label="Import JSON"
+            title="Import JSON"
+            onClick={handleImportJson}
           />
-        </label>
+        </div>
 
         {message ? (
           <p

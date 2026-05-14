@@ -156,11 +156,13 @@ const FlightView = () => {
           </Button>
         </header>
 
-        <ul className="flight-view__help-list">
-          {FLIGHT_VIEW_HELP_LINES.map((helpLine) => {
-            return <li key={helpLine}>{helpLine}</li>
-          })}
-        </ul>
+        {!isTouchDevice ? (
+          <ul className="flight-view__help-list">
+            {FLIGHT_VIEW_HELP_LINES.map((helpLine) => {
+              return <li key={helpLine}>{helpLine}</li>
+            })}
+          </ul>
+        ) : null}
       </aside>
 
       {isTouchDevice ? (

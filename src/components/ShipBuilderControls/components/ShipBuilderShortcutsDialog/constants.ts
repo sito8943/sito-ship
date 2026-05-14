@@ -7,8 +7,8 @@ export const SHIP_BUILDER_SHORTCUTS_SECTIONS: ShortcutSection[] = [
     title: 'General',
     shortcuts: [
       { key: 'F1', description: 'Open keyboard shortcuts/help' },
-      { key: 'Ctrl+E', description: 'Export ship as JSON' },
-      { key: 'Ctrl+I', description: 'Import ship JSON' },
+      { key: 'Ctrl+E', description: 'Export ship JSON file' },
+      { key: 'Ctrl+I', description: 'Import ship JSON file' },
       { key: 'Ctrl+S', description: 'Save current ship' },
       { key: 'Ctrl+Z', description: 'Undo last action' },
       { key: 'Ctrl+Shift+Z', description: 'Redo last action' },

@@ -2,8 +2,6 @@ import { useEffect } from 'react'
 import { useDialog } from '@/hooks/useDialog'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 import {
-  SHORTCUT_EXPORT_PROMPT_MESSAGE,
-  SHORTCUT_IMPORT_PROMPT_MESSAGE,
   SHORTCUT_KEYS,
   SHORTCUT_SLOT_BY_KEY,
   SHORTCUT_TRANSFORM_MODE_BY_KEY,
@@ -16,6 +14,7 @@ import {
   persistShipConfigToStorage,
   supportsSymmetricTransformModes,
 } from '@/hooks/useShipBuilderKeyboardShortcuts/utils'
+import { readShipConfigJsonFromFile, saveShipConfigJsonToFile } from '@/lib/utils/ShipConfigFileIO'
 import { DIALOG_IDS } from '@/providers/DialogProvider'
 
 export const useShipBuilderKeyboardShortcuts = ({
@@ -78,18 +77,20 @@ export const useShipBuilderKeyboardShortcuts = ({
         if (normalizedKey === 'e') {
           event.preventDefault()
           const exportedJson = exportShipConfigToJson()
-          window.prompt(SHORTCUT_EXPORT_PROMPT_MESSAGE, exportedJson)
+          void saveShipConfigJsonToFile(exportedJson)
           return
         }
 
         if (normalizedKey === 'i') {
           event.preventDefault()
-          const rawInput = window.prompt(SHORTCUT_IMPORT_PROMPT_MESSAGE)
-          if (!rawInput) {
-            return
-          }
+          void (async () => {
+            const rawInput = await readShipConfigJsonFromFile()
+            if (!rawInput) {
+              return
+            }
 
-          importShipConfigFromJson(rawInput)
+            importShipConfigFromJson(rawInput)
+          })()
           return
         }
 

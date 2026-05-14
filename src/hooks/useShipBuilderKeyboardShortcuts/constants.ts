@@ -15,9 +15,6 @@ export const SHORTCUT_KEYS = {
   T: 't',
 } as const
 
-export const SHORTCUT_EXPORT_PROMPT_MESSAGE = 'Ship JSON (copy manually):'
-export const SHORTCUT_IMPORT_PROMPT_MESSAGE = 'Paste ship JSON to import:'
-
 export const SHORTCUT_SLOT_BY_KEY: ShortcutSlotMap = {
   '1': 'body',
   '2': 'cockpit',

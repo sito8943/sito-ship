@@ -32,6 +32,18 @@ type ShipBuilderState = {
   historyIndex: number
 }
 
+const isTouchDevice = (): boolean => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+
+  return (
+    'ontouchstart' in window ||
+    window.navigator.maxTouchPoints > 0 ||
+    window.matchMedia('(pointer: coarse)').matches
+  )
+}
+
 const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   const [sceneManager, setSceneManager] = useState<ShipBuilderSceneManager | null>(null)
   const sceneManagerRef = useRef<ShipBuilderSceneManager | null>(null)
@@ -352,6 +364,11 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   useEffect(() => {
     if (!hasInitializedExperienceModeRef.current) {
       hasInitializedExperienceModeRef.current = true
+      return
+    }
+
+    if (experienceMode === 'builder' && isTouchDevice()) {
+      setMessage(null)
       return
     }
 
