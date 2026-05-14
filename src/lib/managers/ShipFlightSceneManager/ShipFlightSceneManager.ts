@@ -34,6 +34,7 @@ import { getCachedPlanetTexture, loadPlanetTexture } from '@/lib/utils/PlanetTex
 import {
   FLIGHT_SCENE_BANK,
   FLIGHT_SCENE_CAMERA,
+  MOBILE_FLIGHT_SCENE_CAMERA,
   FLIGHT_SCENE_PLANET_POOL_SIZE,
   FLIGHT_SCENE_PLANET_TEMPLATES,
   FLIGHT_SCENE_POST_PROCESSING,
@@ -97,6 +98,8 @@ const pickRandomTemplate = () => {
   return FLIGHT_SCENE_PLANET_TEMPLATES[index]
 }
 
+type FlightSceneCameraConfig = typeof FLIGHT_SCENE_CAMERA
+
 export class ShipFlightSceneManager {
   private readonly isDevEnvironment = import.meta.env.DEV
   private canvas: HTMLCanvasElement | null = null
@@ -123,6 +126,7 @@ export class ShipFlightSceneManager {
   private touchStrafe = 0
   private touchPitch = 0
   private touchFire = false
+  private activeCameraConfig: FlightSceneCameraConfig = FLIGHT_SCENE_CAMERA
   private readonly lookTarget = new Vector3(
     FLIGHT_SCENE_CAMERA.lookAt.x,
     FLIGHT_SCENE_CAMERA.lookAt.y,
@@ -227,6 +231,13 @@ export class ShipFlightSceneManager {
       return
     }
 
+    this.activeCameraConfig = this.resolveCameraConfig()
+    this.lookTarget.set(
+      this.activeCameraConfig.lookAt.x,
+      this.activeCameraConfig.lookAt.y,
+      this.activeCameraConfig.lookAt.z
+    )
+
     this.renderer = new WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
@@ -241,15 +252,15 @@ export class ShipFlightSceneManager {
     this.scene.fog = new FogExp2(FLIGHT_SCENE_RENDERER.clearColor, 0.006)
 
     this.camera = new PerspectiveCamera(
-      FLIGHT_SCENE_CAMERA.fov,
+      this.activeCameraConfig.fov,
       1,
-      FLIGHT_SCENE_CAMERA.near,
-      FLIGHT_SCENE_CAMERA.far
+      this.activeCameraConfig.near,
+      this.activeCameraConfig.far
     )
     this.camera.position.set(
-      FLIGHT_SCENE_CAMERA.position.x,
-      FLIGHT_SCENE_CAMERA.position.y,
-      FLIGHT_SCENE_CAMERA.position.z
+      this.activeCameraConfig.position.x,
+      this.activeCameraConfig.position.y,
+      this.activeCameraConfig.position.z
     )
     this.camera.lookAt(this.lookTarget)
 
@@ -671,7 +682,7 @@ export class ShipFlightSceneManager {
     const mesh = new Mesh(new SphereGeometry(radius, 32, 28), material)
 
     const xySpread = FLIGHT_SCENE_SPACE.xySpread
-    const cameraZ = this.camera?.position.z ?? FLIGHT_SCENE_CAMERA.position.z
+    const cameraZ = this.camera?.position.z ?? this.activeCameraConfig.position.z
     const x = (Math.random() - 0.5) * xySpread
     const y = (Math.random() - 0.5) * xySpread * 0.6
     const z = spawnAhead
@@ -744,6 +755,8 @@ export class ShipFlightSceneManager {
       return
     }
 
+    this.applyCameraConfig(this.resolveCameraConfig())
+
     const { width, height } = this.getSceneSize()
     if (width <= 0 || height <= 0) {
       return
@@ -810,7 +823,7 @@ export class ShipFlightSceneManager {
   }
 
   private updateSpaceMotion(delta: number) {
-    const cameraZ = this.camera?.position.z ?? FLIGHT_SCENE_CAMERA.position.z
+    const cameraZ = this.camera?.position.z ?? this.activeCameraConfig.position.z
     const despawnZ = cameraZ + FLIGHT_SCENE_SPACE.zDespawnBehind
     const yawDriftSpeed = -this.strafe * FLIGHT_SCENE_SPACE.yawDrift
 
@@ -958,6 +971,35 @@ export class ShipFlightSceneManager {
 
   private getAxisInput(positive: boolean, negative: boolean): number {
     return (positive ? 1 : 0) - (negative ? 1 : 0)
+  }
+
+  private resolveCameraConfig(): FlightSceneCameraConfig {
+    if (typeof window === 'undefined') {
+      return FLIGHT_SCENE_CAMERA
+    }
+
+    const hasCoarsePointer = window.matchMedia('(pointer: coarse)').matches
+    const isNarrowViewport = window.matchMedia('(max-width: 900px)').matches
+
+    if (hasCoarsePointer || isNarrowViewport) {
+      return MOBILE_FLIGHT_SCENE_CAMERA
+    }
+
+    return FLIGHT_SCENE_CAMERA
+  }
+
+  private applyCameraConfig(config: FlightSceneCameraConfig) {
+    this.activeCameraConfig = config
+    this.lookTarget.set(config.lookAt.x, config.lookAt.y, config.lookAt.z)
+
+    if (!this.camera) {
+      return
+    }
+
+    this.camera.fov = config.fov
+    this.camera.near = config.near
+    this.camera.far = config.far
+    this.camera.position.set(config.position.x, config.position.y, config.position.z)
   }
 
   private animate = () => {

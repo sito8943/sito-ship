@@ -170,8 +170,8 @@ body {
   position: absolute;
   left: 24px;
   bottom: 24px;
-  width: 144px;
-  height: 144px;
+  width: 80px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,8 +192,8 @@ body {
 
 .flight-touch__joystick-knob {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid rgba(191, 219, 254, 0.7);
   background: rgba(59, 130, 246, 0.55);
@@ -206,8 +206,8 @@ body {
   position: absolute;
   right: 24px;
   bottom: 24px;
-  width: 112px;
-  height: 112px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   border: 1px solid rgba(248, 113, 113, 0.65);
   background: rgba(127, 29, 29, 0.55);

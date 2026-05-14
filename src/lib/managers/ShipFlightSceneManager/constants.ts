@@ -4,8 +4,24 @@ export const FLIGHT_SCENE_CAMERA = {
   far: 520,
   position: {
     x: 0,
-    y: 3.1,
-    z: 15.2,
+    y: 5.1,
+    z: 10.2,
+  },
+  lookAt: {
+    x: 0,
+    y: 0.2,
+    z: -6,
+  },
+} as const
+
+export const MOBILE_FLIGHT_SCENE_CAMERA = {
+  fov: 52,
+  near: 0.1,
+  far: 520,
+  position: {
+    x: 0,
+    y: 5.1,
+    z: 10.2,
   },
   lookAt: {
     x: 0,
