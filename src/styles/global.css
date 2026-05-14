@@ -839,6 +839,8 @@ body {
 
 @media (max-width: 900px) {
   .flight-view__hud {
+    background: none;
+    border: none;
     top: 12px;
     left: 12px;
     right: 12px;

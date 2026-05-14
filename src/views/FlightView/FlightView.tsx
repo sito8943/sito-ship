@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { faScrewdriverWrench } from '@fortawesome/free-solid-svg-icons'
 import FlightSceneCanvas from '@/components/FlightSceneCanvas'
 import MobileFlightControls from '@/components/MobileFlightControls'
-import { Button } from '@/components/ui'
+import { Button, IconButton } from '@/components/ui'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { ShipFlightSceneManager } from '@/lib/managers/ShipFlightSceneManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
@@ -104,9 +105,20 @@ const FlightView = () => {
       >
         <header className="flight-view__hud-header">
           <h2 className="flight-view__title">{FLIGHT_VIEW_TITLE}</h2>
-          <Button size="sm" variant="ghost" onClick={closeFlightView}>
-            {FLIGHT_VIEW_BACK_LABEL}
-          </Button>
+          {isTouchDevice ? (
+            <IconButton
+              size="sm"
+              variant="ghost"
+              icon={faScrewdriverWrench}
+              label={FLIGHT_VIEW_BACK_LABEL}
+              title={FLIGHT_VIEW_BACK_LABEL}
+              onClick={closeFlightView}
+            />
+          ) : (
+            <Button size="sm" variant="ghost" onClick={closeFlightView}>
+              {FLIGHT_VIEW_BACK_LABEL}
+            </Button>
+          )}
         </header>
 
         {!isTouchDevice ? (
