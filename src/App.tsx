@@ -1,16 +1,21 @@
+import { lazy, Suspense } from 'react'
+import ViewTransitionOverlay from '@/components/ViewTransitionOverlay'
 import AppLayout from '@/layouts/AppLayout'
 import DialogProvider from '@/providers/DialogProvider'
-import ShipBuilderProvider from '@/providers/ShipBuilderProvider'
-import HomeView from '@/views/HomeView'
+
+const ShipBuilderProvider = lazy(() => import('@/providers/ShipBuilderProvider'))
+const HomeView = lazy(() => import('@/views/HomeView'))
 
 const App = () => {
   return (
     <DialogProvider>
-      <ShipBuilderProvider>
-        <AppLayout>
-          <HomeView />
-        </AppLayout>
-      </ShipBuilderProvider>
+      <Suspense fallback={<ViewTransitionOverlay visible />}>
+        <ShipBuilderProvider>
+          <AppLayout>
+            <HomeView />
+          </AppLayout>
+        </ShipBuilderProvider>
+      </Suspense>
     </DialogProvider>
   )
 }

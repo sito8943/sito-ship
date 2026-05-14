@@ -111,7 +111,7 @@ export const useShipBuilderKeyboardShortcuts = ({
       if (normalizedKey === SHORTCUT_KEYS.TAB) {
         event.preventDefault()
         if (event.shiftKey) {
-          sceneManager.togglePanoramicView()
+          sceneManager?.togglePanoramicView()
           return
         }
 
@@ -152,25 +152,25 @@ export const useShipBuilderKeyboardShortcuts = ({
 
       if (normalizedKey === SHORTCUT_KEYS.F) {
         event.preventDefault()
-        sceneManager.focusSelectedSlot()
+        sceneManager?.focusSelectedSlot()
         return
       }
 
       if (normalizedKey === SHORTCUT_KEYS.C) {
         event.preventDefault()
-        sceneManager.toggleFreeCamera()
+        sceneManager?.toggleFreeCamera()
         return
       }
 
       if (normalizedKey === SHORTCUT_KEYS.HOME) {
         event.preventDefault()
-        sceneManager.zoomToShip()
+        sceneManager?.zoomToShip()
         return
       }
 
       if (normalizedKey === SHORTCUT_KEYS.V) {
         event.preventDefault()
-        sceneManager.toggleCinematicView()
+        sceneManager?.toggleCinematicView()
       }
     }
 

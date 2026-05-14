@@ -1,14 +1,19 @@
-import { useCallback, useState } from 'react'
+import { lazy, Suspense, useCallback, useState } from 'react'
 import { useDialog } from '@/hooks/useDialog'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { useShipBuilderKeyboardShortcuts } from '@/hooks/useShipBuilderKeyboardShortcuts'
 import { DIALOG_IDS } from '@/providers/DialogProvider'
 import {
   ShipBuilderControlsFooter,
-  ShipBuilderControlsImportExportAside,
   ShipBuilderControlsMainAside,
-  ShipBuilderShortcutsDialog,
 } from '@/components/ShipBuilderControls/components'
+
+const ShipBuilderControlsImportExportAside = lazy(
+  () => import('@/components/ShipBuilderControls/components/ShipBuilderControlsImportExportAside')
+)
+const ShipBuilderShortcutsDialog = lazy(
+  () => import('@/components/ShipBuilderControls/components/ShipBuilderShortcutsDialog')
+)
 
 const ShipBuilderControls = () => {
   const [hideUI, setHideUI] = useState(false)
@@ -30,10 +35,12 @@ const ShipBuilderControls = () => {
         isHidden={hideUI}
         panelVisibilityClassName={controlsPanelVisibilityClass}
       />
-      <ShipBuilderControlsImportExportAside
-        isHidden={hideUI}
-        panelVisibilityClassName={controlsPanelVisibilityClass}
-      />
+      <Suspense fallback={null}>
+        <ShipBuilderControlsImportExportAside
+          isHidden={hideUI}
+          panelVisibilityClassName={controlsPanelVisibilityClass}
+        />
+      </Suspense>
       <ShipBuilderControlsFooter
         hideUI={hideUI}
         experienceMode={experienceMode}
@@ -41,7 +48,11 @@ const ShipBuilderControls = () => {
         onToggleExperienceMode={toggleExperienceMode}
         onOpenKeyboardShortcuts={shortcutsDialog.open}
       />
-      <ShipBuilderShortcutsDialog isOpen={shortcutsDialog.isOpen} onClose={shortcutsDialog.close} />
+      {shortcutsDialog.isOpen ? (
+        <Suspense fallback={null}>
+          <ShipBuilderShortcutsDialog isOpen onClose={shortcutsDialog.close} />
+        </Suspense>
+      ) : null}
     </>
   )
 }

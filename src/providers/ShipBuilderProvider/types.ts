@@ -22,7 +22,7 @@ export type ShipBuilderMessage = {
 }
 
 export type ShipBuilderContextValue = {
-  sceneManager: ShipBuilderSceneManager
+  sceneManager: ShipBuilderSceneManager | null
   shipConfig: ShipConfig
   selectedSlot: ShipSlot
   experienceMode: ExperienceMode

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import SceneCanvas from '@/components/SceneCanvas'
 import ShipBuilderControls from '@/components/ShipBuilderControls'
 import ViewTransitionOverlay from '@/components/ViewTransitionOverlay'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
-import FlightView from '@/views/FlightView'
+
+const FlightView = lazy(() => import('@/views/FlightView'))
 
 const FADE_IN_MS = 350
 const HOLD_MS = 150
@@ -44,7 +45,9 @@ const HomeView = () => {
 
   const content =
     displayedMode === 'flight' ? (
-      <FlightView />
+      <Suspense fallback={<ViewTransitionOverlay visible />}>
+        <FlightView />
+      </Suspense>
     ) : (
       <section className="home-view">
         <SceneCanvas />

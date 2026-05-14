@@ -7,7 +7,7 @@ import {
   ShipConfigIOManager,
   type ImportShipConfigResult,
 } from '@/lib/managers/ShipConfigIOManager'
-import { ShipBuilderSceneManager } from '@/lib/managers/ShipBuilderSceneManager'
+import type { ShipBuilderSceneManager } from '@/lib/managers/ShipBuilderSceneManager'
 import type { ExperienceMode } from '@/lib/managers/ShipBuilderSceneManager/types'
 import type { ShipConfig, ShipSlot, ShipSlotPatch } from '@/lib/models/ShipConfig'
 import { ShipBuilderContext } from '@/providers/ShipBuilderProvider/context'
@@ -33,7 +33,8 @@ type ShipBuilderState = {
 }
 
 const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
-  const sceneManager = useMemo(() => new ShipBuilderSceneManager(), [])
+  const [sceneManager, setSceneManager] = useState<ShipBuilderSceneManager | null>(null)
+  const sceneManagerRef = useRef<ShipBuilderSceneManager | null>(null)
   const shipConfigManager = useMemo(() => new ShipConfigManager(), [])
   const shipConfigIOManager = useMemo(() => new ShipConfigIOManager(), [])
 
@@ -125,10 +126,27 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   }, [builderState])
 
   useEffect(() => {
-    return () => {
-      sceneManager.destroy()
+    let isCancelled = false
+
+    const initializeSceneManager = async () => {
+      const { ShipBuilderSceneManager } = await import('@/lib/managers/ShipBuilderSceneManager')
+      if (isCancelled) {
+        return
+      }
+
+      const nextSceneManager = new ShipBuilderSceneManager()
+      sceneManagerRef.current = nextSceneManager
+      setSceneManager(nextSceneManager)
     }
-  }, [sceneManager])
+
+    void initializeSceneManager()
+
+    return () => {
+      isCancelled = true
+      sceneManagerRef.current?.destroy()
+      sceneManagerRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     if (hasRestoredStorageRef.current) {
@@ -351,6 +369,10 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   }, [experienceMode])
 
   useEffect(() => {
+    if (!sceneManager) {
+      return
+    }
+
     sceneManager.setSlotSelectionHandler((slot) => {
       if (!slot) {
         return
@@ -399,10 +421,18 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   }, [sceneManager, updateSlot])
 
   useEffect(() => {
+    if (!sceneManager) {
+      return
+    }
+
     sceneManager.setSelectedSlot(selectedSlot)
   }, [sceneManager, selectedSlot])
 
   useEffect(() => {
+    if (!sceneManager) {
+      return
+    }
+
     sceneManager.setExperienceMode(experienceMode)
   }, [sceneManager, experienceMode])
 
@@ -421,6 +451,10 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
   }, [builderState.shipConfig.weapons.variant, selectedSlot, transformMode])
 
   useEffect(() => {
+    if (!sceneManager) {
+      return
+    }
+
     sceneManager.setTransformMode(transformMode)
   }, [sceneManager, transformMode])
 

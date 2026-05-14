@@ -6,6 +6,10 @@ const SceneCanvas = () => {
   const { sceneManager, shipConfig } = useShipBuilder()
 
   useEffect(() => {
+    if (!sceneManager) {
+      return
+    }
+
     const canvas = canvasRef.current
     if (!canvas) {
       return
@@ -19,6 +23,10 @@ const SceneCanvas = () => {
   }, [sceneManager])
 
   useEffect(() => {
+    if (!sceneManager) {
+      return
+    }
+
     sceneManager.syncShipConfig(shipConfig)
   }, [sceneManager, shipConfig])
 
