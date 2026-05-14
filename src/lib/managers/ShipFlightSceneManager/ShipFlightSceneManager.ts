@@ -13,7 +13,6 @@ import {
   MathUtils,
   Matrix4,
   Mesh,
-  MeshBasicMaterial,
   MeshStandardMaterial,
   PerspectiveCamera,
   Points,
@@ -27,6 +26,7 @@ import {
   type Material,
 } from 'three'
 import { thrusterFragmentShader, thrusterVertexShader } from '@/lib/shaders/thruster'
+import { projectileFragmentShader, projectileVertexShader } from '@/lib/shaders/projectile'
 import { BloomEffect, EffectComposer, EffectPass, FXAAEffect, RenderPass } from 'postprocessing'
 import Stats from 'three/addons/libs/stats.module.js'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
@@ -412,11 +412,18 @@ export class ShipFlightSceneManager {
     geometry.setIndex([0, 1, 2])
     geometry.computeVertexNormals()
 
-    const bloomColor = new Color(FLIGHT_SCENE_PROJECTILES.color).multiplyScalar(2.6)
-    const material = new MeshBasicMaterial({
-      color: bloomColor,
+    const coreColor = new Color('#ffffff')
+    const edgeColor = new Color(FLIGHT_SCENE_PROJECTILES.color).multiplyScalar(1.8)
+    const material = new ShaderMaterial({
+      vertexShader: projectileVertexShader,
+      fragmentShader: projectileFragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uCoreColor: { value: coreColor },
+        uEdgeColor: { value: edgeColor },
+        uSize: { value: size },
+      },
       transparent: true,
-      opacity: 1,
       side: DoubleSide,
       blending: AdditiveBlending,
       depthWrite: false,
@@ -1017,6 +1024,10 @@ export class ShipFlightSceneManager {
     this.updateProjectiles(delta)
     if (this.thrusterField) {
       this.thrusterField.material.uniforms.uTime.value = elapsed
+    }
+    if (this.projectileField) {
+      const projectileMaterial = this.projectileField.mesh.material as ShaderMaterial
+      projectileMaterial.uniforms.uTime.value = elapsed
     }
     this.camera.lookAt(this.lookTarget)
     if (this.composer) {
