@@ -1,13 +1,16 @@
 import {
   AdditiveBlending,
   AmbientLight,
+  AxesHelper,
   BufferAttribute,
   BufferGeometry,
   Clock,
   Color,
   DirectionalLight,
+  DirectionalLightHelper,
   DoubleSide,
   FogExp2,
+  GridHelper,
   Group,
   InstancedMesh,
   MathUtils,
@@ -30,6 +33,8 @@ import { projectileFragmentShader, projectileVertexShader } from '@/lib/shaders/
 import { muzzleFlashFragmentShader, muzzleFlashVertexShader } from '@/lib/shaders/muzzleFlash'
 import { BloomEffect, EffectComposer, EffectPass, FXAAEffect, RenderPass } from 'postprocessing'
 import Stats from 'three/addons/libs/stats.module.js'
+import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
 import { PLANET_TEXTURE_URLS } from '@/assets/resources'
@@ -104,6 +109,12 @@ const pickRandomTemplate = () => {
 
 type FlightSceneCameraConfig = typeof FLIGHT_SCENE_CAMERA
 
+type FlightDebugHelpersVisibility = {
+  axes: boolean
+  grid: boolean
+  light: boolean
+}
+
 export class ShipFlightSceneManager {
   private readonly isDevEnvironment = import.meta.env.DEV
   private canvas: HTMLCanvasElement | null = null
@@ -112,6 +123,18 @@ export class ShipFlightSceneManager {
   private camera: PerspectiveCamera | null = null
   private clock: Clock | null = null
   private stats: Stats | null = null
+  private debugGui: GUI | null = null
+  private axesHelper: AxesHelper | null = null
+  private gridHelper: GridHelper | null = null
+  private directionalLights: DirectionalLight[] = []
+  private lightHelpers: DirectionalLightHelper[] = []
+  private debugHelpersVisibility: FlightDebugHelpersVisibility = {
+    axes: false,
+    grid: false,
+    light: false,
+  }
+  private orbitControls: OrbitControls | null = null
+  private isFreeCameraEnabled = false
   private composer: EffectComposer | null = null
   private shipGroup: Group | null = null
   private shipModelGroup: Group | null = null
@@ -201,6 +224,9 @@ export class ShipFlightSceneManager {
     this.disposeMuzzleFlash()
     this.disposeProjectiles()
     this.disposeSceneObjects()
+    this.disposeDebugGui()
+    this.disposeDebugHelpers()
+    this.disposeOrbitControls()
     this.disposeStats()
     this.composer?.dispose()
     this.renderer?.dispose()
@@ -215,6 +241,8 @@ export class ShipFlightSceneManager {
     this.planetsLayer = null
     this.shipModelManager = null
     this.pendingShipConfig = null
+    this.directionalLights = []
+    this.isFreeCameraEnabled = false
     this.canvas = null
     this.strafe = 0
     this.targetStrafe = 0
@@ -277,6 +305,7 @@ export class ShipFlightSceneManager {
     this.initializeSpace()
     this.initializePostProcessing()
     this.initializeStats()
+    this.initializeDebugGui()
   }
 
   private initializePostProcessing() {
@@ -340,6 +369,167 @@ export class ShipFlightSceneManager {
     const rimLight = new DirectionalLight('#93c5fd', 0.92)
     rimLight.position.set(-6.4, 3.1, -8.2)
     this.scene.add(rimLight)
+
+    this.directionalLights = [keyLight, rimLight]
+    if (this.isDevEnvironment) {
+      this.initializeDebugHelpers()
+    }
+  }
+
+  private initializeDebugHelpers() {
+    if (!this.scene) {
+      return
+    }
+
+    this.disposeDebugHelpers()
+
+    this.axesHelper = new AxesHelper(5)
+    this.scene.add(this.axesHelper)
+
+    this.gridHelper = new GridHelper(40, 40, 0x4f6d8a, 0x223044)
+    this.scene.add(this.gridHelper)
+
+    this.directionalLights.forEach((light) => {
+      const helper = new DirectionalLightHelper(light, 3.5)
+      this.scene?.add(helper)
+      this.lightHelpers.push(helper)
+    })
+
+    this.updateDebugHelpersVisibility()
+  }
+
+  private disposeDebugHelpers() {
+    if (this.axesHelper) {
+      this.scene?.remove(this.axesHelper)
+      this.axesHelper.dispose()
+      this.axesHelper = null
+    }
+    if (this.gridHelper) {
+      this.scene?.remove(this.gridHelper)
+      this.gridHelper.dispose()
+      this.gridHelper = null
+    }
+    this.lightHelpers.forEach((helper) => {
+      helper.dispose()
+      this.scene?.remove(helper)
+    })
+    this.lightHelpers = []
+  }
+
+  private updateDebugHelpersVisibility() {
+    if (this.axesHelper) {
+      this.axesHelper.visible = this.debugHelpersVisibility.axes
+    }
+    if (this.gridHelper) {
+      this.gridHelper.visible = this.debugHelpersVisibility.grid
+    }
+    this.lightHelpers.forEach((helper) => {
+      helper.visible = this.debugHelpersVisibility.light
+    })
+  }
+
+  private setDebugHelpersVisibility(visibility: Partial<FlightDebugHelpersVisibility>) {
+    if (visibility.axes !== undefined) {
+      this.debugHelpersVisibility.axes = visibility.axes
+    }
+    if (visibility.grid !== undefined) {
+      this.debugHelpersVisibility.grid = visibility.grid
+    }
+    if (visibility.light !== undefined) {
+      this.debugHelpersVisibility.light = visibility.light
+    }
+    this.updateDebugHelpersVisibility()
+  }
+
+  private initializeDebugGui() {
+    if (!this.isDevEnvironment) {
+      return
+    }
+
+    this.disposeDebugGui()
+    this.debugGui = new GUI({
+      title: 'Flight Debug',
+      width: 280,
+    })
+
+    const helpersFolder = this.debugGui.addFolder('Helpers')
+    helpersFolder
+      .add(this.debugHelpersVisibility, 'axes')
+      .name('Axes Helper')
+      .onChange((value: boolean) => {
+        this.setDebugHelpersVisibility({ axes: value })
+      })
+    helpersFolder
+      .add(this.debugHelpersVisibility, 'grid')
+      .name('Grid Helper')
+      .onChange((value: boolean) => {
+        this.setDebugHelpersVisibility({ grid: value })
+      })
+    helpersFolder
+      .add(this.debugHelpersVisibility, 'light')
+      .name('Light Helpers')
+      .onChange((value: boolean) => {
+        this.setDebugHelpersVisibility({ light: value })
+      })
+
+    const cameraFolder = this.debugGui.addFolder('Camera')
+    const cameraOptions = { freeOrbit: this.isFreeCameraEnabled }
+    cameraFolder
+      .add(cameraOptions, 'freeOrbit')
+      .name('Free Camera Orbit')
+      .onChange((value: boolean) => {
+        this.setFreeCameraEnabled(value)
+      })
+  }
+
+  private setFreeCameraEnabled(enabled: boolean) {
+    if (this.isFreeCameraEnabled === enabled) {
+      return
+    }
+
+    this.isFreeCameraEnabled = enabled
+    if (enabled) {
+      this.enableFreeCamera()
+      return
+    }
+
+    this.disableFreeCamera()
+  }
+
+  private enableFreeCamera() {
+    if (!this.camera || !this.canvas) {
+      return
+    }
+
+    this.disposeOrbitControls()
+    this.orbitControls = new OrbitControls(this.camera, this.canvas)
+    this.orbitControls.enableDamping = true
+    this.orbitControls.dampingFactor = 0.08
+    this.orbitControls.target.copy(this.lookTarget)
+    this.orbitControls.update()
+  }
+
+  private disableFreeCamera() {
+    this.disposeOrbitControls()
+    if (!this.camera) {
+      return
+    }
+    this.camera.position.set(
+      this.activeCameraConfig.position.x,
+      this.activeCameraConfig.position.y,
+      this.activeCameraConfig.position.z
+    )
+    this.camera.lookAt(this.lookTarget)
+  }
+
+  private disposeOrbitControls() {
+    this.orbitControls?.dispose()
+    this.orbitControls = null
+  }
+
+  private disposeDebugGui() {
+    this.debugGui?.destroy()
+    this.debugGui = null
   }
 
   private initializeShip() {
@@ -1164,7 +1354,11 @@ export class ShipFlightSceneManager {
       const projectileMaterial = this.projectileField.mesh.material as ShaderMaterial
       projectileMaterial.uniforms.uTime.value = elapsed
     }
-    this.camera.lookAt(this.lookTarget)
+    if (this.isFreeCameraEnabled && this.orbitControls) {
+      this.orbitControls.update()
+    } else {
+      this.camera.lookAt(this.lookTarget)
+    }
     if (this.composer) {
       this.composer.render()
     } else {

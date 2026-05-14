@@ -32,13 +32,6 @@ export const DEFAULT_ORBIT_CONSTRAINTS = {
   maxPolarAngle: Math.PI * 0.48,
 } as const
 
-export const FREE_CAMERA_ORBIT_CONSTRAINTS = {
-  minDistance: 1.2,
-  maxDistance: 60,
-  minPolarAngle: 0.02,
-  maxPolarAngle: Math.PI - 0.02,
-} as const
-
 export const PANORAMIC_ORBIT_CONSTRAINTS = {
   minDistance: 8.5,
   maxDistance: 30,

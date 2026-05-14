@@ -131,9 +131,9 @@ export const SHIP_SYMMETRIC_AIM_ROTATION_RANGES: Record<ShipSymmetricSlot, Offse
 export const SHIP_ENGINE_AIM_ROTATION_RANGES = SHIP_SYMMETRIC_AIM_ROTATION_RANGES.engines
 
 export const SHIP_SYMMETRIC_PAIR_SPREAD_RANGES: Record<ShipSymmetricSlot, TransformRange> = {
-  wings: { min: -2.2, max: 1.4, step: 0.02 },
-  engines: { min: -2.2, max: 1.4, step: 0.02 },
-  weapons: { min: -2.2, max: 1.4, step: 0.02 },
+  wings: { min: -1, max: 1.4, step: 0.02 },
+  engines: { min: -1, max: 1.4, step: 0.02 },
+  weapons: { min: -1, max: 1.4, step: 0.02 },
 }
 
 export const SHIP_ENGINE_PAIR_SPREAD_RANGE = SHIP_SYMMETRIC_PAIR_SPREAD_RANGES.engines

@@ -61,7 +61,6 @@ export const SHIP_BUILDER_SHORTCUTS_SECTIONS: ShortcutSection[] = [
     title: 'Camera',
     shortcuts: [
       { key: 'F', description: 'Focus selected part' },
-      { key: 'C', description: 'Toggle free camera' },
       { key: 'Home', description: 'Zoom to fit entire ship' },
       { key: 'V', description: 'Toggle cinematic view' },
     ],

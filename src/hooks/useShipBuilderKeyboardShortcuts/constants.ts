@@ -10,7 +10,6 @@ export const SHORTCUT_KEYS = {
   BACKSPACE: 'backspace',
   DELETE: 'delete',
   F: 'f',
-  C: 'c',
   V: 'v',
   T: 't',
 } as const

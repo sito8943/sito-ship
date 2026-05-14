@@ -157,12 +157,6 @@ export const useShipBuilderKeyboardShortcuts = ({
         return
       }
 
-      if (normalizedKey === SHORTCUT_KEYS.C) {
-        event.preventDefault()
-        sceneManager?.toggleFreeCamera()
-        return
-      }
-
       if (normalizedKey === SHORTCUT_KEYS.HOME) {
         event.preventDefault()
         sceneManager?.zoomToShip()

@@ -40,7 +40,6 @@ import {
   CINEMATIC_ROTATION_SPEED,
   DEFAULT_ORBIT_CONSTRAINTS,
   FLIGHT_SETTINGS,
-  FREE_CAMERA_ORBIT_CONSTRAINTS,
   MAX_DEVICE_PIXEL_RATIO,
   OVERLAP_SLOT_PAIRS,
   OVERLAP_VOLUME_RATIO_THRESHOLD,
@@ -126,7 +125,6 @@ export class ShipBuilderSceneManager {
   private animationFrameId = 0
   private isMounted = false
   private isPanoramicViewEnabled = false
-  private isFreeCameraEnabled = false
   private isCinematicViewEnabled = false
   private experienceMode: ExperienceMode = 'builder'
   private selectedSlot: ShipSlot | null = 'body'
@@ -233,15 +231,6 @@ export class ShipBuilderSceneManager {
     }
 
     this.isPanoramicViewEnabled = !this.isPanoramicViewEnabled
-    this.applyCameraViewConstraints()
-  }
-
-  toggleFreeCamera() {
-    if (this.experienceMode === 'flight') {
-      return
-    }
-
-    this.isFreeCameraEnabled = !this.isFreeCameraEnabled
     this.applyCameraViewConstraints()
   }
 
@@ -456,7 +445,6 @@ export class ShipBuilderSceneManager {
     this.renderer = null
     this.canvas = null
     this.isPanoramicViewEnabled = false
-    this.isFreeCameraEnabled = false
     this.isCinematicViewEnabled = false
   }
 
@@ -818,11 +806,9 @@ export class ShipBuilderSceneManager {
       return
     }
 
-    const constraints = this.isFreeCameraEnabled
-      ? FREE_CAMERA_ORBIT_CONSTRAINTS
-      : this.isPanoramicViewEnabled
-        ? PANORAMIC_ORBIT_CONSTRAINTS
-        : DEFAULT_ORBIT_CONSTRAINTS
+    const constraints = this.isPanoramicViewEnabled
+      ? PANORAMIC_ORBIT_CONSTRAINTS
+      : DEFAULT_ORBIT_CONSTRAINTS
 
     this.applyOrbitConstraints(constraints)
     if (this.controls) {
