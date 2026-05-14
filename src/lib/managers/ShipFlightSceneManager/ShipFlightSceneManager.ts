@@ -25,6 +25,13 @@ import {
   WebGLRenderer,
   type Material,
 } from 'three'
+import {
+  BloomEffect,
+  EffectComposer,
+  EffectPass,
+  FXAAEffect,
+  RenderPass,
+} from 'postprocessing'
 import Stats from 'three/addons/libs/stats.module.js'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
@@ -38,6 +45,7 @@ import {
   FLIGHT_SCENE_CAMERA,
   FLIGHT_SCENE_PLANET_POOL_SIZE,
   FLIGHT_SCENE_PLANET_TEMPLATES,
+  FLIGHT_SCENE_POST_PROCESSING,
   FLIGHT_SCENE_PROJECTILES,
   FLIGHT_SCENE_RENDERER,
   FLIGHT_SCENE_SPACE,
@@ -92,6 +100,7 @@ export class ShipFlightSceneManager {
   private camera: PerspectiveCamera | null = null
   private clock: Clock | null = null
   private stats: Stats | null = null
+  private composer: EffectComposer | null = null
   private shipGroup: Group | null = null
   private shipModelGroup: Group | null = null
   private planetsLayer: Group | null = null
@@ -163,8 +172,10 @@ export class ShipFlightSceneManager {
     this.disposeProjectiles()
     this.disposeSceneObjects()
     this.disposeStats()
+    this.composer?.dispose()
     this.renderer?.dispose()
 
+    this.composer = null
     this.renderer = null
     this.scene = null
     this.camera = null
@@ -223,7 +234,31 @@ export class ShipFlightSceneManager {
     this.initializeLights()
     this.initializeShip()
     this.initializeSpace()
+    this.initializePostProcessing()
     this.initializeStats()
+  }
+
+  private initializePostProcessing() {
+    if (!this.renderer || !this.scene || !this.camera) {
+      return
+    }
+
+    this.composer = new EffectComposer(this.renderer)
+    this.composer.addPass(new RenderPass(this.scene, this.camera))
+
+    const bloomEffect = new BloomEffect({
+      intensity: FLIGHT_SCENE_POST_PROCESSING.bloom.intensity,
+      radius: FLIGHT_SCENE_POST_PROCESSING.bloom.radius,
+      luminanceThreshold: FLIGHT_SCENE_POST_PROCESSING.bloom.threshold,
+      mipmapBlur: true,
+    })
+    const bloomPass = new EffectPass(this.camera, bloomEffect)
+    bloomPass.enabled = FLIGHT_SCENE_POST_PROCESSING.bloom.enabled
+    this.composer.addPass(bloomPass)
+
+    const fxaaPass = new EffectPass(this.camera, new FXAAEffect())
+    fxaaPass.enabled = FLIGHT_SCENE_POST_PROCESSING.fxaa.enabled
+    this.composer.addPass(fxaaPass)
   }
 
   private initializeStats() {
@@ -328,21 +363,23 @@ export class ShipFlightSceneManager {
     const size = FLIGHT_SCENE_PROJECTILES.size
     const geometry = new BufferGeometry()
     const vertices = new Float32Array([
-      0, 0, -size,
-      -size * 0.45, 0, size * 0.55,
-      size * 0.45, 0, size * 0.55,
+      0, 0, -size * 3.2,
+      -size * 0.22, 0, size * 0.5,
+      size * 0.22, 0, size * 0.5,
     ])
     geometry.setAttribute('position', new BufferAttribute(vertices, 3))
     geometry.setIndex([0, 1, 2])
     geometry.computeVertexNormals()
 
+    const bloomColor = new Color(FLIGHT_SCENE_PROJECTILES.color).multiplyScalar(2.6)
     const material = new MeshBasicMaterial({
-      color: new Color(FLIGHT_SCENE_PROJECTILES.color),
+      color: bloomColor,
       transparent: true,
-      opacity: 0.95,
+      opacity: 1,
       side: DoubleSide,
       blending: AdditiveBlending,
       depthWrite: false,
+      toneMapped: false,
     })
 
     const mesh = new InstancedMesh(geometry, material, capacity)
@@ -680,6 +717,9 @@ export class ShipFlightSceneManager {
     const pixelRatio = Math.min(window.devicePixelRatio || 1, FLIGHT_SCENE_RENDERER.maxPixelRatio)
     this.renderer.setPixelRatio(pixelRatio)
     this.renderer.setSize(width, height, false)
+    if (this.composer) {
+      this.composer.setSize(width, height, false)
+    }
 
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
@@ -888,7 +928,11 @@ export class ShipFlightSceneManager {
     this.updateThrusters(delta)
     this.updateProjectiles(delta)
     this.camera.lookAt(this.lookTarget)
-    this.renderer.render(this.scene, this.camera)
+    if (this.composer) {
+      this.composer.render()
+    } else {
+      this.renderer.render(this.scene, this.camera)
+    }
 
     this.stats?.end()
 

@@ -82,6 +82,18 @@ export const FLIGHT_SCENE_PROJECTILES = {
   poolSize: 128,
 } as const
 
+export const FLIGHT_SCENE_POST_PROCESSING = {
+  bloom: {
+    enabled: true,
+    intensity: 1.6,
+    radius: 0.72,
+    threshold: 0.55,
+  },
+  fxaa: {
+    enabled: true,
+  },
+} as const
+
 export const FLIGHT_SCENE_PLANET_POOL_SIZE = 5
 
 export const FLIGHT_SCENE_PLANET_TEMPLATES = [
