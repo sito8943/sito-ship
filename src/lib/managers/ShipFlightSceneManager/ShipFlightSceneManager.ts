@@ -284,7 +284,7 @@ export class ShipFlightSceneManager {
 
     this.scene = new Scene()
     this.scene.background = new Color(FLIGHT_SCENE_RENDERER.clearColor)
-    this.scene.fog = new FogExp2(FLIGHT_SCENE_RENDERER.clearColor, 0.006)
+    this.scene.fog = new FogExp2(FLIGHT_SCENE_RENDERER.clearColor, FLIGHT_SCENE_RENDERER.fogDensity)
 
     this.camera = new PerspectiveCamera(
       this.activeCameraConfig.fov,
@@ -359,18 +359,22 @@ export class ShipFlightSceneManager {
       return
     }
 
-    const ambient = new AmbientLight('#b8d7ff', 0.3)
+    const ambient = new AmbientLight('#d7e2f0', 0.2)
     this.scene.add(ambient)
 
-    const keyLight = new DirectionalLight('#fef3c7', 1)
-    keyLight.position.set(4.5, 5.8, 7.2)
+    const keyLight = new DirectionalLight('#fff4d6', 1.6)
+    keyLight.position.set(6.5, 7.5, 8.4)
     this.scene.add(keyLight)
 
-    const rimLight = new DirectionalLight('#93c5fd', 0.55)
-    rimLight.position.set(-6.4, 3.1, -8.2)
+    const rimLight = new DirectionalLight('#bfdcff', 0.42)
+    rimLight.position.set(-7.2, 3.8, -9.5)
     this.scene.add(rimLight)
 
-    this.directionalLights = [keyLight, rimLight]
+    const fillLight = new DirectionalLight('#f3f7ff', 0.18)
+    fillLight.position.set(0, 2.6, 10.5)
+    this.scene.add(fillLight)
+
+    this.directionalLights = [keyLight, rimLight, fillLight]
     if (this.isDevEnvironment) {
       this.initializeDebugHelpers()
     }

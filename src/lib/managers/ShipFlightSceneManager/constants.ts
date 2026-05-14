@@ -33,6 +33,7 @@ export const MOBILE_FLIGHT_SCENE_CAMERA = {
 export const FLIGHT_SCENE_RENDERER = {
   maxPixelRatio: 1.5,
   clearColor: '#03070f',
+  fogDensity: 0.004,
   enableShadows: false,
 } as const
 
@@ -115,9 +116,9 @@ export const FLIGHT_SCENE_MUZZLE_FLASH = {
 export const FLIGHT_SCENE_POST_PROCESSING = {
   bloom: {
     enabled: true,
-    intensity: 0.6,
-    radius: 0.72,
-    threshold: 0.55,
+    intensity: 0.14,
+    radius: 0.5,
+    threshold: 0.78,
   },
   fxaa: {
     enabled: true,
