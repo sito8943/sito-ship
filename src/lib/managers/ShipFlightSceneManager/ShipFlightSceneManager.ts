@@ -275,12 +275,12 @@ export class ShipFlightSceneManager {
 
     this.renderer = new WebGLRenderer({
       canvas: this.canvas,
-      antialias: true,
+      antialias: false,
       alpha: false,
       powerPreference: 'high-performance',
     })
     this.renderer.setClearColor(new Color(FLIGHT_SCENE_RENDERER.clearColor), 1)
-    this.renderer.shadowMap.enabled = true
+    this.renderer.shadowMap.enabled = FLIGHT_SCENE_RENDERER.enableShadows
 
     this.scene = new Scene()
     this.scene.background = new Color(FLIGHT_SCENE_RENDERER.clearColor)
@@ -359,14 +359,14 @@ export class ShipFlightSceneManager {
       return
     }
 
-    const ambient = new AmbientLight('#b8d7ff', 0.52)
+    const ambient = new AmbientLight('#b8d7ff', 0.3)
     this.scene.add(ambient)
 
-    const keyLight = new DirectionalLight('#fef3c7', 1.38)
+    const keyLight = new DirectionalLight('#fef3c7', 1)
     keyLight.position.set(4.5, 5.8, 7.2)
     this.scene.add(keyLight)
 
-    const rimLight = new DirectionalLight('#93c5fd', 0.92)
+    const rimLight = new DirectionalLight('#93c5fd', 0.55)
     rimLight.position.set(-6.4, 3.1, -8.2)
     this.scene.add(rimLight)
 

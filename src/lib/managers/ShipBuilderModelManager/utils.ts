@@ -15,8 +15,8 @@ import type { QuaternionTuple } from '@/lib/models'
 import type { ShipSlot, ShipSlotConfigMap, Vector3Tuple } from '@/lib/models/ShipConfig'
 
 const SHIP_RIM_COLOR = '#9bd3ff'
-const SHIP_RIM_POWER = 2.4
-const SHIP_RIM_INTENSITY = 0.95
+const SHIP_RIM_POWER = 1.5
+const SHIP_RIM_INTENSITY = 0.1
 
 export const createSlotMaterial = (color: string): MeshStandardMaterial => {
   const material = new MeshStandardMaterial({

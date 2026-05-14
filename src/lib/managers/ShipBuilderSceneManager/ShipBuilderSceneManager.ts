@@ -33,6 +33,7 @@ import {
   type ShipSlot,
 } from '@/lib/models/ShipConfig'
 import {
+  BUILDER_SHADOW_SETTINGS,
   BODY_CONTACT_SLOTS,
   BODY_CONTACT_TOLERANCE,
   CAMERA_FOCUS_PADDING,
@@ -455,7 +456,7 @@ export class ShipBuilderSceneManager {
 
     this.renderer = new WebGLRenderer({
       canvas: this.canvas,
-      antialias: true,
+      antialias: false,
       alpha: false,
     })
     this.renderer.shadowMap.enabled = true
@@ -595,8 +596,15 @@ export class ShipBuilderSceneManager {
     const keyLight = new DirectionalLight('#fff6df', 2)
     keyLight.position.set(7, 10, 9)
     keyLight.castShadow = true
-    keyLight.shadow.mapSize.set(1536, 1536)
-    keyLight.shadow.bias = -0.0002
+    keyLight.shadow.mapSize.set(BUILDER_SHADOW_SETTINGS.mapSize, BUILDER_SHADOW_SETTINGS.mapSize)
+    keyLight.shadow.bias = BUILDER_SHADOW_SETTINGS.bias
+    keyLight.shadow.camera.near = BUILDER_SHADOW_SETTINGS.cameraNear
+    keyLight.shadow.camera.far = BUILDER_SHADOW_SETTINGS.cameraFar
+    keyLight.shadow.camera.left = -BUILDER_SHADOW_SETTINGS.cameraBounds
+    keyLight.shadow.camera.right = BUILDER_SHADOW_SETTINGS.cameraBounds
+    keyLight.shadow.camera.top = BUILDER_SHADOW_SETTINGS.cameraBounds
+    keyLight.shadow.camera.bottom = -BUILDER_SHADOW_SETTINGS.cameraBounds
+    keyLight.shadow.camera.updateProjectionMatrix()
     this.scene.add(keyLight)
 
     const rimLight = new DirectionalLight('#9ec5ff', 1.2)

@@ -1,17 +1,25 @@
 import type { ShipSlot } from '@/lib/models/ShipConfig'
 
-export const MAX_DEVICE_PIXEL_RATIO = 2
+export const MAX_DEVICE_PIXEL_RATIO = 1.5
 
 export const POST_PROCESSING_SETTINGS = {
   bloom: {
     enabled: true,
     intensity: 0.04,
-    radius: 0.26,
-    threshold: 1,
+    radius: 0.22,
+    threshold: 0.72,
   },
   fxaa: {
     enabled: true,
   },
+} as const
+
+export const BUILDER_SHADOW_SETTINGS = {
+  mapSize: 1024,
+  bias: -0.0002,
+  cameraNear: 1,
+  cameraFar: 28,
+  cameraBounds: 5.5,
 } as const
 
 export const CAMERA_SETTINGS = {
