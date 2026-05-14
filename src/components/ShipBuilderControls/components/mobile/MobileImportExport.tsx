@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { faFileExport, faFileImport } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
-import { Button, IconButton } from '@/components/ui'
+import { IconButton } from '@/components/ui'
 import { SLOT_LABELS } from '@/components/ShipBuilderControls/constants'
-import type { ShipBuilderControlsImportExportAsideProps } from '@/components/ShipBuilderControls/components/ShipBuilderControlsImportExportAside/types'
 import { readShipConfigJsonFromFile, saveShipConfigJsonToFile } from '@/lib/utils/ShipConfigFileIO'
 
-const ShipBuilderControlsImportExportAside = ({
-  isHidden,
-  panelVisibilityClassName,
-}: ShipBuilderControlsImportExportAsideProps) => {
+export type MobileImportExportProps = {
+  isHidden: boolean
+  panelVisibilityClassName: string
+}
+
+const MobileImportExport = ({ isHidden, panelVisibilityClassName }: MobileImportExportProps) => {
   const {
     overlappingSlots,
     detachedSlots,
@@ -43,6 +43,8 @@ const ShipBuilderControlsImportExportAside = ({
     })()
   }
 
+  const isErrorMessage = message?.kind === 'error' || message?.kind === 'warning'
+
   return (
     <aside
       className={`ship-builder-controls-import-export ship-builder-controls-panel ${panelVisibilityClassName} ${
@@ -52,30 +54,16 @@ const ShipBuilderControlsImportExportAside = ({
       aria-hidden={isHidden}
     >
       <section className="ship-builder-controls__io">
-        <div className="ship-builder-controls__io-actions ship-builder-controls__io-actions--spaced">
-          <Button
-            className="ship-builder-controls__action-button ship-builder-controls__io-action-button ship-builder-controls__io-action-button--desktop"
-            onClick={handleExportJson}
-            leadingIcon={<FontAwesomeIcon icon={faFileExport} fixedWidth />}
-          >
-            Export JSON
-          </Button>
+        <div className="ship-builder-controls__io-actions">
           <IconButton
-            className="ship-builder-controls__action-button ship-builder-controls__io-action-button ship-builder-controls__io-action-button--mobile"
+            className="ship-builder-controls__action-button"
             icon={faFileExport}
             label="Export JSON"
             title="Export JSON"
             onClick={handleExportJson}
           />
-          <Button
-            className="ship-builder-controls__action-button ship-builder-controls__io-action-button ship-builder-controls__io-action-button--desktop"
-            onClick={handleImportJson}
-            leadingIcon={<FontAwesomeIcon icon={faFileImport} fixedWidth />}
-          >
-            Import JSON
-          </Button>
           <IconButton
-            className="ship-builder-controls__action-button ship-builder-controls__io-action-button ship-builder-controls__io-action-button--mobile"
+            className="ship-builder-controls__action-button"
             icon={faFileImport}
             label="Import JSON"
             title="Import JSON"
@@ -83,7 +71,7 @@ const ShipBuilderControlsImportExportAside = ({
           />
         </div>
 
-        {message ? (
+        {message && isErrorMessage ? (
           <p
             className={`ship-builder-controls__io-message ship-builder-controls__io-message--${message.kind}`}
           >
@@ -115,4 +103,4 @@ const ShipBuilderControlsImportExportAside = ({
   )
 }
 
-export default ShipBuilderControlsImportExportAside
+export default MobileImportExport

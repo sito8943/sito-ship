@@ -2,13 +2,8 @@ import { useMemo } from 'react'
 import {
   faArrowRotateLeft,
   faArrowRotateRight,
-  faArrowsToCircle,
   faArrowsRotate,
-  faArrowsSpin,
-  faArrowsUpDownLeftRight,
-  faMaximize,
   faRotateLeft,
-  faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { ShipSlot, ShipSlotConfigMap, ShipSlotPatch } from '@/lib/models/ShipConfig'
@@ -33,15 +28,14 @@ import {
   getUniformScale,
   updateTupleAxis,
 } from '@/components/ShipBuilderControls/utils'
-import type {
-  ShipBuilderControlsMainAsideProps,
-  SymmetricSlot,
-} from '@/components/ShipBuilderControls/components/ShipBuilderControlsMainAside/types'
+import type { SymmetricSlot } from '@/components/ShipBuilderControls/types'
 
-const ShipBuilderControlsMainAside = ({
-  isHidden,
-  panelVisibilityClassName,
-}: ShipBuilderControlsMainAsideProps) => {
+export type DesktopAsideProps = {
+  isHidden: boolean
+  panelVisibilityClassName: string
+}
+
+const DesktopAside = ({ isHidden, panelVisibilityClassName }: DesktopAsideProps) => {
   const {
     shipConfig,
     selectedSlot,
@@ -65,15 +59,11 @@ const ShipBuilderControlsMainAside = ({
     slot: TSlot,
     variant: ShipSlotConfigMap[TSlot]['variant']
   ) => {
-    updateSlot(slot, {
-      variant,
-    } as ShipSlotPatch<TSlot>)
+    updateSlot(slot, { variant } as ShipSlotPatch<TSlot>)
   }
 
   const handleColorChange = <TSlot extends ShipSlot>(slot: TSlot, color: string) => {
-    updateSlot(slot, {
-      color,
-    } as ShipSlotPatch<TSlot>)
+    updateSlot(slot, { color } as ShipSlotPatch<TSlot>)
   }
 
   const handleScaleChange = <TSlot extends ShipSlot>(
@@ -81,15 +71,9 @@ const ShipBuilderControlsMainAside = ({
     scale: number,
     options?: { commitHistory?: boolean }
   ) => {
-    updateSlot(
-      slot,
-      {
-        scale: createVector3Tuple(scale, scale, scale),
-      } as ShipSlotPatch<TSlot>,
-      {
-        commitHistory: options?.commitHistory ?? false,
-      }
-    )
+    updateSlot(slot, { scale: createVector3Tuple(scale, scale, scale) } as ShipSlotPatch<TSlot>, {
+      commitHistory: options?.commitHistory ?? false,
+    })
   }
 
   const handleOffsetAxisChange = <TSlot extends ShipSlot>(
@@ -101,12 +85,8 @@ const ShipBuilderControlsMainAside = ({
     const slotConfig = getSlotConfig(shipConfig, slot)
     updateSlot(
       slot,
-      {
-        offset: updateTupleAxis(slotConfig.offset, axisIndex, value),
-      } as ShipSlotPatch<TSlot>,
-      {
-        commitHistory: options?.commitHistory ?? false,
-      }
+      { offset: updateTupleAxis(slotConfig.offset, axisIndex, value) } as ShipSlotPatch<TSlot>,
+      { commitHistory: options?.commitHistory ?? false }
     )
   }
 
@@ -119,12 +99,8 @@ const ShipBuilderControlsMainAside = ({
     const slotConfig = getSlotConfig(shipConfig, slot)
     updateSlot(
       slot,
-      {
-        rotation: updateTupleAxis(slotConfig.rotation, axisIndex, value),
-      } as ShipSlotPatch<TSlot>,
-      {
-        commitHistory: options?.commitHistory ?? false,
-      }
+      { rotation: updateTupleAxis(slotConfig.rotation, axisIndex, value) } as ShipSlotPatch<TSlot>,
+      { commitHistory: options?.commitHistory ?? false }
     )
   }
 
@@ -136,12 +112,8 @@ const ShipBuilderControlsMainAside = ({
   ) => {
     updateSlot(
       slot,
-      {
-        aimRotation: updateTupleAxis(shipConfig[slot].aimRotation, axisIndex, value),
-      },
-      {
-        commitHistory: options?.commitHistory ?? false,
-      }
+      { aimRotation: updateTupleAxis(shipConfig[slot].aimRotation, axisIndex, value) },
+      { commitHistory: options?.commitHistory ?? false }
     )
   }
 
@@ -150,15 +122,7 @@ const ShipBuilderControlsMainAside = ({
     value: number,
     options?: { commitHistory?: boolean }
   ) => {
-    updateSlot(
-      slot,
-      {
-        pairSpread: value,
-      },
-      {
-        commitHistory: options?.commitHistory ?? false,
-      }
-    )
+    updateSlot(slot, { pairSpread: value }, { commitHistory: options?.commitHistory ?? false })
   }
 
   const uniformScale = getUniformScale(activeSlotConfig.scale)
@@ -202,26 +166,17 @@ const ShipBuilderControlsMainAside = ({
             disabled={!canRedo}
           />
           <Button
-            className="ship-builder-controls__action-button ship-builder-controls__reset-action-button ship-builder-controls__reset-action-button--desktop"
+            className="ship-builder-controls__action-button"
             onClick={resetShipConfig}
             leadingIcon={<FontAwesomeIcon icon={faArrowsRotate} fixedWidth />}
           >
             Reset Ship
           </Button>
-          <IconButton
-            className="ship-builder-controls__action-button ship-builder-controls__reset-action-button ship-builder-controls__reset-action-button--mobile"
-            icon={faArrowsRotate}
-            label="Reset Ship"
-            title="Reset Ship"
-            onClick={resetShipConfig}
-          />
         </div>
       </header>
 
       <section className="ship-builder-controls__section ship-builder-controls__section--selected-slot">
-        <span className="ship-builder-controls__section-title ship-builder-controls__section-title--selected-slot">
-          Selected Slot
-        </span>
+        <span className="ship-builder-controls__section-title">Selected Slot</span>
         <div className="ship-builder-controls__slot-tabs">
           {SLOT_ORDER.map((slot) => {
             return (
@@ -247,19 +202,6 @@ const ShipBuilderControlsMainAside = ({
         <div className="ship-builder-controls__mode-toggle">
           {TRANSFORM_MODE_OPTIONS.map((modeOption) => {
             const isDisabled = modeOption.symmetricOnly === true && !hasSymmetricControls
-            const mobileModeIcon =
-              modeOption.value === 'translate'
-                ? faArrowsUpDownLeftRight
-                : modeOption.value === 'rotate'
-                  ? faArrowsSpin
-                  : modeOption.value === 'scale'
-                    ? faMaximize
-                    : modeOption.value === 'pairSpread'
-                      ? faUpRightAndDownLeftFromCenter
-                      : modeOption.value === 'aimRotate'
-                        ? faArrowsToCircle
-                        : null
-
             return (
               <button
                 key={modeOption.value}
@@ -274,18 +216,7 @@ const ShipBuilderControlsMainAside = ({
                   setTransformMode(modeOption.value)
                 }}
               >
-                {mobileModeIcon ? (
-                  <>
-                    <span className="ship-builder-controls__mode-button-label">
-                      {modeOption.label}
-                    </span>
-                    <span className="ship-builder-controls__mode-button-icon" aria-hidden="true">
-                      <FontAwesomeIcon icon={mobileModeIcon} fixedWidth />
-                    </span>
-                  </>
-                ) : (
-                  modeOption.label
-                )}
+                {modeOption.label}
               </button>
             )
           })}
@@ -298,7 +229,7 @@ const ShipBuilderControlsMainAside = ({
             <h3 className="ship-builder-controls__card-title">{SLOT_LABELS[selectedSlot]}</h3>
             <Button
               size="sm"
-              className="ship-builder-controls__action-button ship-builder-controls__action-button--small ship-builder-controls__reset-action-button ship-builder-controls__reset-action-button--desktop"
+              className="ship-builder-controls__action-button ship-builder-controls__action-button--small"
               onClick={() => {
                 resetSlot(selectedSlot)
               }}
@@ -306,16 +237,6 @@ const ShipBuilderControlsMainAside = ({
             >
               Reset Slot
             </Button>
-            <IconButton
-              size="sm"
-              className="ship-builder-controls__action-button ship-builder-controls__action-button--small ship-builder-controls__reset-action-button ship-builder-controls__reset-action-button--mobile"
-              icon={faRotateLeft}
-              label="Reset Slot"
-              title="Reset Slot"
-              onClick={() => {
-                resetSlot(selectedSlot)
-              }}
-            />
           </div>
 
           <label className="ship-builder-controls__field">
@@ -561,4 +482,4 @@ const ShipBuilderControlsMainAside = ({
   )
 }
 
-export default ShipBuilderControlsMainAside
+export default DesktopAside

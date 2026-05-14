@@ -1,4 +1,5 @@
 import type { TransformMode } from '@/lib/managers/ShipBuilderSceneManager/types'
+import type { ShipSlot } from '@/lib/models/ShipConfig'
 
 export type OffsetAxis = 'x' | 'y' | 'z'
 export type OffsetAxisOption = {
@@ -11,3 +12,5 @@ export type TransformModeOption = {
   label: string
   symmetricOnly?: boolean
 }
+
+export type SymmetricSlot = Extract<ShipSlot, 'wings' | 'engines' | 'weapons'>

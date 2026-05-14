@@ -745,14 +745,6 @@ body {
   cursor: pointer;
 }
 
-.ship-builder-controls__mode-button-label {
-  display: inline;
-}
-
-.ship-builder-controls__mode-button-icon {
-  display: none;
-}
-
 .ship-builder-controls__mode-button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -810,6 +802,10 @@ body {
   color: #cbd5e1;
 }
 
+.ship-builder-controls__mobile-variant-picker {
+  display: none;
+}
+
 .ship-builder-controls__select {
   width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.35);
@@ -863,14 +859,6 @@ body {
   justify-content: space-between;
 }
 
-.ship-builder-controls__io-action-button--mobile {
-  display: none;
-}
-
-.ship-builder-controls__reset-action-button--mobile {
-  display: none;
-}
-
 .ship-builder-controls__io-message {
   margin: 0;
   font-size: 0.74rem;
@@ -910,13 +898,17 @@ body {
   }
 
   .ship-builder-controls {
+    position: fixed;
     right: 12px;
-    top: 12px;
+    top: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
     width: fit-content;
     max-height: none;
     border: 0;
     background: transparent;
     backdrop-filter: none;
+    gap: 8px;
+    align-items: flex-end;
   }
 
   .ship-builder-controls-import-export {
@@ -931,6 +923,7 @@ body {
   }
 
   .ship-builder-controls-footer {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
     border: 0;
     background: transparent;
     backdrop-filter: none;
@@ -968,18 +961,8 @@ body {
     justify-content: center;
   }
 
-  .ship-builder-controls__header {
-    justify-content: flex-end;
-    border-bottom: 0;
-    padding: 0;
-  }
-
   .ship-builder-controls__header-actions {
     flex-direction: column;
-  }
-
-  .ship-builder-controls__title {
-    display: none;
   }
 
   .ship-builder-mobile-title {
@@ -1012,79 +995,50 @@ body {
     transform: translate(-50%, -8px);
   }
 
-  .ship-builder-controls__section--selected-slot {
-    display: none;
-  }
-
-  .ship-builder-controls__list {
-    display: none;
-  }
-
-  .ship-builder-controls__section--gizmo {
-    margin-top: 10px;
-    padding: 0;
+  .ship-builder-controls__mobile-variant-picker {
+    position: fixed;
+    left: 12px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
     z-index: 6;
+    display: block;
+    width: min(210px, calc(100vw - 132px));
   }
 
-  .ship-builder-controls__section--gizmo .ship-builder-controls__mode-toggle {
+  .ship-builder-controls__mobile-variant-picker .ship-builder-controls__field {
+    gap: 4px;
+  }
+
+  .ship-builder-controls__mobile-variant-picker .ship-builder-controls__field-label {
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ship-builder-controls__mobile-variant-picker .ship-builder-controls__select {
+    font-size: 0.74rem;
+    padding: 6px 8px;
+  }
+
+  .ship-builder-controls .ship-builder-controls__mode-toggle {
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: flex-end;
     gap: 8px;
   }
 
-  .ship-builder-controls__section--gizmo .ship-builder-controls__section-title {
-    display: none;
-  }
-
-  .home-view--builder-ui-hidden .ship-builder-controls__section--gizmo {
+  .home-view--builder-ui-hidden .ship-builder-controls__mobile-variant-picker {
     opacity: 0;
     pointer-events: none;
   }
 
-  .ship-builder-controls__section-title--selected-slot {
-    display: none;
-  }
-
-  .ship-builder-controls__io-actions--spaced {
+  .ship-builder-controls__io-actions {
     justify-content: flex-start;
     gap: 8px;
-  }
-
-  .ship-builder-controls__io-action-button--desktop {
-    display: none;
-  }
-
-  .ship-builder-controls__io-action-button--mobile {
-    display: inline-flex;
-  }
-
-  .ship-builder-controls__reset-action-button--desktop {
-    display: none;
-  }
-
-  .ship-builder-controls__reset-action-button--mobile {
-    display: inline-flex;
-  }
-
-  .ship-builder-controls-footer__shortcuts-toggle {
-    display: none;
   }
 
   .ship-builder-controls__io-message--info,
   .ship-builder-controls__io-message--success {
     display: none;
-  }
-
-  .ship-builder-controls__mode-button-label {
-    display: none;
-  }
-
-  .ship-builder-controls__mode-button-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
   }
 }
 
