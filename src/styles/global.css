@@ -1019,6 +1019,19 @@ body {
     padding: 6px 8px;
   }
 
+  .ship-builder-controls__mobile-variant-picker-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  @media (orientation: portrait) {
+    .ship-builder-controls__mobile-variant-picker {
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+    }
+  }
+
   .ship-builder-controls .ship-builder-controls__mode-toggle {
     flex-direction: column;
     flex-wrap: nowrap;

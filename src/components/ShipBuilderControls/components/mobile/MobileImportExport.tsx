@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { faFileExport, faFileImport } from '@fortawesome/free-solid-svg-icons'
+import { faArrowsRotate, faFileExport, faFileImport } from '@fortawesome/free-solid-svg-icons'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 import { IconButton } from '@/components/ui'
 import { SLOT_LABELS } from '@/components/ShipBuilderControls/constants'
@@ -17,6 +17,7 @@ const MobileImportExport = ({ isHidden, panelVisibilityClassName }: MobileImport
     message,
     exportShipConfigToJson,
     importShipConfigFromJson,
+    resetShipConfig,
   } = useShipBuilder()
   const [importWarnings, setImportWarnings] = useState<string[]>([])
 
@@ -68,6 +69,13 @@ const MobileImportExport = ({ isHidden, panelVisibilityClassName }: MobileImport
             label="Import JSON"
             title="Import JSON"
             onClick={handleImportJson}
+          />
+          <IconButton
+            className="ship-builder-controls__action-button"
+            icon={faArrowsRotate}
+            label="Reset Ship"
+            title="Reset Ship"
+            onClick={resetShipConfig}
           />
         </div>
 

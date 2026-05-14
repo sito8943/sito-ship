@@ -1,5 +1,7 @@
+import { faRotateLeft } from '@fortawesome/free-solid-svg-icons'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
 import type { ShipSlot, ShipSlotConfigMap, ShipSlotPatch } from '@/lib/models/ShipConfig'
+import { IconButton } from '@/components/ui'
 import { SLOT_LABELS, SLOT_VARIANT_OPTIONS } from '@/components/ShipBuilderControls/constants'
 import { formatVariantLabel } from '@/components/ShipBuilderControls/utils'
 
@@ -8,7 +10,7 @@ export type MobileVariantPickerProps = {
 }
 
 const MobileVariantPicker = ({ panelVisibilityClassName }: MobileVariantPickerProps) => {
-  const { selectedSlot, shipConfig, updateSlot } = useShipBuilder()
+  const { selectedSlot, shipConfig, updateSlot, resetSlot } = useShipBuilder()
   const activeSlotConfig = shipConfig[selectedSlot]
 
   const handleVariantChange = <TSlot extends ShipSlot>(
@@ -16,6 +18,10 @@ const MobileVariantPicker = ({ panelVisibilityClassName }: MobileVariantPickerPr
     variant: ShipSlotConfigMap[TSlot]['variant']
   ) => {
     updateSlot(slot, { variant } as ShipSlotPatch<TSlot>)
+  }
+
+  const handleColorChange = <TSlot extends ShipSlot>(slot: TSlot, color: string) => {
+    updateSlot(slot, { color } as ShipSlotPatch<TSlot>)
   }
 
   return (
@@ -44,6 +50,27 @@ const MobileVariantPicker = ({ panelVisibilityClassName }: MobileVariantPickerPr
           })}
         </select>
       </label>
+
+      <div className="ship-builder-controls__mobile-variant-picker-actions">
+        <input
+          className="ship-builder-controls__color"
+          type="color"
+          aria-label={`Color for ${SLOT_LABELS[selectedSlot]}`}
+          value={activeSlotConfig.color}
+          onChange={(event) => {
+            handleColorChange(selectedSlot, event.target.value)
+          }}
+        />
+        <IconButton
+          className="ship-builder-controls__action-button"
+          icon={faRotateLeft}
+          label="Reset Slot"
+          title="Reset Slot"
+          onClick={() => {
+            resetSlot(selectedSlot)
+          }}
+        />
+      </div>
     </div>
   )
 }

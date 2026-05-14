@@ -2,7 +2,6 @@ import {
   faArrowRotateLeft,
   faArrowRotateRight,
   faArrowsToCircle,
-  faArrowsRotate,
   faArrowsSpin,
   faArrowsUpDownLeftRight,
   faMaximize,
@@ -29,7 +28,6 @@ const MobileAside = ({ isHidden, panelVisibilityClassName }: MobileAsideProps) =
     setTransformMode,
     undo,
     redo,
-    resetShipConfig,
   } = useShipBuilder()
 
   const symmetricSlot: SymmetricSlot | null =
@@ -63,13 +61,6 @@ const MobileAside = ({ isHidden, panelVisibilityClassName }: MobileAsideProps) =
           title="Redo last change"
           onClick={redo}
           disabled={!canRedo}
-        />
-        <IconButton
-          className="ship-builder-controls__action-button"
-          icon={faArrowsRotate}
-          label="Reset Ship"
-          title="Reset Ship"
-          onClick={resetShipConfig}
         />
       </div>
 
