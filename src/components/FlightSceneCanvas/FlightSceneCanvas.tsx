@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { ShipFlightSceneManager } from '@/lib/managers/ShipFlightSceneManager'
+import { useEffect, useRef } from 'react'
 import type { FlightSceneCanvasProps } from '@/components/FlightSceneCanvas/types'
 
-const FlightSceneCanvas = ({ shipConfig }: FlightSceneCanvasProps) => {
+const FlightSceneCanvas = ({ shipConfig, sceneManager }: FlightSceneCanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const sceneManager = useMemo(() => new ShipFlightSceneManager(), [])
 
   useEffect(() => {
     const canvas = canvasRef.current

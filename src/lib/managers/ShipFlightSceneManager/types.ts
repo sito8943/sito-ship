@@ -8,6 +8,12 @@ export type FlightSceneInputState = {
   fire: boolean
 }
 
+export type FlightSceneTouchInput = {
+  strafe?: number
+  pitch?: number
+  fire?: boolean
+}
+
 export type FlightSceneProjectileField = {
   mesh: InstancedMesh
   positions: Float32Array

@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import FlightSceneCanvas from '@/components/FlightSceneCanvas'
+import MobileFlightControls from '@/components/MobileFlightControls'
 import { Button } from '@/components/ui'
 import { useShipBuilder } from '@/hooks/useShipBuilder'
+import { ShipFlightSceneManager } from '@/lib/managers/ShipFlightSceneManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
 import {
   FLIGHT_VIEW_BACK_LABEL,
@@ -10,14 +12,52 @@ import {
 } from '@/views/FlightView/constants'
 import { resolveFlightShipConfig } from '@/views/FlightView/utils'
 
+const detectTouchDevice = () => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+  return (
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0 ||
+    window.matchMedia('(pointer: coarse)').matches
+  )
+}
+
 const FlightView = () => {
   const { shipConfig, setExperienceMode } = useShipBuilder()
   const [flightShipConfig] = useState<ShipConfig>(() => resolveFlightShipConfig(shipConfig))
   const [isHudHidden, setIsHudHidden] = useState(false)
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+  const sceneManager = useMemo(() => new ShipFlightSceneManager(), [])
+
+  useEffect(() => {
+    setIsTouchDevice(detectTouchDevice())
+  }, [])
 
   const closeFlightView = useCallback(() => {
     setExperienceMode('builder')
   }, [setExperienceMode])
+
+  const handleStrafe = useCallback(
+    (value: number) => {
+      sceneManager.setTouchInput({ strafe: value })
+    },
+    [sceneManager]
+  )
+
+  const handlePitch = useCallback(
+    (value: number) => {
+      sceneManager.setTouchInput({ pitch: value })
+    },
+    [sceneManager]
+  )
+
+  const handleFire = useCallback(
+    (active: boolean) => {
+      sceneManager.setTouchInput({ fire: active })
+    },
+    [sceneManager]
+  )
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -53,7 +93,7 @@ const FlightView = () => {
 
   return (
     <section className="flight-view" aria-label="Flight View">
-      <FlightSceneCanvas shipConfig={flightShipConfig} />
+      <FlightSceneCanvas shipConfig={flightShipConfig} sceneManager={sceneManager} />
 
       <aside
         className={`flight-view__hud${isHudHidden ? ' flight-view__hud--hidden' : ''}`}
@@ -74,6 +114,14 @@ const FlightView = () => {
           })}
         </ul>
       </aside>
+
+      {isTouchDevice ? (
+        <MobileFlightControls
+          onStrafe={handleStrafe}
+          onPitch={handlePitch}
+          onFire={handleFire}
+        />
+      ) : null}
     </section>
   )
 }

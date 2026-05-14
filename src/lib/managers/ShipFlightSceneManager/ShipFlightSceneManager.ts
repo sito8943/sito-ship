@@ -60,6 +60,7 @@ import type {
   FlightSceneSize,
   FlightSceneStarField,
   FlightSceneThrusterField,
+  FlightSceneTouchInput,
 } from '@/lib/managers/ShipFlightSceneManager/types'
 
 const MAX_ENGINE_EXHAUSTS = 4
@@ -115,6 +116,9 @@ export class ShipFlightSceneManager {
   private targetPitch = 0
   private pitchBound = 0
   private readonly inputState: FlightSceneInputState = createDefaultInputState()
+  private touchStrafe = 0
+  private touchPitch = 0
+  private touchFire = false
   private readonly lookTarget = new Vector3(
     FLIGHT_SCENE_CAMERA.lookAt.x,
     FLIGHT_SCENE_CAMERA.lookAt.y,
@@ -150,6 +154,18 @@ export class ShipFlightSceneManager {
     this.pendingShipConfig = shipConfig
     this.shipModelManager?.sync(shipConfig)
     this.shipModelManager?.setSelectedSlot(null)
+  }
+
+  setTouchInput(input: FlightSceneTouchInput) {
+    if (input.strafe !== undefined) {
+      this.touchStrafe = MathUtils.clamp(input.strafe, -1, 1)
+    }
+    if (input.pitch !== undefined) {
+      this.touchPitch = MathUtils.clamp(input.pitch, -1, 1)
+    }
+    if (input.fire !== undefined) {
+      this.touchFire = input.fire
+    }
   }
 
   destroy() {
@@ -197,6 +213,9 @@ export class ShipFlightSceneManager {
     this.thrusterField = null
     this.projectileField = null
     this.fireCooldown = 0
+    this.touchStrafe = 0
+    this.touchPitch = 0
+    this.touchFire = false
   }
 
   private initialize() {
@@ -487,7 +506,8 @@ export class ShipFlightSceneManager {
     }
 
     this.fireCooldown = Math.max(0, this.fireCooldown - delta)
-    if (this.inputState.fire && this.fireCooldown === 0) {
+    const firing = this.inputState.fire || this.touchFire
+    if (firing && this.fireCooldown === 0) {
       this.spawnProjectiles()
       this.fireCooldown = FLIGHT_SCENE_PROJECTILES.cooldown
     }
@@ -750,8 +770,10 @@ export class ShipFlightSceneManager {
   }
 
   private updateStrafeState(delta: number) {
-    const strafeInput = this.getAxisInput(this.inputState.strafeRight, this.inputState.strafeLeft)
-    const pitchInput = this.getAxisInput(this.inputState.pitchUp, this.inputState.pitchDown)
+    const keyStrafe = this.getAxisInput(this.inputState.strafeRight, this.inputState.strafeLeft)
+    const keyPitch = this.getAxisInput(this.inputState.pitchUp, this.inputState.pitchDown)
+    const strafeInput = MathUtils.clamp(keyStrafe + this.touchStrafe, -1, 1)
+    const pitchInput = MathUtils.clamp(keyPitch + this.touchPitch, -1, 1)
 
     this.targetStrafe = this.advanceAxis(this.targetStrafe, strafeInput, delta)
     this.targetPitch = this.advanceAxis(this.targetPitch, pitchInput, delta)
@@ -954,6 +976,9 @@ export class ShipFlightSceneManager {
     this.inputState.pitchUp = false
     this.inputState.pitchDown = false
     this.inputState.fire = false
+    this.touchStrafe = 0
+    this.touchPitch = 0
+    this.touchFire = false
   }
 
   private setInputFromCode(code: string, isPressed: boolean): boolean {
