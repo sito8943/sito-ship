@@ -31,6 +31,8 @@ export type FlightSceneStarField = {
   count: number
   speedMultiplier: number
   spread: number
+  minRadius: number
+  verticalSquash: number
 }
 
 export type FlightScenePlanetEntry = {

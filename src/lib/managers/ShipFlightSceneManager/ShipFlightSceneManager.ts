@@ -587,10 +587,13 @@ export class ShipFlightSceneManager {
 
   private createStarField(config: (typeof FLIGHT_SCENE_STAR_LAYERS)[number]): FlightSceneStarField {
     const positions = new Float32Array(config.count * 3)
+    const maxRadius = config.spread * 0.5
     for (let i = 0; i < config.count; i += 1) {
       const offset = i * 3
-      positions[offset] = (Math.random() - 0.5) * config.spread
-      positions[offset + 1] = (Math.random() - 0.5) * config.spread * 0.72
+      const angle = Math.random() * Math.PI * 2
+      const radius = config.minRadius + Math.random() * Math.max(maxRadius - config.minRadius, 0)
+      positions[offset] = Math.cos(angle) * radius
+      positions[offset + 1] = Math.sin(angle) * radius * config.verticalSquash
       positions[offset + 2] = (Math.random() - 0.5) * config.spread
     }
 
@@ -613,6 +616,8 @@ export class ShipFlightSceneManager {
       count: config.count,
       speedMultiplier: config.speedMultiplier,
       spread: config.spread,
+      minRadius: config.minRadius,
+      verticalSquash: config.verticalSquash,
     }
   }
 
@@ -776,13 +781,17 @@ export class ShipFlightSceneManager {
       const forwardSpeed = FLIGHT_SCENE_SPACE.travelSpeed * field.speedMultiplier * delta
       const lateralSpeed = yawDriftSpeed * field.speedMultiplier * delta
       const positions = field.positions
+      const maxRadius = field.spread * 0.5
+      const radiusRange = Math.max(maxRadius - field.minRadius, 0)
       for (let i = 0; i < field.count; i += 1) {
         const offset = i * 3
         positions[offset] += lateralSpeed
         positions[offset + 2] += forwardSpeed
         if (positions[offset + 2] > despawnZ) {
-          positions[offset] = (Math.random() - 0.5) * field.spread
-          positions[offset + 1] = (Math.random() - 0.5) * field.spread * 0.72
+          const angle = Math.random() * Math.PI * 2
+          const radius = field.minRadius + Math.random() * radiusRange
+          positions[offset] = Math.cos(angle) * radius
+          positions[offset + 1] = Math.sin(angle) * radius * field.verticalSquash
           positions[offset + 2] =
             cameraZ -
             randomInRange(FLIGHT_SCENE_SPACE.zSpawnAheadMin, FLIGHT_SCENE_SPACE.zSpawnAheadMax)

@@ -46,17 +46,21 @@ export const FLIGHT_SCENE_STAR_LAYERS = [
     count: 2200,
     size: 0.22,
     opacity: 0.95,
-    speedMultiplier: 1.2,
+    speedMultiplier: 0.35,
     color: '#dbeafe',
     spread: 260,
+    minRadius: 32,
+    verticalSquash: 0.72,
   },
   {
     count: 1500,
     size: 0.18,
     opacity: 0.68,
-    speedMultiplier: 0.8,
+    speedMultiplier: 0.18,
     color: '#93c5fd',
     spread: 340,
+    minRadius: 48,
+    verticalSquash: 0.72,
   },
 ] as const
 
