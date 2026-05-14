@@ -914,6 +914,9 @@ body {
     top: 12px;
     width: fit-content;
     max-height: none;
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
   }
 
   .ship-builder-controls-import-export {
@@ -922,6 +925,15 @@ body {
     right: auto;
     width: auto;
     max-height: none;
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .ship-builder-controls-footer {
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
   }
 
   .ship-builder-controls__io {
@@ -948,11 +960,22 @@ body {
 
   .ship-builder-controls__mode-button {
     flex: 0 0 auto;
-    height: 27px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .ship-builder-controls__header {
     justify-content: flex-end;
+    border-bottom: 0;
+    padding: 0;
+  }
+
+  .ship-builder-controls__header-actions {
+    flex-direction: column;
   }
 
   .ship-builder-controls__title {
@@ -998,8 +1021,25 @@ body {
   }
 
   .ship-builder-controls__section--gizmo {
-    padding-top: 10px;
-    padding-bottom: 10px;
+    margin-top: 10px;
+    padding: 0;
+    z-index: 6;
+  }
+
+  .ship-builder-controls__section--gizmo .ship-builder-controls__mode-toggle {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .ship-builder-controls__section--gizmo .ship-builder-controls__section-title {
+    display: none;
+  }
+
+  .home-view--builder-ui-hidden .ship-builder-controls__section--gizmo {
+    opacity: 0;
+    pointer-events: none;
   }
 
   .ship-builder-controls__section-title--selected-slot {
@@ -1040,7 +1080,7 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    width: auto;
   }
 }
 
