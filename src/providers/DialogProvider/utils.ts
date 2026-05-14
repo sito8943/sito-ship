@@ -14,4 +14,3 @@ export const setDialogVisibility = (
 export const getDialogVisibility = (dialogState: DialogState, dialogId: DialogId): boolean => {
   return dialogState[dialogId] === true
 }
-

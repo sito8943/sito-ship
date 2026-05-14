@@ -1,9 +1,6 @@
 import { useCallback, useRef, useState, type PointerEvent } from 'react'
 import { useDrag } from '@use-gesture/react'
-import {
-  JOYSTICK_DEADZONE,
-  JOYSTICK_RADIUS,
-} from '@/components/MobileFlightControls/constants'
+import { JOYSTICK_DEADZONE, JOYSTICK_RADIUS } from '@/components/MobileFlightControls/constants'
 import type { MobileFlightControlsProps } from '@/components/MobileFlightControls/types'
 
 const applyDeadzone = (value: number) => {

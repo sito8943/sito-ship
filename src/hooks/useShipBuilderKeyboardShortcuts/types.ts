@@ -7,4 +7,3 @@ export type UseShipBuilderKeyboardShortcutsOptions = {
 
 export type ShortcutSlotMap = Record<string, ShipSlot>
 export type ShortcutTransformModeMap = Record<string, TransformMode>
-

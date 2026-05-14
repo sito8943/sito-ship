@@ -10,4 +10,3 @@ export const assertDialogContext = (
 
   return context
 }
-

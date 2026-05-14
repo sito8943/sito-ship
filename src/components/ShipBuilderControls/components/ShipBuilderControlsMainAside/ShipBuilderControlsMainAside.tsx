@@ -239,7 +239,9 @@ const ShipBuilderControlsMainAside = ({
                 key={modeOption.value}
                 type="button"
                 className={`ship-builder-controls__mode-button ${
-                  transformMode === modeOption.value ? 'ship-builder-controls__mode-button--active' : ''
+                  transformMode === modeOption.value
+                    ? 'ship-builder-controls__mode-button--active'
+                    : ''
                 }`}
                 disabled={isDisabled}
                 onClick={() => {
@@ -275,7 +277,8 @@ const ShipBuilderControlsMainAside = ({
               className="ship-builder-controls__select"
               value={activeSlotConfig.variant}
               onChange={(event) => {
-                const nextVariant = event.target.value as ShipSlotConfigMap[typeof selectedSlot]['variant']
+                const nextVariant = event.target
+                  .value as ShipSlotConfigMap[typeof selectedSlot]['variant']
                 handleVariantChange(selectedSlot, nextVariant)
               }}
             >
@@ -351,7 +354,11 @@ const ShipBuilderControlsMainAside = ({
                       step={axisRange.step}
                       value={axisValue}
                       onChange={(event) => {
-                        handleOffsetAxisChange(selectedSlot, axisOption.index, Number(event.target.value))
+                        handleOffsetAxisChange(
+                          selectedSlot,
+                          axisOption.index,
+                          Number(event.target.value)
+                        )
                       }}
                       onPointerUp={(event) => {
                         handleOffsetAxisChange(
@@ -396,7 +403,11 @@ const ShipBuilderControlsMainAside = ({
                       step={axisRange.step}
                       value={axisValue}
                       onChange={(event) => {
-                        handleRotationAxisChange(selectedSlot, axisOption.index, Number(event.target.value))
+                        handleRotationAxisChange(
+                          selectedSlot,
+                          axisOption.index,
+                          Number(event.target.value)
+                        )
                       }}
                       onPointerUp={(event) => {
                         handleRotationAxisChange(
@@ -470,7 +481,11 @@ const ShipBuilderControlsMainAside = ({
                       step={axisRange.step}
                       value={axisValue}
                       onChange={(event) => {
-                        handleAimAxisChange(symmetricSlot, axisOption.index, Number(event.target.value))
+                        handleAimAxisChange(
+                          symmetricSlot,
+                          axisOption.index,
+                          Number(event.target.value)
+                        )
                       }}
                       onPointerUp={(event) => {
                         handleAimAxisChange(

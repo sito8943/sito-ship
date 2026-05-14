@@ -29,7 +29,7 @@ export const FLIGHT_SCENE_STRAFE = {
 export const FLIGHT_SCENE_BANK = {
   rollFactor: 0.85,
   yawFactor: 0.22,
-  pitchFactor: 0.20,
+  pitchFactor: 0.2,
 } as const
 
 export const FLIGHT_SCENE_SPACE = {
@@ -78,7 +78,7 @@ export const FLIGHT_SCENE_THRUSTERS = {
 } as const
 
 export const FLIGHT_SCENE_PROJECTILES = {
-  cooldown: 0.10,
+  cooldown: 0.1,
   speed: 80,
   lifetime: 1.2,
   size: 0.35,

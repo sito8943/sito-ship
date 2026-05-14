@@ -40,4 +40,3 @@ export const persistShipConfigToStorage = (jsonPayload: string) => {
 
   window.localStorage.setItem(SHIP_BUILDER_STORAGE_KEY, jsonPayload)
 }
-

@@ -8,4 +8,3 @@ export type UseDialogResult = {
 }
 
 export type UseDialog = (dialogId: DialogId) => UseDialogResult
-

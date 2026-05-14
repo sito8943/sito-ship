@@ -75,7 +75,9 @@ const ShipBuilderControlsImportExportAside = ({
         </label>
 
         {message ? (
-          <p className={`ship-builder-controls__io-message ship-builder-controls__io-message--${message.kind}`}>
+          <p
+            className={`ship-builder-controls__io-message ship-builder-controls__io-message--${message.kind}`}
+          >
             {message.text}
           </p>
         ) : null}

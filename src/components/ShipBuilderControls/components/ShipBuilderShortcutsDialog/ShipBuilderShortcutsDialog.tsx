@@ -15,7 +15,10 @@ const ShipBuilderShortcutsDialog = ({ isOpen, onClose }: ShipBuilderShortcutsDia
             <h3 className="ship-builder-shortcuts-dialog__section-title">{section.title}</h3>
             <ul className="ship-builder-shortcuts-dialog__list">
               {section.shortcuts.map((shortcut) => (
-                <li key={`${section.title}-${shortcut.key}`} className="ship-builder-shortcuts-dialog__item">
+                <li
+                  key={`${section.title}-${shortcut.key}`}
+                  className="ship-builder-shortcuts-dialog__item"
+                >
                   <span>{shortcut.description}</span>
                   <span className="ship-builder-shortcuts-dialog__keys">
                     {splitShortcutKeys(shortcut.key).map((keyPart) => (
@@ -33,4 +36,3 @@ const ShipBuilderShortcutsDialog = ({ isOpen, onClose }: ShipBuilderShortcutsDia
 }
 
 export default ShipBuilderShortcutsDialog
-

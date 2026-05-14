@@ -186,7 +186,10 @@ export class ShipConfigIOManager {
       if (aimRotationValue !== undefined && !isValidVector3Tuple(aimRotationValue)) {
         warnings.push(`Slot "${slot}" has an invalid aimRotation. Using default aimRotation.`)
       }
-      const parsedAimRotation = parseVector3Tuple(aimRotationValue, defaultSymmetricSlot.aimRotation)
+      const parsedAimRotation = parseVector3Tuple(
+        aimRotationValue,
+        defaultSymmetricSlot.aimRotation
+      )
       const clampedAimRotation = this.clampSymmetricAimRotationTuple(slot, parsedAimRotation)
       if (this.hasTupleChanged(parsedAimRotation, clampedAimRotation)) {
         const changedAxes = this.getChangedAxes(parsedAimRotation, clampedAimRotation).join(', ')

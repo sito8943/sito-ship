@@ -25,21 +25,12 @@ import {
   WebGLRenderer,
   type Material,
 } from 'three'
-import {
-  BloomEffect,
-  EffectComposer,
-  EffectPass,
-  FXAAEffect,
-  RenderPass,
-} from 'postprocessing'
+import { BloomEffect, EffectComposer, EffectPass, FXAAEffect, RenderPass } from 'postprocessing'
 import Stats from 'three/addons/libs/stats.module.js'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
 import { PLANET_TEXTURE_URLS } from '@/assets/resources'
-import {
-  getCachedPlanetTexture,
-  loadPlanetTexture,
-} from '@/lib/utils/PlanetTextureCache'
+import { getCachedPlanetTexture, loadPlanetTexture } from '@/lib/utils/PlanetTextureCache'
 import {
   FLIGHT_SCENE_BANK,
   FLIGHT_SCENE_CAMERA,
@@ -382,9 +373,15 @@ export class ShipFlightSceneManager {
     const size = FLIGHT_SCENE_PROJECTILES.size
     const geometry = new BufferGeometry()
     const vertices = new Float32Array([
-      0, 0, -size * 3.2,
-      -size * 0.22, 0, size * 0.5,
-      size * 0.22, 0, size * 0.5,
+      0,
+      0,
+      -size * 3.2,
+      -size * 0.22,
+      0,
+      size * 0.5,
+      size * 0.22,
+      0,
+      size * 0.5,
     ])
     geometry.setAttribute('position', new BufferAttribute(vertices, 3))
     geometry.setIndex([0, 1, 2])
@@ -648,8 +645,7 @@ export class ShipFlightSceneManager {
 
     const template = pickRandomTemplate()
     const radius = randomInRange(template.radiusRange[0], template.radiusRange[1])
-    const textureUrl =
-      PLANET_TEXTURE_URLS[Math.floor(Math.random() * PLANET_TEXTURE_URLS.length)]
+    const textureUrl = PLANET_TEXTURE_URLS[Math.floor(Math.random() * PLANET_TEXTURE_URLS.length)]
     const cachedTexture = getCachedPlanetTexture(textureUrl)
     const material = new MeshStandardMaterial({
       color: cachedTexture ? '#ffffff' : template.color,
@@ -666,7 +662,8 @@ export class ShipFlightSceneManager {
     const x = (Math.random() - 0.5) * xySpread
     const y = (Math.random() - 0.5) * xySpread * 0.6
     const z = spawnAhead
-      ? cameraZ - randomInRange(FLIGHT_SCENE_SPACE.zSpawnAheadMin, FLIGHT_SCENE_SPACE.zSpawnAheadMax)
+      ? cameraZ -
+        randomInRange(FLIGHT_SCENE_SPACE.zSpawnAheadMin, FLIGHT_SCENE_SPACE.zSpawnAheadMax)
       : cameraZ - randomInRange(20, FLIGHT_SCENE_SPACE.zSpawnAheadMax)
     mesh.position.set(x, y, z)
     mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0)
@@ -778,7 +775,12 @@ export class ShipFlightSceneManager {
     this.targetStrafe = this.advanceAxis(this.targetStrafe, strafeInput, delta)
     this.targetPitch = this.advanceAxis(this.targetPitch, pitchInput, delta)
 
-    this.strafe = MathUtils.damp(this.strafe, this.targetStrafe, FLIGHT_SCENE_STRAFE.smoothing, delta)
+    this.strafe = MathUtils.damp(
+      this.strafe,
+      this.targetStrafe,
+      FLIGHT_SCENE_STRAFE.smoothing,
+      delta
+    )
     this.pitch = MathUtils.damp(this.pitch, this.targetPitch, FLIGHT_SCENE_STRAFE.smoothing, delta)
 
     if (!this.shipGroup) {
@@ -892,8 +894,7 @@ export class ShipFlightSceneManager {
         field.positions[offset + 1] = origin.y + (Math.random() - 0.5) * spawnSpread
         field.positions[offset + 2] = origin.z + (Math.random() - 0.5) * spawnSpread
 
-        field.velocities[offset] =
-          this.shipBackwardWorld.x * speed + (Math.random() - 0.5) * jitter
+        field.velocities[offset] = this.shipBackwardWorld.x * speed + (Math.random() - 0.5) * jitter
         field.velocities[offset + 1] =
           this.shipBackwardWorld.y * speed + (Math.random() - 0.5) * jitter
         field.velocities[offset + 2] =

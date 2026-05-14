@@ -2,13 +2,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import Stats from 'three/addons/libs/stats.module.js'
-import {
-  BloomEffect,
-  EffectComposer,
-  EffectPass,
-  FXAAEffect,
-  RenderPass,
-} from 'postprocessing'
+import { BloomEffect, EffectComposer, EffectPass, FXAAEffect, RenderPass } from 'postprocessing'
 import {
   AmbientLight,
   AxesHelper,
@@ -1096,9 +1090,18 @@ export class ShipBuilderSceneManager {
       this.flightInputState.throttleForward,
       this.flightInputState.throttleReverse
     )
-    const yawInput = this.getFlightAxisValue(this.flightInputState.yawLeft, this.flightInputState.yawRight)
-    const pitchInput = this.getFlightAxisValue(this.flightInputState.pitchUp, this.flightInputState.pitchDown)
-    const rollInput = this.getFlightAxisValue(this.flightInputState.rollRight, this.flightInputState.rollLeft)
+    const yawInput = this.getFlightAxisValue(
+      this.flightInputState.yawLeft,
+      this.flightInputState.yawRight
+    )
+    const pitchInput = this.getFlightAxisValue(
+      this.flightInputState.pitchUp,
+      this.flightInputState.pitchDown
+    )
+    const rollInput = this.getFlightAxisValue(
+      this.flightInputState.rollRight,
+      this.flightInputState.rollLeft
+    )
 
     const forwardBoostMultiplier = this.flightInputState.boost && throttleInput > 0 ? 1.45 : 1
     const targetSpeed =

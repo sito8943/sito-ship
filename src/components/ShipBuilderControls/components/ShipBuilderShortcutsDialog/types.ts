@@ -12,4 +12,3 @@ export type ShipBuilderShortcutsDialogProps = {
   isOpen: boolean
   onClose: () => void
 }
-

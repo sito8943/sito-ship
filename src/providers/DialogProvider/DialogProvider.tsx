@@ -45,4 +45,3 @@ const DialogProvider = ({ children }: DialogProviderProps) => {
 }
 
 export default DialogProvider
-

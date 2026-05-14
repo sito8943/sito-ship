@@ -21,4 +21,3 @@ export const useDialog: UseDialog = (dialogId) => {
     },
   }
 }
-

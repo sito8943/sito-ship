@@ -318,12 +318,9 @@ const ShipBuilderProvider = ({ children }: ShipBuilderProviderProps) => {
     [applyNextConfig, shipConfigIOManager, shipConfigManager]
   )
 
-  const setExperienceMode = useCallback(
-    (mode: ExperienceMode) => {
-      setExperienceModeState(mode)
-    },
-    []
-  )
+  const setExperienceMode = useCallback((mode: ExperienceMode) => {
+    setExperienceModeState(mode)
+  }, [])
 
   const toggleExperienceMode = useCallback(() => {
     setExperienceModeState((previousMode) => (previousMode === 'builder' ? 'flight' : 'builder'))

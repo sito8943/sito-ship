@@ -110,14 +110,11 @@ export const mirrorQuaternionAcrossPlane = (
     .clone()
     .multiply(rotationMatrix)
     .multiply(reflectionMatrix)
-  const mirroredQuaternion = new Quaternion().setFromRotationMatrix(mirroredRotationMatrix).normalize()
+  const mirroredQuaternion = new Quaternion()
+    .setFromRotationMatrix(mirroredRotationMatrix)
+    .normalize()
 
-  return [
-    mirroredQuaternion.x,
-    mirroredQuaternion.y,
-    mirroredQuaternion.z,
-    mirroredQuaternion.w,
-  ]
+  return [mirroredQuaternion.x, mirroredQuaternion.y, mirroredQuaternion.z, mirroredQuaternion.w]
 }
 
 export const mirrorQuaternionAcrossShipLocalSymmetryPlane = (

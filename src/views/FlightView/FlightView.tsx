@@ -116,11 +116,7 @@ const FlightView = () => {
       </aside>
 
       {isTouchDevice ? (
-        <MobileFlightControls
-          onStrafe={handleStrafe}
-          onPitch={handlePitch}
-          onFire={handleFire}
-        />
+        <MobileFlightControls onStrafe={handleStrafe} onPitch={handlePitch} onFire={handleFire} />
       ) : null}
     </section>
   )

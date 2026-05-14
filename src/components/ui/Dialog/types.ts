@@ -10,4 +10,3 @@ export type DialogProps = {
 }
 
 export type BackdropClickEvent = MouseEvent<HTMLDivElement>
-
