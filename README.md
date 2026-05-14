@@ -1,75 +1,104 @@
-# React + TypeScript + Vite
+# Sito Ship
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A 3D spaceship builder and flight simulator running in the browser. Built with React, TypeScript, Three.js, and Vite. Players assemble a ship from modular slots (body, cockpit, wings, engines, weapons), then drop into a flight scene with thrusters, projectiles, post-processing bloom, and a streaming planet field.
 
-Currently, two official plugins are available:
+## Modes
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Builder Mode
 
-## React Compiler
+Modular ship editor with an orbit camera. Pick slots from categories, transform them with translate/rotate/scale gizmos, mirror symmetric pairs (wings/engines/weapons), validate overlap and body-contact constraints, save/load ship JSON, and undo/redo edits.
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+### Flight Mode
 
-Note: This will impact Vite dev & build performances.
+Take the assembled ship into space. Strafe and pitch, fire projectiles with muzzle flash, thrusters react to throttle, planets stream past with a textured pool and parallax star layers. Touch controls auto-enable on coarse-pointer devices.
 
-## Expanding the ESLint configuration
+## Screenshots
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+<!-- TODO: replace placeholders with real screenshots -->
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Builder                                                         | Flight                                                        |
+| --------------------------------------------------------------- | ------------------------------------------------------------- |
+| ![Builder screenshot placeholder](docs/screenshots/builder.png) | ![Flight screenshot placeholder](docs/screenshots/flight.png) |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Getting Started
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then open the printed local URL.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Scripts:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- `npm run dev` — start Vite dev server
+- `npm run build` — typecheck + production build
+- `npm run typecheck` — `tsc -b`
+- `npm run lint` — typecheck + ESLint (max-warnings=0)
+- `npm run format` — Prettier write
+
+## Development-Only Features
+
+These only mount when `import.meta.env.DEV` is true.
+
+### Builder — Debug GUI
+
+A `lil-gui` panel titled **Debug Helpers** appears in the top-right of the builder canvas with toggles for:
+
+- **Axes Helper** — world axes at origin
+- **Light Helpers** — `DirectionalLightHelper` for key/rim/fill lights
+- **Shadow Helpers** — `CameraHelper` for the shadow-casting key light
+
+### Flight — Debug GUI
+
+A `lil-gui` panel titled **Flight Debug** appears in the top-right of the flight canvas with two folders:
+
+- **Helpers**
+  - **Axes Helper**
+  - **Grid Helper**
+  - **Light Helpers**
+- **Camera**
+  - **Free Camera Orbit** — disables the fixed follow camera and enables `OrbitControls` (drag to orbit, scroll to zoom)
+
+### Stats Panel
+
+Three.js `Stats` overlay (MS panel) is fixed at top-left of both builder and flight scenes in dev.
+
+## Keyboard Shortcuts (Builder)
+
+| Action                                            | Key                         |
+| ------------------------------------------------- | --------------------------- |
+| Open keyboard shortcuts/help                      | `F1`                        |
+| Export ship as JSON                               | `Ctrl+E`                    |
+| Import ship JSON                                  | `Ctrl+I`                    |
+| Save current ship                                 | `Ctrl+S`                    |
+| Undo                                              | `Ctrl+Z`                    |
+| Redo                                              | `Ctrl+Shift+Z`              |
+| Hide/show controls panel                          | `Tab`                       |
+| Toggle panoramic view                             | `Shift+Tab`                 |
+| Select body / cockpit / wings / engines / weapons | `1` / `2` / `3` / `4` / `5` |
+| Move / Rotate / Scale gizmo                       | `G` / `R` / `S`             |
+| Toggle pair spread editing                        | `P`                         |
+| Aim-rotate toward target                          | `A`                         |
+| Delete selected part                              | `Delete`                    |
+| Reset selected slot                               | `Backspace`                 |
+| Reset entire ship                                 | `Ctrl+Backspace`            |
+| Focus selected part                               | `F`                         |
+| Zoom to fit entire ship                           | `Home`                      |
+| Toggle cinematic view                             | `V`                         |
+
+## Keyboard Shortcuts (Flight)
+
+| Action                        | Key            |
+| ----------------------------- | -------------- |
+| Exit flight (back to builder) | `T` / `Escape` |
+| Hide/show HUD                 | `Tab`          |
+
+## Tech Stack
+
+- React 19 + TypeScript 5.9
+- Three.js 0.184
+- `postprocessing` (bloom, FXAA)
+- `lil-gui`, `Stats`, `OrbitControls`, `TransformControls` (three addons)
+- Vite (rolldown) + React Compiler
+- ESLint + Prettier + Husky + lint-staged
