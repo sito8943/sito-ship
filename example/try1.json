@@ -34,7 +34,7 @@
     "rotation": [0, 0, 0],
     "pivotLocal": [0, 0, 0],
     "aimRotation": [0.01, -1.59, 0],
-    "pairSpread": -1.46
+    "pairSpread": -1
   },
   "weapons": {
     "variant": "dualCannon",
