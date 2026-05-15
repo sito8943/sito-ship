@@ -23,6 +23,10 @@ export const POST_PROCESSING_SETTINGS = {
   },
 } as const
 
+export const BUILDER_RENDERER_SETTINGS = {
+  toneMappingExposure: 1.0,
+} as const
+
 export const BUILDER_SHADOW_SETTINGS = {
   mapSize: 1024,
   bias: -0.0002,

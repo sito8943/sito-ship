@@ -12,6 +12,7 @@ import {
   RenderPass,
 } from 'postprocessing'
 import {
+  ACESFilmicToneMapping,
   AmbientLight,
   AxesHelper,
   Box3,
@@ -27,12 +28,15 @@ import {
   PCFShadowMap,
   Raycaster,
   Scene,
+  SRGBColorSpace,
   Vector2,
   Vector3,
   WebGLRenderer,
   type Event as ThreeEvent,
   type Object3D,
 } from 'three'
+import { BUILDER_ENVIRONMENT_HDR_URL } from '@/assets/resources'
+import { loadBuilderEnvironmentMap } from '@/lib/utils/BuilderEnvironmentMap'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
 import {
   SHIP_SYMMETRIC_AIM_ROTATION_RANGES,
@@ -41,6 +45,7 @@ import {
   type ShipSlot,
 } from '@/lib/models/ShipConfig'
 import {
+  BUILDER_RENDERER_SETTINGS,
   BUILDER_SHADOW_SETTINGS,
   BODY_CONTACT_SLOTS,
   BODY_CONTACT_TOLERANCE,
@@ -397,6 +402,7 @@ export class ShipBuilderSceneManager {
     }
 
     if (this.scene) {
+      this.scene.environment = null
       this.scene.traverse((object) => {
         if (!(object instanceof Mesh)) {
           return
@@ -465,6 +471,9 @@ export class ShipBuilderSceneManager {
     })
     this.renderer.shadowMap.enabled = true
     this.renderer.shadowMap.type = PCFShadowMap
+    this.renderer.outputColorSpace = SRGBColorSpace
+    this.renderer.toneMapping = ACESFilmicToneMapping
+    this.renderer.toneMappingExposure = BUILDER_RENDERER_SETTINGS.toneMappingExposure
 
     this.scene = new Scene()
     this.scene.background = new Color(SCENE_COLORS.background)
@@ -492,6 +501,7 @@ export class ShipBuilderSceneManager {
     this.clock = new Clock()
 
     this.initializeLights()
+    this.initializeEnvironmentMap()
     this.initializeHelpers()
     this.initializeShipGroup()
     this.initializeTransformControls()
@@ -718,6 +728,24 @@ export class ShipBuilderSceneManager {
     if (this.isDevEnvironment) {
       this.initializeDebugLightHelpers()
     }
+  }
+
+  private initializeEnvironmentMap() {
+    if (!this.scene || !this.renderer || !BUILDER_ENVIRONMENT_HDR_URL) {
+      return
+    }
+
+    const renderer = this.renderer
+    loadBuilderEnvironmentMap(renderer, BUILDER_ENVIRONMENT_HDR_URL)
+      .then((envMap) => {
+        if (!this.scene) {
+          return
+        }
+        this.scene.environment = envMap
+      })
+      .catch((error) => {
+        console.warn('Builder environment HDR load failed', error)
+      })
   }
 
   private initializeHelpers() {

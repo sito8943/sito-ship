@@ -36,6 +36,8 @@ Create a ship from modular parts, tweak transforms in the builder, export or imp
 
 ## Getting Started
 
+Requires Node.js as pinned in [`.nvmrc`](./.nvmrc) (currently 20.20.0). Run `nvm use` to match.
+
 ```bash
 npm install
 npm run dev
@@ -92,6 +94,40 @@ Open the local URL printed by Vite.
 ## Development Notes
 
 In development mode only, both scenes mount a `Stats` panel and a `lil-gui` debug panel. The builder debug panel is titled `Debug Helpers` and the flight panel is titled `Flight Debug`.
+
+## Design Decisions
+
+### Procedural geometry, no GLTF
+
+No GLTF, no external 3D models, zero asset weight. Every ship is the sum of primitives assembled at runtime — boxes, cylinders, and cones combined under the modular slot system with transforms applied in the builder. Geometry is procedural, materials are code-defined, and the entire ship config serializes to a small JSON document. This keeps the bundle light, removes the asset pipeline, and lets ships be shared as plain text.
+
+Textures are limited to planet surfaces, served from a CDN and cached at runtime — they add zero bundle weight and load lazily per planet. Everything else (ship parts, thrusters, projectiles, scenery) uses procedural geometry and code-defined materials, so the build has no texture budget to manage.
+
+### Lighting (lights over HDRI)
+
+Both scenes use one `AmbientLight` plus three `DirectionalLight`s (key, rim, fill) instead of an HDRI environment map. A 1k–2k HDRI would cost 200 KB–4 MB even compressed, and the flight scene's black background means most env reflection would be wasted. Four lights cost zero bytes, render cheaply, and give full control over hue per scene.
+
+The builder scene supports an **optional** 1k HDR for PBR reflections on metallic ship parts. Set `BUILDER_ENVIRONMENT_HDR_URL` in `src/assets/resources.ts` to a hosted `.hdr` file — the builder will lazy-load it via `RGBELoader` + `PMREMGenerator` and assign it to `scene.environment`. When left empty, the scene falls back to the 3-light setup with no network cost.
+
+### Shadows (builder-only)
+
+Shadows are enabled in the builder scene only. The key light casts, and every ship part mesh gets `castShadow` and `receiveShadow` via `applyShadowToObject` (in `ShipBuilderModelManager/utils.ts`) so parts self-shadow as the ship is assembled. The flight scene disables shadows entirely (`FLIGHT_SCENE_RENDERER.enableShadows = false`) — in open space there is no ground plane for shadows to land on, so the extra shadow map pass would render onto nothing. Skipping it saves a full pass per frame on every flight frame.
+
+### Shaders on meshes
+
+Shader work appears in both scenes. The flight scene runs three full `ShaderMaterial`s with custom GLSL — `thruster`, `projectile`, and `muzzleFlash` — each with time-driven uniforms and life-curve fades (see `src/lib/shaders/`). The builder scene extends `MeshStandardMaterial` via `onBeforeCompile` (`ShipBuilderModelManager/utils.ts:createSlotMaterial`) to inject a fresnel rim glow into the PBR fragment program for every ship part, with `uRimColor`, `uRimPower`, and `uRimIntensity` uniforms. Selection highlight is driven through the same material via `emissive` + `emissiveIntensity`, layered with a screen-space `OutlineEffect` post pass.
+
+### Post-processing and AA (FXAA over MSAA)
+
+Both scenes render through `postprocessing`'s `EffectComposer` with FXAA, Bloom, and (in the builder) Outline passes. FXAA was chosen over hardware MSAA because the post-processing pipeline writes to a render target where MSAA cannot anti-alias the composited result, and a screen-space FXAA pass after bloom/outline produces a consistent edge across all effects. WebGL renderer `antialias` is therefore set to `false` in both managers. The cost is a single full-screen pass — far cheaper than running MSAA samples through every post effect.
+
+### Instanced projectiles
+
+Flight projectiles render through a single `InstancedMesh` rather than one mesh per shot. Per-frame matrix updates write into a shared instance buffer, so the GPU sees one draw call regardless of how many bullets are alive. This keeps fire-rate scaling cheap and avoids the per-shot allocation churn that one-mesh-per-projectile would incur.
+
+### Renderer correctness
+
+Both renderers set `outputColorSpace = SRGBColorSpace` and `toneMapping = ACESFilmicToneMapping` (exposure exposed as a typed config in each manager's `constants.ts`). Pixel ratio is clamped via `setPixelRatio(Math.min(window.devicePixelRatio, MAX_*))` to bound work on retina/HiDPI displays, and resize handlers update the renderer, camera aspect, and composer in lockstep.
 
 ## Tech Stack
 

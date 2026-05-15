@@ -1,4 +1,5 @@
 import {
+  ACESFilmicToneMapping,
   AdditiveBlending,
   AmbientLight,
   AxesHelper,
@@ -23,6 +24,7 @@ import {
   Scene,
   ShaderMaterial,
   SphereGeometry,
+  SRGBColorSpace,
   Vector3,
   WebGLRenderer,
   type Material,
@@ -246,6 +248,9 @@ export class ShipFlightSceneManager {
     })
     this.renderer.setClearColor(new Color(FLIGHT_SCENE_RENDERER.clearColor), 1)
     this.renderer.shadowMap.enabled = FLIGHT_SCENE_RENDERER.enableShadows
+    this.renderer.outputColorSpace = SRGBColorSpace
+    this.renderer.toneMapping = ACESFilmicToneMapping
+    this.renderer.toneMappingExposure = FLIGHT_SCENE_RENDERER.toneMappingExposure
 
     this.scene = new Scene()
     this.scene.background = new Color(FLIGHT_SCENE_RENDERER.clearColor)

@@ -39,6 +39,7 @@ export const FLIGHT_SCENE_RENDERER = {
   clearColor: '#03070f',
   fogDensity: 0.004,
   enableShadows: false,
+  toneMappingExposure: 1.0,
 } as const
 
 export const FLIGHT_SCENE_STRAFE = {
