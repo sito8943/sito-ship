@@ -127,6 +127,12 @@ The flight scene adds a final low-opacity `NoiseEffect` pass (soft-light blend, 
 
 Flight projectiles render through a single `InstancedMesh` rather than one mesh per shot. Per-frame matrix updates write into a shared instance buffer, so the GPU sees one draw call regardless of how many bullets are alive. This keeps fire-rate scaling cheap and avoids the per-shot allocation churn that one-mesh-per-projectile would incur.
 
+### Performance budget
+
+The renderer keeps a tight budget so the flight scene stays at 60fps on a mid-range phone. Procedural geometry means zero download cost and no decode step on first paint. Both renderers clamp `setPixelRatio` so HiDPI screens never burn 4× the fragment work for marginal visual gain. The flight composer chains Render → Bloom → FXAA → Noise — three passes total — chosen over hardware MSAA so anti-aliasing happens once at the end of the chain on the composited image. Projectiles render through a single `InstancedMesh` so fire rate scales without growing the draw-call count. Shadows are disabled in the flight scene because there is no ground plane for them to fall on, saving a full shadow-map pass every frame. Frustum culling is left at three's default (every `Mesh` is culled by its bounding sphere), which is exactly what the procedural geometry produces.
+
+A runtime quality tier (`src/lib/utils/RendererQuality`) detects coarse-pointer devices and narrow viewports and switches both managers to a low profile: pixel ratio capped at `1.0` instead of `1.5`, bloom and outline passes disabled. The tier is read once at scene construction, so a user landing on a phone immediately gets the lighter pipeline without flipping flags by hand.
+
 ### Renderer correctness
 
 Both renderers set `outputColorSpace = SRGBColorSpace` and `toneMapping = ACESFilmicToneMapping` (exposure exposed as a typed config in each manager's `constants.ts`). Pixel ratio is clamped via `setPixelRatio(Math.min(window.devicePixelRatio, MAX_*))` to bound work on retina/HiDPI displays, and resize handlers update the renderer, camera aspect, and composer in lockstep.

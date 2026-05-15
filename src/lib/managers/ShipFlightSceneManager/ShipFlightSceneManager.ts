@@ -45,6 +45,7 @@ import Stats from 'three/addons/libs/stats.module.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
+import { getRendererQualityProfile, type RendererQualityProfile } from '@/lib/utils/RendererQuality'
 import type { ShipConfig } from '@/lib/models/ShipConfig'
 import { PLANET_TEXTURE_URLS } from '@/assets/resources'
 import { getCachedPlanetTexture, loadPlanetTexture } from '@/lib/utils/PlanetTextureCache'
@@ -112,6 +113,7 @@ export class ShipFlightSceneManager {
   private orbitControls: OrbitControls | null = null
   private isFreeCameraEnabled = false
   private composer: EffectComposer | null = null
+  private qualityProfile: RendererQualityProfile = getRendererQualityProfile()
   private noisePass: EffectPass | null = null
   private noiseEffect: NoiseEffect | null = null
   private noiseSettings = {
@@ -317,7 +319,8 @@ export class ShipFlightSceneManager {
       mipmapBlur: true,
     })
     const bloomPass = new EffectPass(this.camera, bloomEffect)
-    bloomPass.enabled = FLIGHT_SCENE_POST_PROCESSING.bloom.enabled
+    bloomPass.enabled =
+      FLIGHT_SCENE_POST_PROCESSING.bloom.enabled && this.qualityProfile.bloomEnabled
     this.composer.addPass(bloomPass)
 
     const fxaaPass = new EffectPass(this.camera, new FXAAEffect())
@@ -837,7 +840,7 @@ export class ShipFlightSceneManager {
     geometry.setAttribute('position', new BufferAttribute(positions, 3))
     geometry.setAttribute('aLife', new BufferAttribute(lives, 1))
 
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, FLIGHT_SCENE_RENDERER.maxPixelRatio)
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, this.qualityProfile.maxPixelRatio)
     const material = new ShaderMaterial({
       vertexShader: thrusterVertexShader,
       fragmentShader: thrusterFragmentShader,
@@ -1009,7 +1012,7 @@ export class ShipFlightSceneManager {
       return
     }
 
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, FLIGHT_SCENE_RENDERER.maxPixelRatio)
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, this.qualityProfile.maxPixelRatio)
     this.renderer.setPixelRatio(pixelRatio)
     this.renderer.setSize(width, height, false)
     if (this.composer) {
@@ -1212,7 +1215,7 @@ export class ShipFlightSceneManager {
     geometry.setAttribute('position', new BufferAttribute(positions, 3))
     geometry.setAttribute('aLife', new BufferAttribute(lives, 1))
 
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, FLIGHT_SCENE_RENDERER.maxPixelRatio)
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, this.qualityProfile.maxPixelRatio)
     const material = new ShaderMaterial({
       vertexShader: muzzleFlashVertexShader,
       fragmentShader: muzzleFlashFragmentShader,

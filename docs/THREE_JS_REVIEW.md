@@ -43,27 +43,34 @@ The project is split in three Three.js "managers" plus a shader folder. The rest
 | Ship model helpers (rim-light injection, disposal, mirroring math) | `src/lib/managers/ShipBuilderModelManager/utils.ts`                                              |
 | Custom GLSL shaders                                                | `src/lib/shaders/thruster.ts`, `src/lib/shaders/projectile.ts`, `src/lib/shaders/muzzleFlash.ts` |
 | Texture cache (planets)                                            | `src/lib/utils/PlanetTextureCache/PlanetTextureCache.ts`                                         |
-| Texture URLs                                                       | `src/assets/resources.ts`                                                                        |
+| Builder HDR environment map (PMREM + RGBELoader, cached)           | `src/lib/utils/BuilderEnvironmentMap/BuilderEnvironmentMap.ts`                                   |
+| Runtime quality tier (mobile DPR cap + bloom/outline gating)       | `src/lib/utils/RendererQuality/RendererQuality.ts`                                               |
+| Texture / HDR URLs                                                 | `src/assets/resources.ts`                                                                        |
 
 ---
 
 ## 3. Renderer / WebGL Surface Setup
 
-`WebGLRenderer`, pixel-ratio clamping, shadow map, and clear color.
+`WebGLRenderer`, pixel-ratio clamping, shadow map, tone mapping, sRGB output, and clear color.
 
-- Builder renderer + shadow map type — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts:427-429`
+- Builder renderer — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts` (`initialize`)
   - `WebGLRenderer({ canvas, antialias: false, alpha: false })`
-  - `renderer.shadowMap.enabled = true`
-  - `renderer.shadowMap.type = PCFShadowMap`
-- DPR clamp + dynamic resize — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts:312-329`
-  - `Math.min(window.devicePixelRatio, MAX_DEVICE_PIXEL_RATIO)`
+  - `renderer.shadowMap.enabled = true`, `renderer.shadowMap.type = PCFShadowMap`
+  - `renderer.outputColorSpace = SRGBColorSpace`
+  - `renderer.toneMapping = ACESFilmicToneMapping`
+  - `renderer.toneMappingExposure = BUILDER_RENDERER_SETTINGS.toneMappingExposure`
+- DPR clamp + dynamic resize — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts` (`resize`)
+  - `Math.min(window.devicePixelRatio, this.qualityProfile.maxPixelRatio)`
   - `setPixelRatio` + `composer.setSize` / `renderer.setSize`
-- Flight renderer + clear color + fog — `src/lib/managers/ShipFlightSceneManager/ShipFlightSceneManager.ts:241-252`
+- Flight renderer + clear color + fog — `src/lib/managers/ShipFlightSceneManager/ShipFlightSceneManager.ts` (`initialize`)
   - `WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' })`
   - `renderer.setClearColor(new Color(...), 1)`
-  - `scene.background = new Color(...)`
-  - `scene.fog = new FogExp2(color, density)`
-- Renderer tuning constants — `src/lib/managers/ShipBuilderSceneManager/constants.ts:3` (`MAX_DEVICE_PIXEL_RATIO`), `src/lib/managers/ShipFlightSceneManager/constants.ts` (`FLIGHT_SCENE_RENDERER`)
+  - `renderer.outputColorSpace = SRGBColorSpace`
+  - `renderer.toneMapping = ACESFilmicToneMapping`
+  - `renderer.toneMappingExposure = FLIGHT_SCENE_RENDERER.toneMappingExposure`
+  - `scene.background = new Color(...)`, `scene.fog = new FogExp2(color, density)`
+- Renderer tuning constants — `ShipBuilderSceneManager/constants.ts` (`BUILDER_RENDERER_SETTINGS`), `ShipFlightSceneManager/constants.ts` (`FLIGHT_SCENE_RENDERER` incl. `maxPixelRatio` and `toneMappingExposure`)
+- Runtime quality tier — `src/lib/utils/RendererQuality/RendererQuality.ts` returns a profile (`tier`, `maxPixelRatio`, `bloomEnabled`, `outlineEnabled`) based on `matchMedia('(pointer: coarse)')` or `(max-width: 900px)`. Low tier caps DPR at 1.0 and disables bloom + outline passes. Both managers read it once at construction.
 
 ---
 
@@ -79,19 +86,21 @@ The project is split in three Three.js "managers" plus a shader folder. The rest
 
 - `PerspectiveCamera` builder — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts:438-449`
 - `PerspectiveCamera` flight (mobile vs desktop config) — `src/lib/managers/ShipFlightSceneManager/ShipFlightSceneManager.ts:254-265`
-- `OrbitControls` (damping + constraints + auto-rotate cinematic mode) — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts:451-456` and `applyOrbitConstraints` near `DEFAULT_ORBIT_CONSTRAINTS` / `PANORAMIC_ORBIT_CONSTRAINTS` in `constants.ts:36-48`
-- `TransformControls` (gizmo) attach/detach + per-axis visibility for the "pair spread" custom mode — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts:671-749`
-- Camera framing (`focusSelectedSlot`, `zoomToShip`) using `Box3` to fit the model in view — `ShipBuilderSceneManager.ts:227-311`
+- `OrbitControls` (damping + constraints + auto-rotate cinematic mode) — `ShipBuilderSceneManager.ts` `initialize` + `applyOrbitConstraints`; constraints in `constants.ts` (`DEFAULT_ORBIT_CONSTRAINTS`, `PANORAMIC_ORBIT_CONSTRAINTS`, `CINEMATIC_ROTATION_SPEED`)
+- Idle cinematic — when the builder camera has had no input for `IDLE_CINEMATIC_DELAY_MS` (6s), `updateIdleCinematic` quietly enables `controls.autoRotate`; activity events (canvas `pointerdown`, `wheel`, window `keydown`, manual `V` toggle) call `markActivity` to cancel it. The manual `V` toggle takes priority. See `ShipBuilderSceneManager.ts` (`markActivity`, `updateIdleCinematic`, `toggleCinematicView`).
+- Flight mouse parallax — a window-level `pointermove` listener normalizes the pointer to `(-1, 1)`. Each frame `MathUtils.damp` smooths the target and offsets the camera by `FLIGHT_SCENE_PARALLAX.offsetX/Y` (no allocation). Skipped when free-orbit is active. See `ShipFlightSceneManager.ts` (`handleWindowPointerMove`, parallax block inside `animate`).
+- `TransformControls` (gizmo) attach/detach + per-axis visibility for the "pair spread" custom mode — `ShipBuilderSceneManager.ts` (`initializeTransformControls`, `setTransformMode`)
+- Camera framing (`focusSelectedSlot`, `zoomToShip`) using `Box3` to fit the model in view — `ShipBuilderSceneManager.ts`
 
 ---
 
 ## 6. Lights & Shadows
 
-- Three-point lighting (key/rim/fill) in both scenes:
-  - Builder — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts:557-585`
-  - Flight — `src/lib/managers/ShipFlightSceneManager/ShipFlightSceneManager.ts:322-346`
-- Shadow map sizing + bias + ortho shadow camera bounds (key light) — `ShipBuilderSceneManager.ts:565-573`, parameters in `constants.ts:17-23` (`BUILDER_SHADOW_SETTINGS`)
-- `castShadow` / `receiveShadow` applied recursively per mesh — `src/lib/managers/ShipBuilderModelManager/utils.ts:69-78` (`applyShadowToObject`)
+- Three-point lighting (key/rim/fill) plus an `AmbientLight` in both scenes — `initializeLights` in each manager.
+- Shadow map sizing + bias + ortho shadow camera bounds (key light) — `ShipBuilderSceneManager.initializeLights`, parameters in `constants.ts` (`BUILDER_SHADOW_SETTINGS`).
+- Shadows are enabled in the builder scene only. Flight disables them via `FLIGHT_SCENE_RENDERER.enableShadows = false` because the open-space scene has no ground plane to receive them — skipping the shadow-map pass saves work every frame.
+- `castShadow` / `receiveShadow` applied recursively per ship mesh — `src/lib/managers/ShipBuilderModelManager/utils.ts` (`applyShadowToObject`).
+- Optional HDR environment map for builder PBR reflections — `initializeEnvironmentMap` lazy-loads an `.hdr` via `RGBELoader`, processes it with `PMREMGenerator`, and assigns the result to `scene.environment`. Cached in `src/lib/utils/BuilderEnvironmentMap/`. URL is `BUILDER_ENVIRONMENT_HDR_URL` in `src/assets/resources.ts`; when empty the scene falls back to the 3-light setup with no network cost.
 
 Dev-only helpers (toggleable via lil-gui in dev):
 
@@ -173,13 +182,14 @@ Projectiles are a single `InstancedMesh` of size `FLIGHT_SCENE_PROJECTILES.poolS
 
 ## 12. Post-Processing (`postprocessing` library on top of Three)
 
-Both scenes share the same pipeline: `EffectComposer` → `RenderPass` → `BloomEffect` (mipmap blur) → `FXAAEffect`.
+Both scenes use `EffectComposer` with `RenderPass` first, then differ:
 
-- Builder pipeline — `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts:534-552`
-- Flight pipeline — `src/lib/managers/ShipFlightSceneManager/ShipFlightSceneManager.ts:279-296`
-- Tuning constants — `ShipBuilderSceneManager/constants.ts:5-15` (`POST_PROCESSING_SETTINGS`) and `ShipFlightSceneManager/constants.ts` (`FLIGHT_SCENE_POST_PROCESSING`).
+- Builder pipeline — `EffectComposer` → `RenderPass` → `BloomEffect` (mipmap blur) → `OutlineEffect` (selection highlight) → `FXAAEffect`. See `ShipBuilderSceneManager.initializePostProcessing`. Bloom and outline passes are gated by the runtime quality profile and are disabled on low-tier (mobile) devices.
+- Flight pipeline — `EffectComposer` → `RenderPass` → `BloomEffect` → `FXAAEffect` → `NoiseEffect` (soft-light blend, low opacity for filmic grain). See `ShipFlightSceneManager.initializePostProcessing`. Bloom is gated by the quality profile.
+- Tuning constants — `ShipBuilderSceneManager/constants.ts` (`POST_PROCESSING_SETTINGS`) and `ShipFlightSceneManager/constants.ts` (`FLIGHT_SCENE_POST_PROCESSING` incl. `noise`).
+- Dev controls — both managers expose `lil-gui` folders for tuning bloom, outline, FXAA, and (flight) noise opacity/premultiply at runtime.
 
-Render loop fallback: when no composer is available, `renderer.render(scene, camera)` is used directly — see `animate` at `ShipBuilderSceneManager.ts:1329-1355` and `ShipFlightSceneManager.ts:1305-1340`.
+Render loop fallback: when no composer is available, `renderer.render(scene, camera)` is used directly — see `animate` in both managers.
 
 ---
 
@@ -189,7 +199,9 @@ Planets use shared `Texture`s loaded once via `TextureLoader`, cached per URL, w
 
 - `src/lib/utils/PlanetTextureCache/PlanetTextureCache.ts`
 - Texture URLs — `src/assets/resources.ts`
-- Consumer — `ShipFlightSceneManager.ts:858-867` in `spawnPlanet` (texture passed via `MeshStandardMaterial.map`, with a color fallback while the texture loads).
+- Consumer — `ShipFlightSceneManager.spawnPlanet` (texture passed via `MeshStandardMaterial.map`, with a color fallback while the texture loads).
+
+The same dedup-and-cache pattern is reused for the optional builder HDR environment map (`src/lib/utils/BuilderEnvironmentMap/BuilderEnvironmentMap.ts`): the `.hdr` is loaded once, processed through `PMREMGenerator`, and the resulting cubemap texture is cached. The PMREM generator is disposed after a single use so it doesn't sit in memory.
 
 ---
 
@@ -259,7 +271,19 @@ Standard `requestAnimationFrame` loop bound to the manager instance:
 
 ---
 
-## 20. Suggested Review Order
+## 20. Performance Budget
+
+The renderer keeps a tight budget so the flight scene targets 60fps on a mid-range phone:
+
+- Procedural geometry means zero asset download and no decode step on first paint.
+- `setPixelRatio` is clamped (1.5 on desktop, 1.0 on low-tier devices) so HiDPI screens never burn 4× the fragment work.
+- FXAA is preferred over hardware MSAA: post passes write into a render target where MSAA can't AA the composited result. One screen-space FXAA pass after bloom + outline + (flight) noise gives a single consistent edge.
+- Projectiles render through a single `InstancedMesh`, so fire-rate scales without growing the draw-call count.
+- Shadows are disabled in the flight scene (no ground plane to receive them), saving a full shadow-map pass every frame.
+- Frustum culling is left at three's default (per-`Mesh` bounding-sphere test).
+- Runtime quality tier (`src/lib/utils/RendererQuality/`) detects coarse-pointer / narrow-viewport devices and switches both managers to a low profile (DPR 1.0, bloom + outline off). Read once at scene construction.
+
+## 21. Suggested Review Order
 
 If you want to read the WebGL/Three.js code linearly, this order matches the data flow:
 
@@ -268,5 +292,6 @@ If you want to read the WebGL/Three.js code linearly, this order matches the dat
 3. `src/lib/managers/ShipBuilderSceneManager/ShipBuilderSceneManager.ts` — renderer, lights, shadows, gizmos, raycasting, `Box3` validation, post-processing.
 4. `src/lib/managers/ShipFlightSceneManager/ShipFlightSceneManager.ts` — fog, stars, planets, instanced projectiles, particle systems.
 5. `src/lib/shaders/*.ts` — the three GLSL programs used in flight mode.
+6. `src/lib/utils/BuilderEnvironmentMap/` and `src/lib/utils/RendererQuality/` — opt-in PBR env map and the runtime quality tier.
 
 Everything else is glue (React canvases at `src/components/SceneCanvas/SceneCanvas.tsx` and `src/components/FlightSceneCanvas/FlightSceneCanvas.tsx`, providers, state) and is not central to the WebGL grading.

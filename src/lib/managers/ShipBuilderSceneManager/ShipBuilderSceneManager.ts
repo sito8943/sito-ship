@@ -37,6 +37,7 @@ import {
 } from 'three'
 import { BUILDER_ENVIRONMENT_HDR_URL } from '@/assets/resources'
 import { loadBuilderEnvironmentMap } from '@/lib/utils/BuilderEnvironmentMap'
+import { getRendererQualityProfile, type RendererQualityProfile } from '@/lib/utils/RendererQuality'
 import { ShipBuilderModelManager } from '@/lib/managers/ShipBuilderModelManager'
 import {
   SHIP_SYMMETRIC_AIM_ROTATION_RANGES,
@@ -55,7 +56,6 @@ import {
   IDLE_CINEMATIC_DELAY_MS,
   DEFAULT_ORBIT_CONSTRAINTS,
   FLIGHT_SETTINGS,
-  MAX_DEVICE_PIXEL_RATIO,
   OVERLAP_SLOT_PAIRS,
   OVERLAP_VOLUME_RATIO_THRESHOLD,
   PANORAMIC_ORBIT_CONSTRAINTS,
@@ -128,6 +128,7 @@ export class ShipBuilderSceneManager {
   private isCinematicViewEnabled = false
   private isIdleCinematicActive = false
   private lastActivityAt = 0
+  private qualityProfile: RendererQualityProfile = getRendererQualityProfile()
   private experienceMode: ExperienceMode = 'builder'
   private selectedSlot: ShipSlot | null = 'body'
   private transformMode: TransformMode = 'translate'
@@ -387,7 +388,10 @@ export class ShipBuilderSceneManager {
       return
     }
 
-    const devicePixelRatio = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO)
+    const devicePixelRatio = Math.min(
+      window.devicePixelRatio || 1,
+      this.qualityProfile.maxPixelRatio
+    )
 
     this.renderer.setPixelRatio(devicePixelRatio)
     if (this.composer) {
@@ -696,7 +700,7 @@ export class ShipBuilderSceneManager {
       mipmapBlur: true,
     })
     this.bloomPass = new EffectPass(this.camera, this.bloomEffect)
-    this.bloomPass.enabled = settings.bloom.enabled
+    this.bloomPass.enabled = settings.bloom.enabled && this.qualityProfile.bloomEnabled
     this.composer.addPass(this.bloomPass)
 
     this.outlineEffect = new OutlineEffect(this.scene, this.camera, {
@@ -709,7 +713,7 @@ export class ShipBuilderSceneManager {
       xRay: settings.outline.xRay,
     })
     this.outlinePass = new EffectPass(this.camera, this.outlineEffect)
-    this.outlinePass.enabled = settings.outline.enabled
+    this.outlinePass.enabled = settings.outline.enabled && this.qualityProfile.outlineEnabled
     this.composer.addPass(this.outlinePass)
 
     this.fxaaPass = new EffectPass(this.camera, new FXAAEffect())
