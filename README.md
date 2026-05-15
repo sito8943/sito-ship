@@ -1,26 +1,38 @@
 # Sito Ship
 
-A 3D spaceship builder and flight simulator running in the browser. Built with React, TypeScript, Three.js, and Vite. Players assemble a ship from modular slots (body, cockpit, wings, engines, weapons), then drop into a flight scene with thrusters, projectiles, post-processing bloom, and a streaming planet field.
+Browser-based 3D spaceship builder and flight sandbox built with React, TypeScript, Three.js, and Vite.
 
-## Modes
+Create a ship from modular parts, tweak transforms in the builder, export or import configs as JSON, then switch into a flight scene with thrusters, weapons, bloom, and mobile touch controls.
+
+## Features
 
 ### Builder Mode
 
-Modular ship editor with an orbit camera. Pick slots from categories, transform them with translate/rotate/scale gizmos, mirror symmetric pairs (wings/engines/weapons), validate overlap and body-contact constraints, save/load ship JSON, and undo/redo edits.
+- Modular ship assembly for body, cockpit, wings, engines, and weapons
+- Transform tools for move, rotate, scale, pair spread, and aim rotation
+- Validation feedback for overlapping parts and body-contact violations
+- Undo/redo history
+- Desktop and mobile control layouts
 
 ### Flight Mode
 
-Take the assembled ship into space. Strafe and pitch, fire projectiles with muzzle flash, thrusters react to throttle, planets stream past with a textured pool and parallax star layers. Touch controls auto-enable on coarse-pointer devices.
+- Instant switch from builder to flight with `T`
+- Keyboard flight controls on desktop
+- Touch flight controls on coarse-pointer devices
+- Projectile fire, thruster feedback, and streaming space scenery
+
+### Persistence and IO
+
+- `Ctrl+S` saves the current ship to browser `localStorage`
+- The last saved session is restored automatically when possible
+- `Ctrl+E` exports the current ship as JSON
+- `Ctrl+I` imports a ship config from JSON
 
 ## Screenshots
 
-<!-- TODO: replace placeholders with real screenshots -->
-
-| Builder                                                         | Flight                                                        |
-| --------------------------------------------------------------- | ------------------------------------------------------------- |
-| <img width="2940" height="1490" alt="image" src="https://github.com/user-attachments/assets/23fc5bc6-8062-4d77-ad9b-8da534577516" />
- | <img width="2928" height="1490" alt="image" src="https://github.com/user-attachments/assets/ea937ab5-d4ac-45f1-80b9-f11cb63df703" />
- |
+| Builder                                                                                                                                     | Flight                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| <img width="2940" height="1490" alt="Builder mode" src="https://github.com/user-attachments/assets/23fc5bc6-8062-4d77-ad9b-8da534577516" /> | <img width="2928" height="1490" alt="Flight mode" src="https://github.com/user-attachments/assets/ea937ab5-d4ac-45f1-80b9-f11cb63df703" /> |
 
 ## Getting Started
 
@@ -29,78 +41,64 @@ npm install
 npm run dev
 ```
 
-Then open the printed local URL.
+Open the local URL printed by Vite.
 
-Scripts:
+## Available Scripts
 
-- `npm run dev` — start Vite dev server
-- `npm run build` — typecheck + production build
-- `npm run typecheck` — `tsc -b`
-- `npm run lint` — typecheck + ESLint (max-warnings=0)
-- `npm run format` — Prettier write
+- `npm run dev` starts the Vite dev server
+- `npm run build` runs TypeScript build mode and creates a production bundle
+- `npm run preview` serves the production build locally
+- `npm run typecheck` runs `tsc -b --pretty false`
+- `npm run lint` runs typecheck and ESLint with `--max-warnings=0`
+- `npm run lint:fix` applies ESLint fixes
+- `npm run format` formats the project with Prettier
+- `npm run format:check` checks formatting with Prettier
 
-## Development-Only Features
+## Keyboard Shortcuts
 
-These only mount when `import.meta.env.DEV` is true.
-
-### Builder — Debug GUI
-
-A `lil-gui` panel titled **Debug Helpers** appears in the top-right of the builder canvas with toggles for:
-
-- **Axes Helper** — world axes at origin
-- **Light Helpers** — `DirectionalLightHelper` for key/rim/fill lights
-- **Shadow Helpers** — `CameraHelper` for the shadow-casting key light
-
-### Flight — Debug GUI
-
-A `lil-gui` panel titled **Flight Debug** appears in the top-right of the flight canvas with two folders:
-
-- **Helpers**
-  - **Axes Helper**
-  - **Grid Helper**
-  - **Light Helpers**
-- **Camera**
-  - **Free Camera Orbit** — disables the fixed follow camera and enables `OrbitControls` (drag to orbit, scroll to zoom)
-
-### Stats Panel
-
-Three.js `Stats` overlay (MS panel) is fixed at top-left of both builder and flight scenes in dev.
-
-## Keyboard Shortcuts (Builder)
+### Builder
 
 | Action                                            | Key                         |
 | ------------------------------------------------- | --------------------------- |
-| Open keyboard shortcuts/help                      | `F1`                        |
-| Export ship as JSON                               | `Ctrl+E`                    |
+| Open keyboard shortcuts                           | `F1`                        |
+| Toggle builder / flight mode                      | `T`                         |
+| Export ship JSON                                  | `Ctrl+E`                    |
 | Import ship JSON                                  | `Ctrl+I`                    |
-| Save current ship                                 | `Ctrl+S`                    |
+| Save ship to browser storage                      | `Ctrl+S`                    |
 | Undo                                              | `Ctrl+Z`                    |
 | Redo                                              | `Ctrl+Shift+Z`              |
-| Hide/show controls panel                          | `Tab`                       |
+| Hide or show builder UI                           | `Tab`                       |
 | Toggle panoramic view                             | `Shift+Tab`                 |
 | Select body / cockpit / wings / engines / weapons | `1` / `2` / `3` / `4` / `5` |
-| Move / Rotate / Scale gizmo                       | `G` / `R` / `S`             |
+| Move / rotate / scale                             | `G` / `R` / `S`             |
 | Toggle pair spread editing                        | `P`                         |
 | Aim-rotate toward target                          | `A`                         |
-| Delete selected part                              | `Delete`                    |
-| Reset selected slot                               | `Backspace`                 |
+| Reset selected slot                               | `Backspace` / `Delete`      |
 | Reset entire ship                                 | `Ctrl+Backspace`            |
 | Focus selected part                               | `F`                         |
-| Zoom to fit entire ship                           | `Home`                      |
+| Zoom to fit ship                                  | `Home`                      |
 | Toggle cinematic view                             | `V`                         |
 
-## Keyboard Shortcuts (Flight)
+### Flight
 
-| Action                        | Key            |
-| ----------------------------- | -------------- |
-| Exit flight (back to builder) | `T` / `Escape` |
-| Hide/show HUD                 | `Tab`          |
+| Action              | Key            |
+| ------------------- | -------------- |
+| Strafe left / right | `A` / `D`      |
+| Move up / down      | `W` / `S`      |
+| Fire weapons        | `Space`        |
+| Hide or show HUD    | `Tab`          |
+| Return to builder   | `T` / `Escape` |
+
+## Development Notes
+
+In development mode only, both scenes mount a `Stats` panel and a `lil-gui` debug panel. The builder debug panel is titled `Debug Helpers` and the flight panel is titled `Flight Debug`.
 
 ## Tech Stack
 
-- React 19 + TypeScript 5.9
-- Three.js 0.184
-- `postprocessing` (bloom, FXAA)
-- `lil-gui`, `Stats`, `OrbitControls`, `TransformControls` (three addons)
-- Vite (rolldown) + React Compiler
-- ESLint + Prettier + Husky + lint-staged
+- React 19
+- TypeScript 5.9
+- Three.js
+- `postprocessing`
+- Font Awesome
+- Vite with `@vitejs/plugin-react` and the React Compiler Babel plugin
+- ESLint, Prettier, Husky, and lint-staged
