@@ -18,7 +18,9 @@ Take the assembled ship into space. Strafe and pitch, fire projectiles with muzz
 
 | Builder                                                         | Flight                                                        |
 | --------------------------------------------------------------- | ------------------------------------------------------------- |
-| ![Builder screenshot placeholder](docs/screenshots/builder.png) | ![Flight screenshot placeholder](docs/screenshots/flight.png) |
+| <img width="2940" height="1490" alt="image" src="https://github.com/user-attachments/assets/23fc5bc6-8062-4d77-ad9b-8da534577516" />
+ | <img width="2928" height="1490" alt="image" src="https://github.com/user-attachments/assets/ea937ab5-d4ac-45f1-80b9-f11cb63df703" />
+ |
 
 ## Getting Started
 
