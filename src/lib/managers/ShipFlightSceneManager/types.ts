@@ -63,13 +63,8 @@ export type FlightScenePlanetEntry = {
 
 export type FlightSceneThrusterField = {
   points: Points
-  positions: Float32Array
-  lives: Float32Array
-  velocities: Float32Array
-  ages: Float32Array
-  lifetimes: Float32Array
   capacity: number
-  exhaustWorldPositions: Vector3[]
+  exhaustLocalPositions: Vector3[]
   exhaustCount: number
   material: import('three').ShaderMaterial
 }

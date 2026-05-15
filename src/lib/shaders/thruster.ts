@@ -1,20 +1,47 @@
 export const thrusterVertexShader = /* glsl */ `
-attribute float aLife;
+attribute vec3 aSeed;
+attribute float aSpawnPhase;
+attribute float aLifetime;
+attribute float aEmitterIndex;
+
 uniform float uTime;
+uniform vec3 uExhaustLocal[MAX_EXHAUSTS];
+uniform int uExhaustCount;
+uniform float uExhaustSpeed;
+uniform float uJitter;
+uniform float uSpawnSpread;
 uniform float uSize;
 uniform float uPixelRatio;
+
 varying float vLife;
 
 void main() {
-  vLife = clamp(aLife, 0.0, 1.0);
+  if (uExhaustCount <= 0) {
+    vLife = 1.0;
+    gl_PointSize = 0.0;
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
 
-  vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+  float life = fract(uTime / aLifetime + aSpawnPhase);
+  int idx = int(mod(aEmitterIndex, float(uExhaustCount)));
+  vec3 origin = uExhaustLocal[idx];
 
-  float grow = smoothstep(0.0, 0.18, vLife);
-  float shrink = 1.0 - smoothstep(0.35, 1.0, vLife);
+  vec3 spread = (aSeed - 0.5) * uSpawnSpread;
+  vec3 jitter = (fract(aSeed * 43.13 + aSeed.yzx * 17.7) - 0.5) * uJitter;
+  vec3 dir = vec3(0.0, 0.0, 1.0);
+  vec3 velocity = dir * uExhaustSpeed + jitter;
+
+  vec3 local = origin + spread + velocity * (life * aLifetime);
+
+  vec4 mvPosition = modelViewMatrix * vec4(local, 1.0);
+
+  float grow = smoothstep(0.0, 0.18, life);
+  float shrink = 1.0 - smoothstep(0.35, 1.0, life);
   float scale = mix(0.35, 1.75, grow) * mix(0.25, 1.0, shrink);
-  scale *= 1.0 + 0.10 * sin(uTime * 22.0 + position.x * 7.3 + position.z * 4.1);
+  scale *= 1.0 + 0.10 * sin(uTime * 22.0 + origin.x * 7.3 + origin.z * 4.1);
 
+  vLife = life;
   gl_PointSize = uSize * scale * uPixelRatio * (320.0 / -mvPosition.z);
   gl_Position = projectionMatrix * mvPosition;
 }

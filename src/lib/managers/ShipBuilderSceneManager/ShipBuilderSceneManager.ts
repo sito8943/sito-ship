@@ -1594,7 +1594,7 @@ export class ShipBuilderSceneManager {
 
     this.stats?.begin()
 
-    const delta = this.clock?.getDelta() ?? 0
+    const delta = Math.min(this.clock?.getDelta() ?? 0, 1 / 30)
     if (this.experienceMode === 'flight') {
       this.updateFlightSimulation(delta)
     } else {

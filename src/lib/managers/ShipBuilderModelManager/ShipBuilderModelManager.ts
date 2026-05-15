@@ -153,6 +153,27 @@ export class ShipBuilderModelManager {
     return count
   }
 
+  getEngineExhaustLocalPositions(referenceFrame: Group, out: Vector3[]): number {
+    const enginesGroup = this.slotGroups.engines
+    enginesGroup.updateMatrixWorld(true)
+    referenceFrame.updateMatrixWorld(true)
+    let count = 0
+    enginesGroup.traverse((obj) => {
+      if (obj.userData.isEngineExhaust !== true) {
+        return
+      }
+      let target = out[count]
+      if (!target) {
+        target = new Vector3()
+        out[count] = target
+      }
+      obj.getWorldPosition(target)
+      referenceFrame.worldToLocal(target)
+      count += 1
+    })
+    return count
+  }
+
   getWeaponMuzzleWorldPositions(out: Vector3[]): number {
     const weaponsGroup = this.slotGroups.weapons
     weaponsGroup.updateMatrixWorld(true)

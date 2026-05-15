@@ -149,7 +149,7 @@ Three full vertex+fragment shader pairs, all written in raw GLSL and wired throu
 
 | Effect                                                         | Shader file                      | Consumer                                                                               |
 | -------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------- |
-| Engine thruster particles (additive, life-driven color ramp)   | `src/lib/shaders/thruster.ts`    | `ShipFlightSceneManager.initializeThrusters` — `ShipFlightSceneManager.ts:757-813`     |
+| Engine thruster particles (analytic GPU, additive)             | `src/lib/shaders/thruster.ts`    | `ShipFlightSceneManager.initializeThrusters` — `ShipFlightSceneManager.ts:757-813`     |
 | Plasma projectiles (per-instance billboard, pulse via `uTime`) | `src/lib/shaders/projectile.ts`  | `ShipFlightSceneManager.initializeProjectiles` — `ShipFlightSceneManager.ts:552-620`   |
 | Muzzle flash sprites (radial + cross "ray" pattern)            | `src/lib/shaders/muzzleFlash.ts` | `ShipFlightSceneManager.initializeMuzzleFlash` — `ShipFlightSceneManager.ts:1133-1184` |
 
@@ -159,14 +159,28 @@ All three:
 - Discard out-of-circle fragments (`if (d > 0.5) discard;`).
 - Render with `transparent: true`, `depthWrite: false`, `blending: AdditiveBlending`.
 
+The thruster shader is a fully analytic GPU particle system. The vertex shader computes life, emitter origin, jitter, and final local-space position purely from per-particle static attributes (`aSeed`, `aSpawnPhase`, `aLifetime`, `aEmitterIndex`) and uniforms (`uTime`, `uExhaustLocal[MAX_EXHAUSTS]`, `uExhaustCount`, `uExhaustSpeed`, `uJitter`, `uSpawnSpread`). `MAX_EXHAUSTS` is injected via `material.defines` from `MAX_ENGINE_EXHAUSTS` in `ShipFlightSceneManager/constants.ts`. There is no per-frame CPU integration loop and no `BufferAttribute.needsUpdate`.
+
 ---
 
 ## 10. Particle Systems (`Points` + raw buffers)
 
-Both thruster and muzzle-flash fields use **CPU-driven particle pools**: typed arrays for positions/lives/ages/lifetimes, recycled by index. The GPU only consumes a `BufferGeometry` with `position` + `aLife` attributes and a custom `ShaderMaterial`.
+Two different patterns coexist:
 
-- Allocation + buffer attributes — `ShipFlightSceneManager.ts:762-799` (thrusters), `:1138-1172` (muzzle flash)
-- Per-frame update writing back to `BufferAttribute.needsUpdate = true` — search for `lifeAttribute.needsUpdate` (around `ShipFlightSceneManager.ts:1130`) and `positionAttribute.needsUpdate`.
+### 10.1 Thrusters — analytic GPU particles (no CPU integration)
+
+The thruster field is fully GPU-driven. Per-particle static attributes (`aSeed`, `aSpawnPhase`, `aLifetime`, `aEmitterIndex`) are filled once at init with `Math.random()` and never re-uploaded. The vertex shader (`src/lib/shaders/thruster.ts`) derives the particle's life and local-space position every frame analytically from those attributes plus the `uTime` and `uExhaustLocal[MAX_EXHAUSTS]` uniforms — there is no `BufferAttribute.needsUpdate`, no JS loop over the particle pool, and no CPU→GPU position re-upload per frame.
+
+- Static attribute setup — `ShipFlightSceneManager.initializeThrusters` (`src/lib/managers/ShipFlightSceneManager/ShipFlightSceneManager.ts`).
+- Uniform-only refresh of engine nozzle origins on config change — `refreshThrusterEmitters` calls `ShipBuilderModelManager.getEngineExhaustLocalPositions(shipGroup, out)` and writes the result into `uExhaustLocal` + `uExhaustCount`.
+- The `Points` object is parented to `shipGroup` so the exhaust origins stay in ship-local space and inherit ship transforms automatically through `modelViewMatrix`.
+
+### 10.2 Muzzle flash — CPU pool (event-driven)
+
+Muzzle flash uses a small CPU-driven ring buffer because it is event-driven (only fires when the weapon shoots) and writes are sparse. The GPU consumes a `BufferGeometry` with `position` + `aLife` attributes and a custom `ShaderMaterial`.
+
+- Allocation + buffer attributes — `ShipFlightSceneManager.initializeMuzzleFlash`.
+- Per-spawn position write and per-frame `aLife` update with `BufferAttribute.needsUpdate = true` — see `spawnMuzzleFlash` and `updateMuzzleFlash`.
 
 ---
 

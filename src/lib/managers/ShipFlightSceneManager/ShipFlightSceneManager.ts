@@ -154,7 +154,6 @@ export class ShipFlightSceneManager {
   private projectileField: FlightSceneProjectileField | null = null
   private muzzleFlashField: FlightSceneMuzzleFlashField | null = null
   private fireCooldown = 0
-  private readonly shipBackwardWorld = new Vector3()
   private readonly shipForwardWorld = new Vector3()
 
   mount(canvas: HTMLCanvasElement) {
@@ -819,31 +818,48 @@ export class ShipFlightSceneManager {
   }
 
   private initializeThrusters() {
-    if (!this.scene) {
+    if (!this.scene || !this.shipGroup) {
       return
     }
 
     const capacity = MAX_ENGINE_EXHAUSTS * FLIGHT_SCENE_THRUSTERS.particlesPerEngine
-    const positions = new Float32Array(capacity * 3)
-    const lives = new Float32Array(capacity)
-    const velocities = new Float32Array(capacity * 3)
-    const ages = new Float32Array(capacity)
+    const seeds = new Float32Array(capacity * 3)
+    const spawnPhases = new Float32Array(capacity)
     const lifetimes = new Float32Array(capacity)
+    const emitterIndices = new Float32Array(capacity)
+    const positions = new Float32Array(capacity * 3)
 
+    const lifetimeMin = FLIGHT_SCENE_THRUSTERS.lifetimeMin
+    const lifetimeMax = FLIGHT_SCENE_THRUSTERS.lifetimeMax
     for (let i = 0; i < capacity; i += 1) {
-      ages[i] = Infinity
-      lifetimes[i] = 1
-      lives[i] = 1
+      const offset = i * 3
+      seeds[offset] = Math.random()
+      seeds[offset + 1] = Math.random()
+      seeds[offset + 2] = Math.random()
+      spawnPhases[i] = Math.random()
+      lifetimes[i] = lifetimeMin + Math.random() * (lifetimeMax - lifetimeMin)
+      emitterIndices[i] = i % MAX_ENGINE_EXHAUSTS
     }
 
     const geometry = new BufferGeometry()
     geometry.setAttribute('position', new BufferAttribute(positions, 3))
-    geometry.setAttribute('aLife', new BufferAttribute(lives, 1))
+    geometry.setAttribute('aSeed', new BufferAttribute(seeds, 3))
+    geometry.setAttribute('aSpawnPhase', new BufferAttribute(spawnPhases, 1))
+    geometry.setAttribute('aLifetime', new BufferAttribute(lifetimes, 1))
+    geometry.setAttribute('aEmitterIndex', new BufferAttribute(emitterIndices, 1))
+
+    const exhaustLocalPositions: Vector3[] = []
+    for (let i = 0; i < MAX_ENGINE_EXHAUSTS; i += 1) {
+      exhaustLocalPositions.push(new Vector3())
+    }
 
     const pixelRatio = Math.min(window.devicePixelRatio || 1, this.qualityProfile.maxPixelRatio)
     const material = new ShaderMaterial({
       vertexShader: thrusterVertexShader,
       fragmentShader: thrusterFragmentShader,
+      defines: {
+        MAX_EXHAUSTS: MAX_ENGINE_EXHAUSTS,
+      },
       uniforms: {
         uTime: { value: 0 },
         uSize: { value: FLIGHT_SCENE_THRUSTERS.size },
@@ -851,6 +867,11 @@ export class ShipFlightSceneManager {
         uCoreColor: { value: THRUSTER_CORE_COLOR.clone() },
         uMidColor: { value: THRUSTER_MID_COLOR.clone() },
         uTailColor: { value: THRUSTER_TAIL_COLOR.clone() },
+        uExhaustLocal: { value: exhaustLocalPositions },
+        uExhaustCount: { value: 0 },
+        uExhaustSpeed: { value: FLIGHT_SCENE_THRUSTERS.exhaustSpeed },
+        uJitter: { value: FLIGHT_SCENE_THRUSTERS.jitter },
+        uSpawnSpread: { value: FLIGHT_SCENE_THRUSTERS.spawnSpread },
       },
       transparent: true,
       depthWrite: false,
@@ -860,20 +881,32 @@ export class ShipFlightSceneManager {
     const points = new Points(geometry, material)
     points.name = 'flightThrusterParticles'
     points.frustumCulled = false
-    this.scene.add(points)
+    this.shipGroup.add(points)
 
     this.thrusterField = {
       points,
-      positions,
-      lives,
-      velocities,
-      ages,
-      lifetimes,
       capacity,
-      exhaustWorldPositions: [],
+      exhaustLocalPositions,
       exhaustCount: 0,
       material,
     }
+
+    this.refreshThrusterEmitters()
+  }
+
+  private refreshThrusterEmitters() {
+    const field = this.thrusterField
+    if (!field || !this.shipGroup || !this.shipModelManager) {
+      return
+    }
+
+    const count = this.shipModelManager.getEngineExhaustLocalPositions(
+      this.shipGroup,
+      field.exhaustLocalPositions
+    )
+    field.exhaustCount = count
+    field.material.uniforms.uExhaustCount.value = count
+    field.material.uniforms.uExhaustLocal.value = field.exhaustLocalPositions
   }
 
   private createStarField(config: (typeof FLIGHT_SCENE_STAR_LAYERS)[number]): FlightSceneStarField {
@@ -1121,77 +1154,12 @@ export class ShipFlightSceneManager {
     }
   }
 
-  private updateThrusters(delta: number) {
+  private updateThrusters() {
     const field = this.thrusterField
-    if (!field || !this.shipGroup || !this.shipModelManager) {
+    if (!field) {
       return
     }
-
-    field.exhaustCount = this.shipModelManager.getEngineExhaustWorldPositions(
-      field.exhaustWorldPositions
-    )
-
-    const lifeAttribute = field.points.geometry.getAttribute('aLife') as BufferAttribute
-
-    if (field.exhaustCount === 0) {
-      for (let i = 0; i < field.capacity; i += 1) {
-        field.lives[i] = 1
-      }
-      lifeAttribute.needsUpdate = true
-      return
-    }
-
-    this.shipBackwardWorld.set(0, 0, 1).applyQuaternion(this.shipGroup.quaternion)
-
-    const activeCapacity = Math.min(
-      field.capacity,
-      field.exhaustCount * FLIGHT_SCENE_THRUSTERS.particlesPerEngine
-    )
-    const speed = FLIGHT_SCENE_THRUSTERS.exhaustSpeed
-    const jitter = FLIGHT_SCENE_THRUSTERS.jitter
-    const spawnSpread = FLIGHT_SCENE_THRUSTERS.spawnSpread
-    const lifetimeMin = FLIGHT_SCENE_THRUSTERS.lifetimeMin
-    const lifetimeMax = FLIGHT_SCENE_THRUSTERS.lifetimeMax
-
-    for (let i = 0; i < field.capacity; i += 1) {
-      const offset = i * 3
-
-      if (i >= activeCapacity) {
-        field.lives[i] = 1
-        field.ages[i] = Infinity
-        continue
-      }
-
-      field.ages[i] += delta
-
-      if (field.ages[i] >= field.lifetimes[i]) {
-        const exhaustIndex = i % field.exhaustCount
-        const origin = field.exhaustWorldPositions[exhaustIndex]
-
-        field.positions[offset] = origin.x + (Math.random() - 0.5) * spawnSpread
-        field.positions[offset + 1] = origin.y + (Math.random() - 0.5) * spawnSpread
-        field.positions[offset + 2] = origin.z + (Math.random() - 0.5) * spawnSpread
-
-        field.velocities[offset] = this.shipBackwardWorld.x * speed + (Math.random() - 0.5) * jitter
-        field.velocities[offset + 1] =
-          this.shipBackwardWorld.y * speed + (Math.random() - 0.5) * jitter
-        field.velocities[offset + 2] =
-          this.shipBackwardWorld.z * speed + (Math.random() - 0.5) * jitter
-
-        field.ages[i] = 0
-        field.lifetimes[i] = lifetimeMin + Math.random() * (lifetimeMax - lifetimeMin)
-      } else {
-        field.positions[offset] += field.velocities[offset] * delta
-        field.positions[offset + 1] += field.velocities[offset + 1] * delta
-        field.positions[offset + 2] += field.velocities[offset + 2] * delta
-      }
-
-      field.lives[i] = field.ages[i] / field.lifetimes[i]
-    }
-
-    const positionAttribute = field.points.geometry.getAttribute('position') as BufferAttribute
-    positionAttribute.needsUpdate = true
-    lifeAttribute.needsUpdate = true
+    this.refreshThrusterEmitters()
   }
 
   private initializeMuzzleFlash() {
@@ -1321,7 +1289,7 @@ export class ShipFlightSceneManager {
     if (!field) {
       return
     }
-    this.scene?.remove(field.points)
+    field.points.parent?.remove(field.points)
     field.points.geometry.dispose()
     const material = field.points.material
     if (Array.isArray(material)) {
@@ -1329,7 +1297,7 @@ export class ShipFlightSceneManager {
     } else {
       ;(material as Material | null)?.dispose()
     }
-    field.exhaustWorldPositions.length = 0
+    field.exhaustLocalPositions.length = 0
     this.thrusterField = null
   }
 
@@ -1377,7 +1345,7 @@ export class ShipFlightSceneManager {
     const elapsed = this.clock?.getElapsedTime() ?? 0
     this.updateStrafeState(delta)
     this.updateSpaceMotion(delta)
-    this.updateThrusters(delta)
+    this.updateThrusters()
     this.updateProjectiles(delta)
     this.updateMuzzleFlash(delta)
     if (this.thrusterField) {
