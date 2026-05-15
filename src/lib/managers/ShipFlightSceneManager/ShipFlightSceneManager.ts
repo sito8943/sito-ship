@@ -32,7 +32,15 @@ import {
 import { thrusterFragmentShader, thrusterVertexShader } from '@/lib/shaders/thruster'
 import { projectileFragmentShader, projectileVertexShader } from '@/lib/shaders/projectile'
 import { muzzleFlashFragmentShader, muzzleFlashVertexShader } from '@/lib/shaders/muzzleFlash'
-import { BloomEffect, EffectComposer, EffectPass, FXAAEffect, RenderPass } from 'postprocessing'
+import {
+  BlendFunction,
+  BloomEffect,
+  EffectComposer,
+  EffectPass,
+  FXAAEffect,
+  NoiseEffect,
+  RenderPass,
+} from 'postprocessing'
 import Stats from 'three/addons/libs/stats.module.js'
 import { GUI } from 'three/addons/libs/lil-gui.module.min.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -103,6 +111,13 @@ export class ShipFlightSceneManager {
   private orbitControls: OrbitControls | null = null
   private isFreeCameraEnabled = false
   private composer: EffectComposer | null = null
+  private noisePass: EffectPass | null = null
+  private noiseEffect: NoiseEffect | null = null
+  private noiseSettings = {
+    enabled: FLIGHT_SCENE_POST_PROCESSING.noise.enabled as boolean,
+    opacity: FLIGHT_SCENE_POST_PROCESSING.noise.opacity as number,
+    premultiply: FLIGHT_SCENE_POST_PROCESSING.noise.premultiply as boolean,
+  }
   private shipGroup: Group | null = null
   private shipModelGroup: Group | null = null
   private planetsLayer: Group | null = null
@@ -199,6 +214,8 @@ export class ShipFlightSceneManager {
     this.renderer?.dispose()
 
     this.composer = null
+    this.noisePass = null
+    this.noiseEffect = null
     this.renderer = null
     this.scene = null
     this.camera = null
@@ -299,6 +316,17 @@ export class ShipFlightSceneManager {
     const fxaaPass = new EffectPass(this.camera, new FXAAEffect())
     fxaaPass.enabled = FLIGHT_SCENE_POST_PROCESSING.fxaa.enabled
     this.composer.addPass(fxaaPass)
+
+    const noiseEffect = new NoiseEffect({
+      blendFunction: BlendFunction.SOFT_LIGHT,
+      premultiply: this.noiseSettings.premultiply,
+    })
+    noiseEffect.blendMode.opacity.value = this.noiseSettings.opacity
+    const noisePass = new EffectPass(this.camera, noiseEffect)
+    noisePass.enabled = this.noiseSettings.enabled
+    this.composer.addPass(noisePass)
+    this.noiseEffect = noiseEffect
+    this.noisePass = noisePass
   }
 
   private initializeStats() {
@@ -453,6 +481,27 @@ export class ShipFlightSceneManager {
       .name('Free Camera Orbit')
       .onChange((value: boolean) => {
         this.setFreeCameraEnabled(value)
+      })
+
+    const postFolder = this.debugGui.addFolder('Post Processing')
+    const noiseFolder = postFolder.addFolder('Noise')
+    noiseFolder
+      .add(this.noiseSettings, 'enabled')
+      .name('Enabled')
+      .onChange((value: boolean) => {
+        if (this.noisePass) this.noisePass.enabled = value
+      })
+    noiseFolder
+      .add(this.noiseSettings, 'opacity', 0, 1, 0.01)
+      .name('Opacity')
+      .onChange((value: number) => {
+        if (this.noiseEffect) this.noiseEffect.blendMode.opacity.value = value
+      })
+    noiseFolder
+      .add(this.noiseSettings, 'premultiply')
+      .name('Premultiply')
+      .onChange((value: boolean) => {
+        if (this.noiseEffect) this.noiseEffect.premultiply = value
       })
   }
 

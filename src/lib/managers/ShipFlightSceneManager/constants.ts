@@ -128,6 +128,11 @@ export const FLIGHT_SCENE_POST_PROCESSING = {
   fxaa: {
     enabled: true,
   },
+  noise: {
+    enabled: true,
+    opacity: 0.08,
+    premultiply: false,
+  },
 } as const
 
 export const FLIGHT_SCENE_PLANET_POOL_SIZE = 5

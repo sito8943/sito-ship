@@ -121,6 +121,8 @@ Shader work appears in both scenes. The flight scene runs three full `ShaderMate
 
 Both scenes render through `postprocessing`'s `EffectComposer` with FXAA, Bloom, and (in the builder) Outline passes. FXAA was chosen over hardware MSAA because the post-processing pipeline writes to a render target where MSAA cannot anti-alias the composited result, and a screen-space FXAA pass after bloom/outline produces a consistent edge across all effects. WebGL renderer `antialias` is therefore set to `false` in both managers. The cost is a single full-screen pass — far cheaper than running MSAA samples through every post effect.
 
+The flight scene adds a final low-opacity `NoiseEffect` pass (soft-light blend, ~0.08 opacity) for a filmic grain over space, dialed through `FLIGHT_SCENE_POST_PROCESSING.noise` in `constants.ts`.
+
 ### Instanced projectiles
 
 Flight projectiles render through a single `InstancedMesh` rather than one mesh per shot. Per-frame matrix updates write into a shared instance buffer, so the GPU sees one draw call regardless of how many bullets are alive. This keeps fire-rate scaling cheap and avoids the per-shot allocation churn that one-mesh-per-projectile would incur.
