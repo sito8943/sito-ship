@@ -61,6 +61,7 @@ export const PANORAMIC_ORBIT_CONSTRAINTS = {
 } as const
 
 export const CINEMATIC_ROTATION_SPEED = 0.8
+export const IDLE_CINEMATIC_DELAY_MS = 6000
 export const CAMERA_FOCUS_PADDING = 1.35
 
 export const SCENE_COLORS = {

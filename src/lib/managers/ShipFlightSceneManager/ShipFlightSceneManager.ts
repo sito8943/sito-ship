@@ -59,6 +59,7 @@ import {
   FLIGHT_SCENE_RENDERER,
   FLIGHT_SCENE_SPACE,
   FLIGHT_SCENE_STAR_LAYERS,
+  FLIGHT_SCENE_PARALLAX,
   FLIGHT_SCENE_STRAFE,
   FLIGHT_SCENE_THRUSTERS,
   MAX_ENGINE_EXHAUSTS,
@@ -135,6 +136,10 @@ export class ShipFlightSceneManager {
   private touchStrafe = 0
   private touchPitch = 0
   private touchFire = false
+  private parallaxX = 0
+  private parallaxY = 0
+  private targetParallaxX = 0
+  private targetParallaxY = 0
   private activeCameraConfig: FlightSceneCameraConfig = FLIGHT_SCENE_CAMERA
   private readonly lookTarget = new Vector3(
     FLIGHT_SCENE_CAMERA.lookAt.x,
@@ -164,6 +169,7 @@ export class ShipFlightSceneManager {
     window.addEventListener('keydown', this.handleWindowKeyDown)
     window.addEventListener('keyup', this.handleWindowKeyUp)
     window.addEventListener('blur', this.handleWindowBlur)
+    window.addEventListener('pointermove', this.handleWindowPointerMove)
     this.resize()
     this.animate()
   }
@@ -197,6 +203,7 @@ export class ShipFlightSceneManager {
     window.removeEventListener('keydown', this.handleWindowKeyDown)
     window.removeEventListener('keyup', this.handleWindowKeyUp)
     window.removeEventListener('blur', this.handleWindowBlur)
+    window.removeEventListener('pointermove', this.handleWindowPointerMove)
     this.resetInputState()
 
     this.shipModelManager?.dispose()
@@ -1380,6 +1387,24 @@ export class ShipFlightSceneManager {
     if (this.isFreeCameraEnabled && this.orbitControls) {
       this.orbitControls.update()
     } else {
+      this.parallaxX = MathUtils.damp(
+        this.parallaxX,
+        this.targetParallaxX,
+        FLIGHT_SCENE_PARALLAX.smoothing,
+        delta
+      )
+      this.parallaxY = MathUtils.damp(
+        this.parallaxY,
+        this.targetParallaxY,
+        FLIGHT_SCENE_PARALLAX.smoothing,
+        delta
+      )
+      const base = this.activeCameraConfig.position
+      this.camera.position.set(
+        base.x + this.parallaxX * FLIGHT_SCENE_PARALLAX.offsetX,
+        base.y + this.parallaxY * FLIGHT_SCENE_PARALLAX.offsetY,
+        base.z
+      )
       this.camera.lookAt(this.lookTarget)
     }
     if (this.composer) {
@@ -1468,6 +1493,16 @@ export class ShipFlightSceneManager {
 
   private handleWindowBlur = () => {
     this.resetInputState()
+  }
+
+  private handleWindowPointerMove = (event: PointerEvent) => {
+    const width = window.innerWidth
+    const height = window.innerHeight
+    if (width === 0 || height === 0) {
+      return
+    }
+    this.targetParallaxX = (event.clientX / width) * 2 - 1
+    this.targetParallaxY = -((event.clientY / height) * 2 - 1)
   }
 
   private disposeStarFields() {

@@ -49,6 +49,12 @@ export const FLIGHT_SCENE_STRAFE = {
   smoothing: 8.2,
 } as const
 
+export const FLIGHT_SCENE_PARALLAX = {
+  offsetX: 0.35,
+  offsetY: 0.22,
+  smoothing: 4.5,
+} as const
+
 export const FLIGHT_SCENE_BANK = {
   rollFactor: 0.85,
   yawFactor: 0.22,

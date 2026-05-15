@@ -52,6 +52,7 @@ import {
   CAMERA_FOCUS_PADDING,
   CAMERA_SETTINGS,
   CINEMATIC_ROTATION_SPEED,
+  IDLE_CINEMATIC_DELAY_MS,
   DEFAULT_ORBIT_CONSTRAINTS,
   FLIGHT_SETTINGS,
   MAX_DEVICE_PIXEL_RATIO,
@@ -125,6 +126,8 @@ export class ShipBuilderSceneManager {
   private isMounted = false
   private isPanoramicViewEnabled = false
   private isCinematicViewEnabled = false
+  private isIdleCinematicActive = false
+  private lastActivityAt = 0
   private experienceMode: ExperienceMode = 'builder'
   private selectedSlot: ShipSlot | null = 'body'
   private transformMode: TransformMode = 'translate'
@@ -177,6 +180,7 @@ export class ShipBuilderSceneManager {
     this.canvas.addEventListener('pointerdown', this.handleCanvasPointerDown)
     this.canvas.addEventListener('pointermove', this.handleCanvasPointerMove)
     this.canvas.addEventListener('pointerleave', this.handleCanvasPointerLeave)
+    this.canvas.addEventListener('wheel', this.handleCanvasWheel, { passive: true })
     this.resize()
     this.animate()
   }
@@ -242,6 +246,7 @@ export class ShipBuilderSceneManager {
     }
 
     this.isCinematicViewEnabled = !this.isCinematicViewEnabled
+    this.markActivity()
 
     if (!this.controls) {
       return
@@ -249,6 +254,41 @@ export class ShipBuilderSceneManager {
 
     this.controls.autoRotate = this.isCinematicViewEnabled
     this.controls.autoRotateSpeed = CINEMATIC_ROTATION_SPEED
+  }
+
+  private markActivity = () => {
+    this.lastActivityAt = performance.now()
+    if (!this.isIdleCinematicActive) {
+      return
+    }
+    this.isIdleCinematicActive = false
+    if (this.controls && !this.isCinematicViewEnabled) {
+      this.controls.autoRotate = false
+    }
+  }
+
+  private updateIdleCinematic() {
+    if (
+      this.experienceMode !== 'builder' ||
+      !this.controls ||
+      this.isCinematicViewEnabled ||
+      this.isPanoramicViewEnabled
+    ) {
+      return
+    }
+
+    const isIdle = performance.now() - this.lastActivityAt >= IDLE_CINEMATIC_DELAY_MS
+    if (isIdle === this.isIdleCinematicActive) {
+      return
+    }
+
+    this.isIdleCinematicActive = isIdle
+    this.controls.autoRotate = isIdle
+    this.controls.autoRotateSpeed = CINEMATIC_ROTATION_SPEED
+  }
+
+  private handleCanvasWheel = () => {
+    this.markActivity()
   }
 
   focusSelectedSlot() {
@@ -373,6 +413,7 @@ export class ShipBuilderSceneManager {
     this.canvas?.removeEventListener('pointerdown', this.handleCanvasPointerDown)
     this.canvas?.removeEventListener('pointermove', this.handleCanvasPointerMove)
     this.canvas?.removeEventListener('pointerleave', this.handleCanvasPointerLeave)
+    this.canvas?.removeEventListener('wheel', this.handleCanvasWheel)
     this.resetFlightInputState()
 
     if (this.transformControls) {
@@ -500,6 +541,7 @@ export class ShipBuilderSceneManager {
 
     this.clock = new Clock()
 
+    this.lastActivityAt = performance.now()
     this.initializeLights()
     this.initializeEnvironmentMap()
     this.initializeHelpers()
@@ -977,6 +1019,8 @@ export class ShipBuilderSceneManager {
   }
 
   private handleCanvasPointerDown = (event: PointerEvent) => {
+    this.markActivity()
+
     if (this.experienceMode !== 'builder') {
       return
     }
@@ -1210,6 +1254,7 @@ export class ShipBuilderSceneManager {
 
   private enableFlightMode() {
     this.isCinematicViewEnabled = false
+    this.isIdleCinematicActive = false
     this.resetFlightInputState()
     this.flightSpeed = 0
 
@@ -1226,6 +1271,8 @@ export class ShipBuilderSceneManager {
     this.resetFlightInputState()
     this.flightSpeed = 0
     this.resetShipTransform()
+    this.lastActivityAt = performance.now()
+    this.isIdleCinematicActive = false
 
     if (this.camera && this.controls) {
       this.camera.position.set(
@@ -1361,6 +1408,8 @@ export class ShipBuilderSceneManager {
   }
 
   private handleWindowKeyDown = (event: KeyboardEvent) => {
+    this.markActivity()
+
     if (
       this.experienceMode !== 'flight' ||
       this.isEditableKeyboardTarget(event.target) ||
@@ -1545,6 +1594,7 @@ export class ShipBuilderSceneManager {
     if (this.experienceMode === 'flight') {
       this.updateFlightSimulation(delta)
     } else {
+      this.updateIdleCinematic()
       this.controls?.update(delta)
     }
     if (this.isDevEnvironment) {
