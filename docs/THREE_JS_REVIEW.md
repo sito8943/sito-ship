@@ -150,6 +150,7 @@ Three full vertex+fragment shader pairs, all written in raw GLSL and wired throu
 | Effect                                                         | Shader file                      | Consumer                                                                               |
 | -------------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------- |
 | Engine thruster particles (analytic GPU, additive)             | `src/lib/shaders/thruster.ts`    | `ShipFlightSceneManager.initializeThrusters` — `ShipFlightSceneManager.ts:757-813`     |
+| Star field (analytic GPU, depth-faded, additive)               | `src/lib/shaders/starField.ts`   | `ShipFlightSceneManager.createStarField` — `ShipFlightSceneManager.ts:912-`            |
 | Plasma projectiles (per-instance billboard, pulse via `uTime`) | `src/lib/shaders/projectile.ts`  | `ShipFlightSceneManager.initializeProjectiles` — `ShipFlightSceneManager.ts:552-620`   |
 | Muzzle flash sprites (radial + cross "ray" pattern)            | `src/lib/shaders/muzzleFlash.ts` | `ShipFlightSceneManager.initializeMuzzleFlash` — `ShipFlightSceneManager.ts:1133-1184` |
 
@@ -160,6 +161,8 @@ All three:
 - Render with `transparent: true`, `depthWrite: false`, `blending: AdditiveBlending`.
 
 The thruster shader is a fully analytic GPU particle system. The vertex shader computes life, emitter origin, jitter, and final local-space position purely from per-particle static attributes (`aSeed`, `aSpawnPhase`, `aLifetime`, `aEmitterIndex`) and uniforms (`uTime`, `uExhaustLocal[MAX_EXHAUSTS]`, `uExhaustCount`, `uExhaustSpeed`, `uJitter`, `uSpawnSpread`). `MAX_EXHAUSTS` is injected via `material.defines` from `MAX_ENGINE_EXHAUSTS` in `ShipFlightSceneManager/constants.ts`. There is no per-frame CPU integration loop and no `BufferAttribute.needsUpdate`.
+
+The star field shader follows the same analytic pattern. Each star has a static `aSeed` (vec3 random) and the vertex shader derives angle, radius, and depth-wrapped Z from it: `z = uCameraZ + perStarBase + mod(aSeed.z * uZPeriod + uTime * uTravelSpeed, uZPeriod)`. `perStarBase` adds a per-star hash-derived offset over `uZSpawnRange` so wrap events spread across the spawn band instead of clustering at one Z. `gl_PointSize` is clamped to a minimum to avoid sub-pixel shimmer, and a depth-fade alpha (`uFadeNear`, `uFadeFar`) makes far stars fade out, which both hides the wrap moment and removes the sparkle of stars too small to anti-alias. Strafe drift is preserved via `uLateralOffset`, a single scalar uniform accumulated on the JS side per layer.
 
 ---
 
@@ -175,7 +178,15 @@ The thruster field is fully GPU-driven. Per-particle static attributes (`aSeed`,
 - Uniform-only refresh of engine nozzle origins on config change — `refreshThrusterEmitters` calls `ShipBuilderModelManager.getEngineExhaustLocalPositions(shipGroup, out)` and writes the result into `uExhaustLocal` + `uExhaustCount`.
 - The `Points` object is parented to `shipGroup` so the exhaust origins stay in ship-local space and inherit ship transforms automatically through `modelViewMatrix`.
 
-### 10.2 Muzzle flash — CPU pool (event-driven)
+### 10.2 Stars — analytic GPU field (no CPU integration)
+
+The two star layers in the flight scene are fully GPU-driven. Each star has a single static `aSeed` (vec3 random — angle, radius, z-phase) uploaded once in `createStarField`. The vertex shader (`src/lib/shaders/starField.ts`) computes the star's world position every frame analytically from `aSeed` plus per-layer uniforms (`uTime`, `uTravelSpeed`, `uLateralOffset`, `uCameraZ`, `uZPeriod`, `uZBaseOffset`, `uZSpawnRange`, `uMinRadius`, `uMaxRadius`, `uVerticalSquash`, `uFadeNear`, `uFadeFar`, `uSize`, `uPixelRatio`, `uColor`, `uOpacity`). There is no per-frame loop over star positions and no `BufferAttribute.needsUpdate` for star geometry.
+
+- Static attribute setup — `ShipFlightSceneManager.createStarField`.
+- Per-frame uniform refresh only (`uTime`, `uCameraZ`, `uLateralOffset`) — `ShipFlightSceneManager.updateSpaceMotion`.
+- Depth-fade alpha + min `gl_PointSize` clamp in the vertex shader prevent sub-pixel shimmer and hide the wrap moment.
+
+### 10.3 Muzzle flash — CPU pool (event-driven)
 
 Muzzle flash uses a small CPU-driven ring buffer because it is event-driven (only fires when the weapon shoots) and writes are sparse. The GPU consumes a `BufferGeometry` with `position` + `aLife` attributes and a custom `ShaderMaterial`.
 
@@ -259,7 +270,7 @@ Symmetric slots (wings, engines, weapons) are kept in sync across the ship's loc
 
 - Custom flight integrator (forward/yaw/pitch/roll, drag, boost) lives entirely in `ShipBuilderSceneManager.updateFlightSimulation` (search for `updateFlightSimulation` in `ShipBuilderSceneManager.ts`) and uses `Clock.getDelta()`-driven dt.
 - Flight tuning — `ShipBuilderSceneManager/constants.ts:73-86` (`FLIGHT_SETTINGS`).
-- Stars are infinite-scrolled by wrapping particle Z around the camera (`createStarField` + per-frame update in `ShipFlightSceneManager.ts:815-849` and the corresponding animation step).
+- Stars are infinite-scrolled entirely on the GPU. `createStarField` uploads a single static `aSeed` vec3 attribute per star and a custom `ShaderMaterial`; the vertex shader wraps each star's Z analytically via `mod(aSeed.z * uZPeriod + uTime * uTravelSpeed, uZPeriod)` so the JS side only updates a few scalar uniforms per frame (`uTime`, `uCameraZ`, `uLateralOffset`) — see `ShipFlightSceneManager.updateSpaceMotion` and `src/lib/shaders/starField.ts`.
 - Planets are pool-spawned with `MeshStandardMaterial` + texture, `ShipFlightSceneManager.ts:851-` (`spawnPlanet`).
 
 ---

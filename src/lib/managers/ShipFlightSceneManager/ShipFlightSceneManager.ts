@@ -20,7 +20,6 @@ import {
   MeshStandardMaterial,
   PerspectiveCamera,
   Points,
-  PointsMaterial,
   Scene,
   ShaderMaterial,
   SphereGeometry,
@@ -32,6 +31,7 @@ import {
 import { thrusterFragmentShader, thrusterVertexShader } from '@/lib/shaders/thruster'
 import { projectileFragmentShader, projectileVertexShader } from '@/lib/shaders/projectile'
 import { muzzleFlashFragmentShader, muzzleFlashVertexShader } from '@/lib/shaders/muzzleFlash'
+import { starFieldFragmentShader, starFieldVertexShader } from '@/lib/shaders/starField'
 import {
   BlendFunction,
   BloomEffect,
@@ -114,7 +114,6 @@ export class ShipFlightSceneManager {
   private isFreeCameraEnabled = false
   private composer: EffectComposer | null = null
   private qualityProfile: RendererQualityProfile = getRendererQualityProfile()
-  private noisePass: EffectPass | null = null
   private noiseEffect: NoiseEffect | null = null
   private noiseSettings = {
     enabled: FLIGHT_SCENE_POST_PROCESSING.noise.enabled as boolean,
@@ -222,7 +221,6 @@ export class ShipFlightSceneManager {
     this.renderer?.dispose()
 
     this.composer = null
-    this.noisePass = null
     this.noiseEffect = null
     this.renderer = null
     this.scene = null
@@ -331,11 +329,12 @@ export class ShipFlightSceneManager {
       premultiply: this.noiseSettings.premultiply,
     })
     noiseEffect.blendMode.opacity.value = this.noiseSettings.opacity
+    noiseEffect.blendMode.blendFunction = this.noiseSettings.enabled
+      ? BlendFunction.SOFT_LIGHT
+      : BlendFunction.SKIP
     const noisePass = new EffectPass(this.camera, noiseEffect)
-    noisePass.enabled = this.noiseSettings.enabled
     this.composer.addPass(noisePass)
     this.noiseEffect = noiseEffect
-    this.noisePass = noisePass
   }
 
   private initializeStats() {
@@ -498,7 +497,11 @@ export class ShipFlightSceneManager {
       .add(this.noiseSettings, 'enabled')
       .name('Enabled')
       .onChange((value: boolean) => {
-        if (this.noisePass) this.noisePass.enabled = value
+        if (this.noiseEffect) {
+          this.noiseEffect.blendMode.blendFunction = value
+            ? BlendFunction.SOFT_LIGHT
+            : BlendFunction.SKIP
+        }
       })
     noiseFolder
       .add(this.noiseSettings, 'opacity', 0, 1, 0.01)
@@ -910,38 +913,63 @@ export class ShipFlightSceneManager {
   }
 
   private createStarField(config: (typeof FLIGHT_SCENE_STAR_LAYERS)[number]): FlightSceneStarField {
-    const positions = new Float32Array(config.count * 3)
-    const maxRadius = config.spread * 0.5
+    const seeds = new Float32Array(config.count * 3)
     for (let i = 0; i < config.count; i += 1) {
       const offset = i * 3
-      const angle = Math.random() * Math.PI * 2
-      const radius = config.minRadius + Math.random() * Math.max(maxRadius - config.minRadius, 0)
-      positions[offset] = Math.cos(angle) * radius
-      positions[offset + 1] = Math.sin(angle) * radius * config.verticalSquash
-      positions[offset + 2] = (Math.random() - 0.5) * config.spread
+      seeds[offset] = Math.random()
+      seeds[offset + 1] = Math.random()
+      seeds[offset + 2] = Math.random()
     }
 
+    const positions = new Float32Array(config.count * 3)
     const geometry = new BufferGeometry()
     geometry.setAttribute('position', new BufferAttribute(positions, 3))
+    geometry.setAttribute('aSeed', new BufferAttribute(seeds, 3))
+    geometry.boundingSphere = null
 
-    const material = new PointsMaterial({
-      color: config.color,
-      size: config.size,
+    const travelSpeed = FLIGHT_SCENE_SPACE.travelSpeed * config.speedMultiplier
+    const zPeriod = FLIGHT_SCENE_SPACE.zSpawnAheadMax + FLIGHT_SCENE_SPACE.zDespawnBehind
+    const zBaseOffset = -FLIGHT_SCENE_SPACE.zSpawnAheadMax
+    const zSpawnRange = FLIGHT_SCENE_SPACE.zSpawnAheadMax - FLIGHT_SCENE_SPACE.zSpawnAheadMin
+    const maxRadius = config.spread * 0.5
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, this.qualityProfile.maxPixelRatio)
+
+    const material = new ShaderMaterial({
+      vertexShader: starFieldVertexShader,
+      fragmentShader: starFieldFragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uTravelSpeed: { value: travelSpeed },
+        uLateralOffset: { value: 0 },
+        uCameraZ: { value: 0 },
+        uZPeriod: { value: zPeriod },
+        uZBaseOffset: { value: zBaseOffset },
+        uZSpawnRange: { value: zSpawnRange },
+        uFadeNear: { value: FLIGHT_SCENE_SPACE.zSpawnAheadMin },
+        uFadeFar: { value: FLIGHT_SCENE_SPACE.zSpawnAheadMax },
+        uMinRadius: { value: config.minRadius },
+        uMaxRadius: { value: maxRadius },
+        uVerticalSquash: { value: config.verticalSquash },
+        uSize: { value: config.size },
+        uPixelRatio: { value: pixelRatio },
+        uColor: { value: new Color(config.color) },
+        uOpacity: { value: config.opacity },
+      },
       transparent: true,
-      opacity: config.opacity,
-      sizeAttenuation: true,
       depthWrite: false,
       blending: AdditiveBlending,
     })
 
+    const points = new Points(geometry, material)
+    points.frustumCulled = false
+
     return {
-      points: new Points(geometry, material),
-      positions,
+      points,
       count: config.count,
+      material,
+      travelSpeed,
       speedMultiplier: config.speedMultiplier,
-      spread: config.spread,
-      minRadius: config.minRadius,
-      verticalSquash: config.verticalSquash,
+      lateralOffset: 0,
     }
   }
 
@@ -1117,27 +1145,11 @@ export class ShipFlightSceneManager {
     const yawDriftSpeed = -this.strafe * FLIGHT_SCENE_SPACE.yawDrift
 
     this.starFields.forEach((field) => {
-      const forwardSpeed = FLIGHT_SCENE_SPACE.travelSpeed * field.speedMultiplier * delta
-      const lateralSpeed = yawDriftSpeed * field.speedMultiplier * delta
-      const positions = field.positions
-      const maxRadius = field.spread * 0.5
-      const radiusRange = Math.max(maxRadius - field.minRadius, 0)
-      for (let i = 0; i < field.count; i += 1) {
-        const offset = i * 3
-        positions[offset] += lateralSpeed
-        positions[offset + 2] += forwardSpeed
-        if (positions[offset + 2] > despawnZ) {
-          const angle = Math.random() * Math.PI * 2
-          const radius = field.minRadius + Math.random() * radiusRange
-          positions[offset] = Math.cos(angle) * radius
-          positions[offset + 1] = Math.sin(angle) * radius * field.verticalSquash
-          positions[offset + 2] =
-            cameraZ -
-            randomInRange(FLIGHT_SCENE_SPACE.zSpawnAheadMin, FLIGHT_SCENE_SPACE.zSpawnAheadMax)
-        }
-      }
-      const attribute = field.points.geometry.getAttribute('position') as BufferAttribute
-      attribute.needsUpdate = true
+      field.lateralOffset += yawDriftSpeed * field.speedMultiplier * delta
+      const uniforms = field.material.uniforms
+      uniforms.uTime.value += delta
+      uniforms.uCameraZ.value = cameraZ
+      uniforms.uLateralOffset.value = field.lateralOffset
     })
 
     for (let i = this.planets.length - 1; i >= 0; i -= 1) {

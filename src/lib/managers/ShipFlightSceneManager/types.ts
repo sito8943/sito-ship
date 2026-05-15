@@ -46,12 +46,11 @@ export type FlightSceneSize = {
 
 export type FlightSceneStarField = {
   points: Points
-  positions: Float32Array
   count: number
+  material: import('three').ShaderMaterial
+  travelSpeed: number
   speedMultiplier: number
-  spread: number
-  minRadius: number
-  verticalSquash: number
+  lateralOffset: number
 }
 
 export type FlightScenePlanetEntry = {

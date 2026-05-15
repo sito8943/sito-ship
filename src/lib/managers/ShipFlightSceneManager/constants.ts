@@ -72,7 +72,7 @@ export const FLIGHT_SCENE_SPACE = {
 
 export const FLIGHT_SCENE_STAR_LAYERS = [
   {
-    count: 2200,
+    count: 600,
     size: 0.22,
     opacity: 0.95,
     speedMultiplier: 0.35,
@@ -82,7 +82,7 @@ export const FLIGHT_SCENE_STAR_LAYERS = [
     verticalSquash: 0.72,
   },
   {
-    count: 1500,
+    count: 600,
     size: 0.18,
     opacity: 0.68,
     speedMultiplier: 0.18,

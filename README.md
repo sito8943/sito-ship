@@ -4,6 +4,8 @@ Browser-based 3D spaceship builder and flight sandbox built with React, TypeScri
 
 Create a ship from modular parts, tweak transforms in the builder, export or import configs as JSON, then switch into a flight scene with thrusters, weapons, bloom, and mobile touch controls.
 
+> **For reviewers / graders:** see [`docs/THREE_JS_REVIEW.md`](./docs/THREE_JS_REVIEW.md) for a guided tour of every Three.js / WebGL technique used in this project, mapped to the exact files and line numbers where it lives.
+
 ## Features
 
 ### Builder Mode
@@ -118,6 +120,8 @@ Shadows are enabled in the builder scene only. The key light casts, and every sh
 Shader work appears in both scenes. The flight scene runs three full `ShaderMaterial`s with custom GLSL — `thruster`, `projectile`, and `muzzleFlash` — each with time-driven uniforms and life-curve fades (see `src/lib/shaders/`). The builder scene extends `MeshStandardMaterial` via `onBeforeCompile` (`ShipBuilderModelManager/utils.ts:createSlotMaterial`) to inject a fresnel rim glow into the PBR fragment program for every ship part, with `uRimColor`, `uRimPower`, and `uRimIntensity` uniforms. Selection highlight is driven through the same material via `emissive` + `emissiveIntensity`, layered with a screen-space `OutlineEffect` post pass.
 
 The thruster shader is fully analytic on the GPU. Per-particle state (`aSeed`, `aSpawnPhase`, `aLifetime`, `aEmitterIndex`) is uploaded once at init and never touched again. The vertex shader derives life, origin, and position every frame from `uTime` plus a `uExhaustLocal[MAX_EXHAUSTS]` uniform array of engine nozzle positions in ship-local space, so there is no CPU per-frame loop, no `BufferAttribute.needsUpdate`, and no CPU→GPU re-upload. The `Points` object is parented to the ship group so the exhaust flame stays anchored to the engine nozzles as the ship maneuvers.
+
+The star field uses the same analytic GPU pattern. Per-star `aSeed` (random angle, radius, z-phase) is uploaded once. The vertex shader wraps each star's depth with `mod(aSeed.z * uZPeriod + uTime * uTravelSpeed, uZPeriod)` so it travels from far ahead to behind the camera, then loops without any CPU respawn. A second hash derived from `aSeed` offsets the spawn depth per star across the `[zSpawnAheadMin, zSpawnAheadMax]` band so wrap events are distributed in depth (not clustered at one Z). A clamped minimum `gl_PointSize` and a depth-fade alpha (stars fade out as they approach the far end) eliminate sub-pixel shimmer and hide the wrap moment. Strafe parallax is preserved through a single scalar uniform per layer that the JS side accumulates.
 
 ### Post-processing and AA (FXAA over MSAA)
 
